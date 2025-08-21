@@ -242,7 +242,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
         color: Theme.of(context).cardColor,
         child: ListTile(
           leading: CircleAvatar(
-            backgroundColor: Colors.blueGrey,
+            backgroundColor: Color(0xFFEBAD00),
             foregroundColor: Colors.white,
             child: Text(
               entry.title.isNotEmpty ? entry.title[0].toUpperCase() : '?',

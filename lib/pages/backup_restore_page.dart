@@ -98,16 +98,27 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
             ),
             actions: [
               TextButton.icon(
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: encryptedBackup));
-                  // ignore: use_build_context_synchronously
-                  Navigator.of(context).pop();
-                  if (mounted) {
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('备份数据已复制到剪贴板')),
-                    );
-                  }
+                onPressed: () {
+                  // 捕获 NavigatorState 和 ScaffoldMessengerState，避免在 await 之后直接使用 BuildContext
+                  final navigator = Navigator.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
+
+                  Clipboard.setData(ClipboardData(text: encryptedBackup)).then((_) {
+                    // 先关闭对话框，然后在 mounted 时显示提示
+                    navigator.pop();
+                    if (mounted) {
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('备份数据已复制到剪贴板')),
+                      );
+                    }
+                  }).catchError((error) {
+                    // 复制失败时显示错误提示（在已挂载时）
+                    if (mounted) {
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('复制备份失败: $error'), backgroundColor: Colors.red),
+                      );
+                    }
+                  });
                 },
                 icon: const Icon(Icons.copy),
                 label: const Text('复制备份'),
@@ -172,6 +183,11 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       final entries = jsonData['entries'] as List<dynamic>;
       
       // 确认恢复操作
+      if (!mounted) {
+        // 如果当前 State 已卸载，则中止以避免使用已失效的 BuildContext
+        return;
+      }
+
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(

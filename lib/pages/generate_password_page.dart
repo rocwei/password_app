@@ -194,7 +194,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('密码生成器'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        // backgroundColor: const Color.fromARGB(255, 3, 3, 3),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

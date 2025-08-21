@@ -181,6 +181,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     MaterialPageRoute(builder: (context) => const LoginPage()),
                   );
                 },
+                // ignore: sort_child_properties_last
                 child: const Text('已有账户？点击登录'),
                 style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.primary),
               ),

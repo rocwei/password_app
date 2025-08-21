@@ -12,43 +12,58 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final darkBackground = const Color.fromARGB(255, 47, 57, 59);
+    // 使用用户指定的深色背景
+    final darkBackground = const Color(0xFF0F0506);
     return MaterialApp(
       title: '密码管理器',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 61, 62, 63)),
+        // 主色（按钮/图标）使用 #EBAD00
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEBAD00)),
         useMaterial3: true,
       ),
       darkTheme: ThemeData(
+        // 确保暗色主题也使用相同的主色
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEBAD00), brightness: Brightness.dark),
         brightness: Brightness.dark,
         scaffoldBackgroundColor: darkBackground,
         appBarTheme: AppBarTheme(
           backgroundColor: darkBackground,
           elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.white),
+          // AppBar 图标使用主色
+          iconTheme: const IconThemeData(color: Color(0xFFEBAD00)),
           titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
         ),
+  // 全局图标默认使用主色（按钮/图标）
+  iconTheme: const IconThemeData(color: Color(0xFFEBAD00)),
         cardColor: Colors.grey[850],
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.grey[900],
+          // 输入框背景与整体暗色背景一致
+          fillColor: darkBackground,
           labelStyle: const TextStyle(color: Colors.white70),
-          prefixIconColor: Colors.white70,
+          prefixIconColor: Color(0xFFEBAD00),
           border: OutlineInputBorder(),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[800],
-            foregroundColor: Colors.white,
+            // 按钮背景使用主色，文字/图标使用深色以保证可读性
+            backgroundColor: const Color(0xFFEBAD00),
+            foregroundColor: Colors.black,
           ),
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Colors.blueGrey,
-          foregroundColor: Colors.white,
+          backgroundColor: Color(0xFFEBAD00),
+          foregroundColor: Colors.black,
         ),
         listTileTheme: const ListTileThemeData(
-          iconColor: Colors.white70,
+          iconColor: Color(0xFFEBAD00),
           textColor: Colors.white,
+        ),
+        // 底部导航栏主题，确保选中项使用主色
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          backgroundColor: darkBackground,
+          selectedItemColor: const Color(0xFFEBAD00),
+          unselectedItemColor: Colors.white70,
         ),
       ),
       themeMode: ThemeMode.dark,
@@ -105,7 +120,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 47, 57, 59),
+      backgroundColor: const Color(0xFF0F0506),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -113,7 +128,7 @@ class _SplashScreenState extends State<SplashScreen> {
             const Icon(
               Icons.security,
               size: 100,
-              color: Colors.white,
+              color: Color(0xFFEBAD00),
             ),
             const SizedBox(height: 24),
             const Text(
@@ -134,7 +149,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 48),
             const CircularProgressIndicator(
-              color: Colors.white,
+              color: Color(0xFFEBAD00),
             ),
           ],
         ),
