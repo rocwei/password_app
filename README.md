@@ -1,16 +1,110 @@
-# password
+Password — 本地密码管理器
 
-A new Flutter project.
+这个仓库包含一个基于 Flutter 的本地离线密码管理应用，目标是为个人用户提供安全、简单、可备份的凭据保管方案。
 
-## Getting Started
+## 主要功能
+- 使用主密码（Master Password）保护所有数据
+- 支持生物识别（指纹 / 面容）快速解锁（若设备支持）
+- 本地加密存储密码条目（用户名、密码、网址、备注）
+- 本地数据库持久化与查询（离线优先）
+- 加密备份导出与导入（便于迁移或恢复）
+- 修改主密码、密码生成与强度提示（可扩展）
 
-This project is a starting point for a Flutter application.
+## 项目结构（关键路径）
+- `lib/main.dart` — 应用入口
+- `lib/helpers/` — 辅助模块
+  - `auth_helper.dart` — 会话 / 主密码管理流程
+  - `biometric_helper.dart` — 生物识别接口封装
+  - `database_helper.dart` — 本地数据库操作（增删改查）
+  - `encryption_helper.dart` — 加解密与密钥派生
+- `lib/models/` — 数据模型（如 `password_entry.dart`, `user.dart`）
+- `lib/pages/` — 页面与路由（如备份、修改主密码、列表与详情页）
+- `assets/` — 图标、图片、字体等静态资源
 
-A few resources to get you started if this is your first Flutter project:
+## 安装与运行（开发者）
+先确保已安装 Flutter SDK，并为目标平台配置好工具链。
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+1. 获取依赖：
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```powershell
+flutter pub get
+```
+
+2. 在连接的设备或模拟器上运行：
+
+```powershell
+flutter run
+```
+
+3. 生成发布包：
+
+- Android APK：
+
+```powershell
+flutter build apk --release
+```
+
+- Android AAB：
+
+```powershell
+flutter build appbundle --release
+```
+
+- iOS（在 macOS 上）：
+
+```bash
+flutter build ios --release
+```
+
+- Windows 桌面：
+
+```powershell
+flutter build windows --release
+```
+
+## 使用指南（用户）
+1. 首次启动：设置主密码（Master Password）。主密码用于派生加密密钥，保护所有数据。
+2. 解锁方式：输入主密码或启用设备生物识别（若支持）。
+3. 添加条目：新建密码条目，填写名称、用户名、密码、URL 与备注，保存后条目会被加密后写入本地数据库。
+4. 编辑 / 删除：在条目详情页进行编辑与删除操作。
+5. 备份 / 恢复：在“备份与恢复”页面导出或导入加密备份文件。建议将备份文件保存在安全位置（例如离线存储或受保护的云存储）。
+
+## 数据与安全说明
+- 所有敏感数据在写盘前均被加密（见 `lib/helpers/encryption_helper.dart`）。
+- 加密密钥通过主密码派生（不在本地以明文形式保存主密码）。
+- 应用设计为离线优先，不会自动上传凭据到任何远端服务。
+- 备份文件为加密格式；导出时请妥善保管备份文件与对应口令。
+- 应用可能请求的权限：生物识别、文件访问（用于导入/导出备份）。
+
+## 备份与恢复 注意事项
+- 备份文件依赖主密码或导出时设置的口令进行加密，恢复时需使用正确口令。
+- 在跨设备恢复前，建议在目标设备安装相同或更新版本的应用以保证兼容性。
+- 将备份上传到云端时，请确保云帐号安全（建议开启双因素认证）。
+
+## 常见问题与排查
+- 无法解锁：请确认主密码输入是否正确；若启用生物识别但失败，请使用主密码回退。
+- 导入备份失败：确认备份文件完整且使用正确的口令；检查文件权限与路径是否可访问。
+- 应用异常或崩溃：在终端运行 `flutter run` 并查看日志以定位异常栈信息。
+
+## 开发与贡献
+- 代码格式：使用 `dart format` 保持一致性。
+- 运行测试：
+
+```powershell
+flutter test
+```
+
+- 提交 PR 前请：补充相应测试、更新文档与变更日志。
+- 推荐添加 `LICENSE`（例如 MIT）和 `CONTRIBUTING.md` 以便开源协作。
+
+## 隐私声明
+该应用不收集或发送用户凭据到任何服务器；所有凭据均存储在用户设备并以加密形式保存。若未来引入云同步功能，会明确告知并提供隐私设置。
+
+## 后续改进建议
+- 增加可选的安全云同步功能（端到端加密）。
+- 内置密码生成器与强度检测。
+- 支持导出为 CSV（仅限用户确认风险后）和审计历史记录。
+
+---
+
+如果你希望我将文档改为更面向最终用户的短版说明、或更技术化的开发文档，我可以在此基础上调整并提交更新。
