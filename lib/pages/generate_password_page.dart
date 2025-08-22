@@ -73,7 +73,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
     // 确保至少包含一个来自每个选中字符集的字符
     List<String> requiredChars = [];
     if (_includeUppercase) {
-      String chars = _excludeSimilar 
+      String chars = _excludeSimilar
           ? _uppercaseChars.replaceAll(RegExp('[$_similarChars]'), '')
           : _uppercaseChars;
       if (chars.isNotEmpty) {
@@ -81,7 +81,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
       }
     }
     if (_includeLowercase) {
-      String chars = _excludeSimilar 
+      String chars = _excludeSimilar
           ? _lowercaseChars.replaceAll(RegExp('[$_similarChars]'), '')
           : _lowercaseChars;
       if (chars.isNotEmpty) {
@@ -89,7 +89,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
       }
     }
     if (_includeNumbers) {
-      String chars = _excludeSimilar 
+      String chars = _excludeSimilar
           ? _numberChars.replaceAll(RegExp('[$_similarChars]'), '')
           : _numberChars;
       if (chars.isNotEmpty) {
@@ -97,7 +97,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
       }
     }
     if (_includeSpecialChars) {
-      String chars = _excludeSimilar 
+      String chars = _excludeSimilar
           ? _specialChars.replaceAll(RegExp('[$_similarChars]'), '')
           : _specialChars;
       if (chars.isNotEmpty) {
@@ -153,39 +153,39 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
 
   String _getPasswordStrength() {
     if (_generatedPassword.isEmpty) return '无';
-    
+
     int score = 0;
-    
+
     // 长度评分
     if (_generatedPassword.length >= 8) score++;
     if (_generatedPassword.length >= 12) score++;
     if (_generatedPassword.length >= 16) score++;
-    
+
     // 字符类型评分
     if (_includeUppercase) score++;
     if (_includeLowercase) score++;
     if (_includeNumbers) score++;
     if (_includeSpecialChars) score++;
-    
+
     if (score <= 2) return '弱';
     if (score <= 4) return '中等';
     if (score <= 6) return '强';
     return '非常强';
   }
 
-  Color _getPasswordStrengthColor() {
+  Color _getPasswordStrengthColor(BuildContext context) {
     final strength = _getPasswordStrength();
     switch (strength) {
       case '弱':
-        return Colors.red;
+        return Colors.red.shade300;
       case '中等':
-        return Colors.orange;
+        return Colors.orange.shade300;
       case '强':
-        return Colors.blue;
+        return Theme.of(context).colorScheme.primary;
       case '非常强':
-        return Colors.green;
+        return Theme.of(context).colorScheme.secondary;
       default:
-        return Colors.grey;
+        return Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
     }
   }
 
@@ -203,6 +203,17 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
           children: [
             // 生成的密码显示区域
             Card(
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              color: Theme.of(context).scaffoldBackgroundColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(
+                  // ignore: deprecated_member_use
+                  color: Theme.of(context).dividerColor.withOpacity(1),
+                  width: 0.5,
+                ),
+              ),
+              elevation: 0.5,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -217,15 +228,20 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                     ),
                     const SizedBox(height: 8),
                     Container(
+                      
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color.fromARGB(255, 255, 255, 255)),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                        ),
                         borderRadius: BorderRadius.circular(4),
-                        color: const Color.fromARGB(255, 45, 54, 59),
+                        color: Theme.of(context).scaffoldBackgroundColor,
                       ),
                       child: Text(
-                        _generatedPassword.isEmpty ? '点击生成密码' : _generatedPassword,
+                        _generatedPassword.isEmpty
+                            ? '点击生成密码'
+                            : _generatedPassword,
                         style: const TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 16,
@@ -239,7 +255,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                         Text(
                           _getPasswordStrength(),
                           style: TextStyle(
-                            color: _getPasswordStrengthColor(),
+                            color: _getPasswordStrengthColor(context),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -256,10 +272,21 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // 密码设置
             Expanded(
               child: Card(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                color: Theme.of(context).scaffoldBackgroundColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(
+                    // ignore: deprecated_member_use
+                    color: Theme.of(context).dividerColor.withOpacity(1),
+                    width: 0.5,
+                  ),
+                ),
+                elevation: 0.5,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -273,7 +300,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // 密码长度
                       Text('密码长度: ${_passwordLength.round()}'),
                       Slider(
@@ -281,6 +308,10 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                         min: 4,
                         max: 32,
                         divisions: 28,
+                        activeColor: Theme.of(context).colorScheme.primary,
+                        inactiveColor: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.3),
                         onChanged: (value) {
                           setState(() {
                             _passwordLength = value;
@@ -288,7 +319,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                           _generatePassword();
                         },
                       ),
-                      
+
                       // 字符类型选择
                       CheckboxListTile(
                         title: const Text('包含大写字母 (A-Z)'),
@@ -345,9 +376,9 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // 操作按钮
             Row(
               children: [
@@ -357,20 +388,24 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                     icon: const Icon(Icons.refresh),
                     label: const Text('重新生成'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _generatedPassword.isEmpty ? null : _savePassword,
+                    onPressed: _generatedPassword.isEmpty
+                        ? null
+                        : _savePassword,
                     icon: const Icon(Icons.save),
                     label: const Text('保存到密码库'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      foregroundColor: Theme.of(
+                        context,
+                      ).colorScheme.onSecondary,
                     ),
                   ),
                 ),

@@ -88,7 +88,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
             child: const Text('删除'),
           ),
         ],
@@ -239,11 +239,20 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
       ),
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        color: Theme.of(context).cardColor,
+        color: Theme.of(context).scaffoldBackgroundColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(
+            // ignore: deprecated_member_use
+            color: Theme.of(context).dividerColor.withOpacity(1),
+            width: 0.5,
+          ),
+        ),
+        elevation: 0.5,
         child: ListTile(
           leading: CircleAvatar(
-            backgroundColor: Color(0xFFEBAD00),
-            foregroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
             child: Text(
               entry.title.isNotEmpty ? entry.title[0].toUpperCase() : '?',
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -260,7 +269,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
               if (entry.website != null && entry.website!.isNotEmpty)
                 Text(
                   '网址: ${entry.website}',
-                  style: const TextStyle(color: Colors.blue),
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary),
                 ),
             ],
           ),

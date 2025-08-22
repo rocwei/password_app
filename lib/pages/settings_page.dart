@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../helpers/auth_helper.dart';
+import '../helpers/theme_settings.dart';
 import 'change_master_password_page.dart';
 import 'backup_restore_page.dart';
 import 'about_page.dart';
@@ -89,6 +91,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final user = _authHelper.currentUser;
+  final themeModel = Provider.of<ThemeModel>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -98,7 +101,7 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           // 用户信息
           Card(
-            color: Theme.of(context).cardColor,
+            color: Theme.of(context).scaffoldBackgroundColor,
             margin: const EdgeInsets.all(16),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -226,6 +229,44 @@ class _SettingsPageState extends State<SettingsPage> {
               const Divider(height: 1),
 
           // 关于
+          // 主题设置
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              '主题设置',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Card(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('使用系统 Material You 颜色'),
+                      Switch(
+                        value: themeModel.useSystem,
+                        onChanged: (v) async => await themeModel.setUseSystem(v),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('主题方案预设'),
+                  const SizedBox(height: 12),
+                  for (ThemeType type in ThemeType.values)
+                    _buildThemeOption(context, themeModel, type),
+                ],
+              ),
+            ),
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
@@ -275,5 +316,70 @@ class _SettingsPageState extends State<SettingsPage> {
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildThemeOption(BuildContext context, ThemeModel model, ThemeType type) {
+    final theme = ThemeModel.themeSchemes[type]!;
+    final isSelected = model.currentThemeType == type;
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () async {
+          await model.setThemeType(type);
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          decoration: BoxDecoration(
+            border: isSelected 
+                ? Border.all(color: theme.seedColor, width: 2) 
+                : Border.all(color: Colors.transparent),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              // 主题预览
+              Container(
+                width: 64,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: theme.backgroundColor,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Center(
+                  child: Icon(Icons.circle, color: theme.seedColor, size: 18),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // 主题名称
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      theme.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      theme.brightness == Brightness.dark ? '深色背景' : '浅色背景',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // 选中标记
+              if (isSelected)
+                Icon(Icons.check_circle, color: theme.seedColor),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

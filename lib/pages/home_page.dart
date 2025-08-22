@@ -78,18 +78,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         },
   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
   selectedItemColor: Theme.of(context).colorScheme.primary,
-  unselectedItemColor: Colors.white70,
-        items: const [
+  unselectedItemColor: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.lock),
+            icon: Icon(Icons.lock, color: Theme.of(context).colorScheme.primary),
             label: '密码库',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.generating_tokens),
+            icon: Icon(Icons.generating_tokens, color: Theme.of(context).colorScheme.primary),
             label: '生成密码',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
+            icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.primary),
             label: '设置',
           ),
         ],

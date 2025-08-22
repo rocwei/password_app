@@ -17,7 +17,7 @@ class AboutPage extends StatelessWidget {
             children: [
               // 应用图标和名称
               Card(
-                color: Theme.of(context).cardColor,
+                color: Theme.of(context).scaffoldBackgroundColor,
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Column(
@@ -34,29 +34,29 @@ class AboutPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         '密码管理器',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Theme.of(context).textTheme.titleLarge?.color,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         '版本 1.0.0',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.white70,
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         '安全、简单、可靠的本地密码管理解决方案',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.white70,
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -67,42 +67,47 @@ class AboutPage extends StatelessWidget {
 
               // 功能特性
               Card(
-                color: Colors.grey[850],
+                color: Theme.of(context).scaffoldBackgroundColor,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         '功能特性',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Theme.of(context).textTheme.titleLarge?.color,
                         ),
                       ),
                       const SizedBox(height: 16),
                       _buildFeatureItem(
+                        context,
                         Icons.lock,
                         '安全加密',
                         '使用AES-256加密算法保护您的密码数据',
                       ),
                       _buildFeatureItem(
+                        context,
                         Icons.storage,
                         '本地存储',
                         '所有数据存储在本地，不会上传到任何服务器',
                       ),
                       _buildFeatureItem(
+                        context,
                         Icons.generating_tokens,
                         '密码生成',
                         '强大的密码生成器，创建安全的随机密码',
                       ),
                       _buildFeatureItem(
+                        context,
                         Icons.backup,
                         '备份恢复',
                         '支持加密备份和恢复功能，保护您的数据安全',
                       ),
                       _buildFeatureItem(
+                        context,
                         Icons.search,
                         '快速搜索',
                         '快速搜索和管理您的密码条目',
@@ -115,6 +120,7 @@ class AboutPage extends StatelessWidget {
 
               // 安全说明
               Card(
+                color: Theme.of(context).scaffoldBackgroundColor,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -150,6 +156,7 @@ class AboutPage extends StatelessWidget {
 
               // 版权信息 / 联系方式
               Card(
+                color: Theme.of(context).scaffoldBackgroundColor,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -179,7 +186,7 @@ class AboutPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureItem(IconData icon, String title, String description) {
+  Widget _buildFeatureItem(BuildContext context, IconData icon, String title, String description) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -187,7 +194,7 @@ class AboutPage extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: Colors.blue,
+            color: Theme.of(context).colorScheme.primary,
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -197,16 +204,17 @@ class AboutPage extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
+                    color: Theme.of(context).textTheme.titleMedium?.color,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   description,
-                  style: const TextStyle(
-                    color: Colors.grey,
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodySmall?.color,
                     fontSize: 12,
                   ),
                 ),
