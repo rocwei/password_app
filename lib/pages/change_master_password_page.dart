@@ -5,7 +5,8 @@ class ChangeMasterPasswordPage extends StatefulWidget {
   const ChangeMasterPasswordPage({super.key});
 
   @override
-  State<ChangeMasterPasswordPage> createState() => _ChangeMasterPasswordPageState();
+  State<ChangeMasterPasswordPage> createState() =>
+      _ChangeMasterPasswordPageState();
 }
 
 class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
@@ -66,10 +67,7 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('更改失败: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('更改失败: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -114,7 +112,7 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               TextFormField(
                 controller: _oldPasswordController,
                 obscureText: !_isOldPasswordVisible,
@@ -124,7 +122,9 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _isOldPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      _isOldPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -141,7 +141,7 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                 },
               ),
               const SizedBox(height: 16),
-              
+
               TextFormField(
                 controller: _newPasswordController,
                 obscureText: !_isNewPasswordVisible,
@@ -151,7 +151,9 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _isNewPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      _isNewPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -174,7 +176,7 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                 },
               ),
               const SizedBox(height: 16),
-              
+
               TextFormField(
                 controller: _confirmPasswordController,
                 obscureText: !_isConfirmPasswordVisible,
@@ -184,7 +186,9 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      _isConfirmPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -204,7 +208,7 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                 },
               ),
               const SizedBox(height: 24),
-              
+
               // const Card(
               //   color: Colors.orange,
               //   child: Padding(
@@ -224,7 +228,7 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
               //   ),
               // ),
               const SizedBox(height: 24),
-              
+
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -236,10 +240,7 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          '更改主密码',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                      : const Text('更改主密码', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],

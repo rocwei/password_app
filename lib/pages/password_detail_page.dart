@@ -33,7 +33,8 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
       _loadEntryData();
     } else {
       // 如果传入了 initialPassword（来自生成器），自动填充密码字段
-      if (widget.initialPassword != null && widget.initialPassword!.isNotEmpty) {
+      if (widget.initialPassword != null &&
+          widget.initialPassword!.isNotEmpty) {
         _passwordController.text = widget.initialPassword!;
       }
     }
@@ -54,8 +55,10 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
 
     try {
       // 解密密码
-      final decryptedPassword = EncryptionHelper().decryptString(widget.entry!.encryptedPassword);
-      
+      final decryptedPassword = EncryptionHelper().decryptString(
+        widget.entry!.encryptedPassword,
+      );
+
       setState(() {
         _titleController.text = widget.entry!.title;
         _usernameController.text = widget.entry!.username;
@@ -91,8 +94,10 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
       }
 
       // 加密密码
-      final encryptedPassword = EncryptionHelper().encryptString(_passwordController.text);
-      
+      final encryptedPassword = EncryptionHelper().encryptString(
+        _passwordController.text,
+      );
+
       final now = DateTime.now();
       final dbHelper = DatabaseHelper();
 
@@ -102,8 +107,12 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
           title: _titleController.text.trim(),
           username: _usernameController.text.trim(),
           encryptedPassword: encryptedPassword,
-          website: _websiteController.text.trim().isEmpty ? null : _websiteController.text.trim(),
-          note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+          website: _websiteController.text.trim().isEmpty
+              ? null
+              : _websiteController.text.trim(),
+          note: _noteController.text.trim().isEmpty
+              ? null
+              : _noteController.text.trim(),
           updatedAt: now,
         );
 
@@ -115,8 +124,12 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
           title: _titleController.text.trim(),
           username: _usernameController.text.trim(),
           encryptedPassword: encryptedPassword,
-          website: _websiteController.text.trim().isEmpty ? null : _websiteController.text.trim(),
-          note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+          website: _websiteController.text.trim().isEmpty
+              ? null
+              : _websiteController.text.trim(),
+          note: _noteController.text.trim().isEmpty
+              ? null
+              : _noteController.text.trim(),
           createdAt: now,
           updatedAt: now,
         );
@@ -210,7 +223,8 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                 prefixIcon: const Icon(Icons.person),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.copy),
-                  onPressed: () => _copyToClipboard(_usernameController.text, '用户名'),
+                  onPressed: () =>
+                      _copyToClipboard(_usernameController.text, '用户名'),
                 ),
               ),
               validator: (value) {
@@ -232,7 +246,8 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.copy),
-                      onPressed: () => _copyToClipboard(_passwordController.text, '密码'),
+                      onPressed: () =>
+                          _copyToClipboard(_passwordController.text, '密码'),
                     ),
                   ],
                 ),
@@ -254,7 +269,8 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                 suffixIcon: _websiteController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.copy),
-                        onPressed: () => _copyToClipboard(_websiteController.text, '网址'),
+                        onPressed: () =>
+                            _copyToClipboard(_websiteController.text, '网址'),
                       )
                     : null,
                 helperText: '例如：https://www.example.com',
@@ -282,7 +298,10 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                 onPressed: _isLoading ? null : _saveEntry,
                 child: _isLoading
                     ? const CircularProgressIndicator()
-                    : Text(_isEditing ? '更新密码' : '保存密码', style: const TextStyle(fontSize: 16)),
+                    : Text(
+                        _isEditing ? '更新密码' : '保存密码',
+                        style: const TextStyle(fontSize: 16),
+                      ),
               ),
             ),
             if (_isEditing) ...[
@@ -300,12 +319,18 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                         if (widget.entry!.createdAt != null)
                           Text(
                             '创建时间: ${_formatDateTime(widget.entry!.createdAt!)}',
-                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
                           ),
                         if (widget.entry!.updatedAt != null)
                           Text(
                             '更新时间: ${_formatDateTime(widget.entry!.updatedAt!)}',
-                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
                           ),
                       ],
                     ),
@@ -321,6 +346,6 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
-           '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

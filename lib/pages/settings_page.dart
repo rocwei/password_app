@@ -82,21 +82,19 @@ class _SettingsPageState extends State<SettingsPage> {
       });
     }
     if (!ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('更新生物识别设置失败')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('更新生物识别设置失败')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final user = _authHelper.currentUser;
-  final themeModel = Provider.of<ThemeModel>(context);
+    final themeModel = Provider.of<ThemeModel>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('设置'),
-      ),
+      appBar: AppBar(title: const Text('设置')),
       body: ListView(
         children: [
           // 用户信息
@@ -108,24 +106,24 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                      Text(
-                        '用户信息',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.titleLarge?.color,
-                        ),
-                      ),
+                  Text(
+                    '用户信息',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.titleLarge?.color,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
                       CircleAvatar(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         foregroundColor: Colors.white,
                         radius: 24,
                         child: Text(
-                          user?.username.isNotEmpty == true 
-                              ? user!.username[0].toUpperCase() 
+                          user?.username.isNotEmpty == true
+                              ? user!.username[0].toUpperCase()
                               : '?',
                           style: const TextStyle(
                             fontSize: 20,
@@ -148,10 +146,12 @@ class _SettingsPageState extends State<SettingsPage> {
                             if (user?.createdAt != null)
                               Text(
                                 '注册时间: ${_formatDateTime(user!.createdAt!)}',
-                                    style: TextStyle(
-                                      color: Theme.of(context).textTheme.bodySmall?.color,
-                                      fontSize: 12,
-                                    ),
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodySmall?.color,
+                                  fontSize: 12,
+                                ),
                               ),
                           ],
                         ),
@@ -171,7 +171,7 @@ class _SettingsPageState extends State<SettingsPage> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                    // color provided by theme
+                // color provided by theme
               ),
             ),
           ),
@@ -180,13 +180,17 @@ class _SettingsPageState extends State<SettingsPage> {
             title: const Text('生物识别解锁'),
             subtitle: const Text('使用指纹/面部识别快速解锁'),
             trailing: _loadingBio
-                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : Switch(
                     value: _biometricEnabled,
                     onChanged: (v) => _toggleBiometric(v),
                   ),
           ),
-              const Divider(height: 1),
+          const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.lock_reset),
             title: const Text('修改主密码'),
@@ -200,17 +204,14 @@ class _SettingsPageState extends State<SettingsPage> {
               );
             },
           ),
-              const Divider(height: 1),
+          const Divider(height: 1),
 
           // 数据管理
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
               '数据管理',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
           ListTile(
@@ -226,7 +227,7 @@ class _SettingsPageState extends State<SettingsPage> {
               );
             },
           ),
-              const Divider(height: 1),
+          const Divider(height: 1),
 
           // 关于
           // 主题设置
@@ -234,10 +235,7 @@ class _SettingsPageState extends State<SettingsPage> {
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
               '主题设置',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
           Card(
@@ -254,7 +252,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       const Text('使用系统 Material You 颜色'),
                       Switch(
                         value: themeModel.useSystem,
-                        onChanged: (v) async => await themeModel.setUseSystem(v),
+                        onChanged: (v) async =>
+                            await themeModel.setUseSystem(v),
                       ),
                     ],
                   ),
@@ -271,10 +270,7 @@ class _SettingsPageState extends State<SettingsPage> {
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
               '关于',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
           ListTile(
@@ -284,13 +280,11 @@ class _SettingsPageState extends State<SettingsPage> {
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const AboutPage(),
-                ),
+                MaterialPageRoute(builder: (context) => const AboutPage()),
               );
             },
           ),
-              const Divider(height: 1),
+          const Divider(height: 1),
 
           const SizedBox(height: 32),
 
@@ -303,7 +297,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 onPressed: _logout,
                 icon: const Icon(Icons.logout),
                 label: const Text('登出'),
-                    style: ElevatedButton.styleFrom(),
+                style: ElevatedButton.styleFrom(),
               ),
             ),
           ),
@@ -318,10 +312,14 @@ class _SettingsPageState extends State<SettingsPage> {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
   }
 
-  Widget _buildThemeOption(BuildContext context, ThemeModel model, ThemeType type) {
+  Widget _buildThemeOption(
+    BuildContext context,
+    ThemeModel model,
+    ThemeType type,
+  ) {
     final theme = ThemeModel.themeSchemes[type]!;
     final isSelected = model.currentThemeType == type;
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -331,8 +329,8 @@ class _SettingsPageState extends State<SettingsPage> {
         borderRadius: BorderRadius.circular(8),
         child: Container(
           decoration: BoxDecoration(
-            border: isSelected 
-                ? Border.all(color: theme.seedColor, width: 2) 
+            border: isSelected
+                ? Border.all(color: theme.seedColor, width: 2)
                 : Border.all(color: Colors.transparent),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -359,9 +357,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     Text(
                       theme.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
                       theme.brightness == Brightness.dark ? '深色背景' : '浅色背景',
@@ -374,8 +370,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               // 选中标记
-              if (isSelected)
-                Icon(Icons.check_circle, color: theme.seedColor),
+              if (isSelected) Icon(Icons.check_circle, color: theme.seedColor),
             ],
           ),
         ),

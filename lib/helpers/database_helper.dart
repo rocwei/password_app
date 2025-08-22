@@ -17,11 +17,7 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     String path = join(await getDatabasesPath(), 'password_manager.db');
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _onCreate,
-    );
+    return await openDatabase(path, version: 1, onCreate: _onCreate);
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -90,10 +86,7 @@ class DatabaseHelper {
 
   Future<User?> getFirstUser() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'users',
-      limit: 1,
-    );
+    final List<Map<String, dynamic>> maps = await db.query('users', limit: 1);
 
     if (maps.isNotEmpty) {
       return User.fromMap(maps.first);

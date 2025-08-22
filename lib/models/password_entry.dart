@@ -3,7 +3,7 @@ class PasswordEntry {
   final int userId;
   final String title;
   final String username;
-  final String encryptedPassword;  // 加密后的密码
+  final String encryptedPassword; // 加密后的密码
   final String? website;
   final String? note;
   final DateTime? createdAt;
@@ -44,11 +44,11 @@ class PasswordEntry {
       encryptedPassword: map['password'],
       website: map['website'],
       note: map['note'],
-      createdAt: map['created_at'] != null 
-          ? DateTime.parse(map['created_at']) 
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'])
           : null,
-      updatedAt: map['updated_at'] != null 
-          ? DateTime.parse(map['updated_at']) 
+      updatedAt: map['updated_at'] != null
+          ? DateTime.parse(map['updated_at'])
           : null,
     );
   }

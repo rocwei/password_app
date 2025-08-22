@@ -42,7 +42,8 @@ class BiometricHelper {
       final bool canCheck = await canCheckBiometrics();
       if (!canCheck) return false;
 
-      final List<BiometricType> availableBiometrics = await getAvailableBiometrics();
+      final List<BiometricType> availableBiometrics =
+          await getAvailableBiometrics();
       return availableBiometrics.isNotEmpty;
     } catch (e) {
       return false;
@@ -50,9 +51,7 @@ class BiometricHelper {
   }
 
   // 执行生物识别认证
-  Future<bool> authenticate({
-    String localizedReason = '请使用指纹或面部识别进行验证',
-  }) async {
+  Future<bool> authenticate({String localizedReason = '请使用指纹或面部识别进行验证'}) async {
     try {
       final bool isAvailable = await hasBiometrics();
       if (!isAvailable) return false;
@@ -89,7 +88,8 @@ class BiometricHelper {
   // 检查是否支持指纹
   Future<bool> hasFingerprint() async {
     try {
-      final List<BiometricType> availableBiometrics = await getAvailableBiometrics();
+      final List<BiometricType> availableBiometrics =
+          await getAvailableBiometrics();
       return availableBiometrics.contains(BiometricType.fingerprint);
     } catch (e) {
       return false;
@@ -99,7 +99,8 @@ class BiometricHelper {
   // 检查是否支持面部识别
   Future<bool> hasFaceID() async {
     try {
-      final List<BiometricType> availableBiometrics = await getAvailableBiometrics();
+      final List<BiometricType> availableBiometrics =
+          await getAvailableBiometrics();
       return availableBiometrics.contains(BiometricType.face);
     } catch (e) {
       return false;

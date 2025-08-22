@@ -34,7 +34,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       // 导出密码条目
       final dbHelper = DatabaseHelper();
       final entries = await dbHelper.exportPasswordEntries(userId);
-      
+
       // 创建备份数据
       final backupData = {
         'version': '1.0',
@@ -45,10 +45,13 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
 
       // 转换为JSON字符串
       final jsonString = jsonEncode(backupData);
-      
+
       // 加密备份数据
-      final encryptedBackup = EncryptionHelper().encryptBackupData(jsonString, backupKey);
-      
+      final encryptedBackup = EncryptionHelper().encryptBackupData(
+        jsonString,
+        backupKey,
+      );
+
       // 显示备份数据（实际应用中这里应该保存到文件或上传到云端）
       if (mounted) {
         showDialog(
@@ -89,10 +92,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                 const SizedBox(height: 8),
                 const Text(
                   '注意：在实际应用中，这些数据应该保存到安全的位置。',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ],
             ),
@@ -103,22 +103,27 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                   final navigator = Navigator.of(context);
                   final messenger = ScaffoldMessenger.of(context);
 
-                  Clipboard.setData(ClipboardData(text: encryptedBackup)).then((_) {
-                    // 先关闭对话框，然后在 mounted 时显示提示
-                    navigator.pop();
-                    if (mounted) {
-                      messenger.showSnackBar(
-                        const SnackBar(content: Text('备份数据已复制到剪贴板')),
-                      );
-                    }
-                  }).catchError((error) {
-                    // 复制失败时显示错误提示（在已挂载时）
-                    if (mounted) {
-                      messenger.showSnackBar(
-                        SnackBar(content: Text('复制备份失败: $error'), backgroundColor: Colors.red),
-                      );
-                    }
-                  });
+                  Clipboard.setData(ClipboardData(text: encryptedBackup))
+                      .then((_) {
+                        // 先关闭对话框，然后在 mounted 时显示提示
+                        navigator.pop();
+                        if (mounted) {
+                          messenger.showSnackBar(
+                            const SnackBar(content: Text('备份数据已复制到剪贴板')),
+                          );
+                        }
+                      })
+                      .catchError((error) {
+                        // 复制失败时显示错误提示（在已挂载时）
+                        if (mounted) {
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text('复制备份失败: $error'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      });
                 },
                 icon: const Icon(Icons.copy),
                 label: const Text('复制备份'),
@@ -134,10 +139,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('备份失败: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('备份失败: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -176,12 +178,15 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       }
 
       // 解密备份数据
-      final decryptedData = EncryptionHelper().decryptBackupData(backupData.trim(), backupKey);
-      
+      final decryptedData = EncryptionHelper().decryptBackupData(
+        backupData.trim(),
+        backupKey,
+      );
+
       // 解析JSON
       final jsonData = jsonDecode(decryptedData) as Map<String, dynamic>;
       final entries = jsonData['entries'] as List<dynamic>;
-      
+
       // 确认恢复操作
       if (!mounted) {
         // 如果当前 State 已卸载，则中止以避免使用已失效的 BuildContext
@@ -195,7 +200,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
           content: Text(
             '将恢复 ${entries.length} 个密码条目。\n\n'
             '注意：这将删除当前所有密码条目并替换为备份中的数据。\n\n'
-            '此操作无法撤销，确定要继续吗？'
+            '此操作无法撤销，确定要继续吗？',
           ),
           actions: [
             TextButton(
@@ -218,7 +223,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       // 清除当前密码条目
       final dbHelper = DatabaseHelper();
       await dbHelper.clearPasswordEntries(userId);
-      
+
       // 恢复密码条目
       int restoredCount = 0;
       for (final entryData in entries) {
@@ -232,8 +237,10 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
           'created_at': entryData['created_at'],
           'updated_at': DateTime.now().toIso8601String(),
         };
-        
-        await dbHelper.database.then((db) => db.insert('password_entries', entry));
+
+        await dbHelper.database.then(
+          (db) => db.insert('password_entries', entry),
+        );
         restoredCount++;
       }
 
@@ -248,10 +255,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('恢复失败: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('恢复失败: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -383,6 +387,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
             ),
 
             const SizedBox(height: 24),
+
             // const Card(
             //   color: Colors.red,
             //   child: Padding(
@@ -401,12 +406,9 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
             //     ),
             //   ),
             // ),
-
             if (_isLoading) ...[
               const SizedBox(height: 24),
-              const Center(
-                child: CircularProgressIndicator(),
-              ),
+              const Center(child: CircularProgressIndicator()),
             ],
           ],
         ),

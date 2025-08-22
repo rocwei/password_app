@@ -3,11 +3,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // 主题类型枚举
 enum ThemeType {
-  yellowDark,  // 黄黑经典
-  blueLight,   // 蓝白简约
-  greenDark,   // 绿灰自然
+  yellowDark, // 黄黑经典
+  blueLight, // 蓝白简约
+  greenDark, // 绿灰自然
   purpleLight, // 紫色优雅
-  tealDark,    // 青蓝海洋
+  tealDark, // 青蓝海洋
 }
 
 // 定义主题方案
@@ -101,7 +101,7 @@ class ThemeModel extends ChangeNotifier {
       final seed = await _storage.read(key: _keySeed);
       final use = await _storage.read(key: _keyUseSystem);
       final themeType = await _storage.read(key: _keyThemeType);
-      
+
       if (seed != null && seed.isNotEmpty) {
         try {
           final intVal = int.parse(seed, radix: 16);
@@ -110,9 +110,9 @@ class ThemeModel extends ChangeNotifier {
           seedColor = null;
         }
       }
-      
+
       useSystem = use == '1';
-      
+
       if (themeType != null && themeType.isNotEmpty) {
         try {
           currentThemeType = ThemeType.values[int.parse(themeType)];
@@ -132,7 +132,10 @@ class ThemeModel extends ChangeNotifier {
     seedColor = color;
     // 当用户手动选择主色时，关闭"使用系统 Material You"选项
     useSystem = false;
-    await _storage.write(key: _keySeed, value: color.value.toRadixString(16).padLeft(8, '0'));
+    await _storage.write(
+      key: _keySeed,
+      value: color.value.toRadixString(16).padLeft(8, '0'),
+    );
     await _storage.write(key: _keyUseSystem, value: '0');
     notifyListeners();
   }
@@ -142,11 +145,14 @@ class ThemeModel extends ChangeNotifier {
     final scheme = themeSchemes[type]!;
     seedColor = scheme.seedColor;
     useSystem = false;
-    
+
     await _storage.write(key: _keyThemeType, value: type.index.toString());
-    await _storage.write(key: _keySeed, value: scheme.seedColor.value.toRadixString(16).padLeft(8, '0'));
+    await _storage.write(
+      key: _keySeed,
+      value: scheme.seedColor.value.toRadixString(16).padLeft(8, '0'),
+    );
     await _storage.write(key: _keyUseSystem, value: '0');
-    
+
     notifyListeners();
   }
 
@@ -163,7 +169,8 @@ class ThemeModel extends ChangeNotifier {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: seedColor ?? Colors.blue,
-          brightness: WidgetsBinding.instance.platformDispatcher.platformBrightness,
+          brightness:
+              WidgetsBinding.instance.platformDispatcher.platformBrightness,
         ),
       );
     } else if (seedColor != null) {

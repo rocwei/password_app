@@ -23,141 +23,163 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-        return Consumer<ThemeModel>(builder: (context, model, child) {
-          // 如果启用系统 Material You 且动态色可用，则使用系统配色
-          if (model.useSystem && (lightDynamic != null || darkDynamic != null)) {
-            final ColorScheme lightScheme = lightDynamic ?? ColorScheme.fromSeed(
-              seedColor: model.seedColor ?? Colors.blue,
-              brightness: Brightness.light,
-            );
-            
-            final ColorScheme darkScheme = darkDynamic ?? ColorScheme.fromSeed(
-              seedColor: model.seedColor ?? Colors.blue,
-              brightness: Brightness.dark,
-            );
-            
-            return MaterialApp(
-              title: '密码管理器',
-              theme: ThemeData(
-                colorScheme: lightScheme,
-                useMaterial3: true,
-                scaffoldBackgroundColor: lightScheme.surface,
-                appBarTheme: AppBarTheme(
-                  backgroundColor: lightScheme.surface,
-                  elevation: 0,
-                  iconTheme: IconThemeData(color: lightScheme.primary),
-                  titleTextStyle: TextStyle(color: lightScheme.onSurface, fontSize: 20),
+        return Consumer<ThemeModel>(
+          builder: (context, model, child) {
+            // 如果启用系统 Material You 且动态色可用，则使用系统配色
+            if (model.useSystem &&
+                (lightDynamic != null || darkDynamic != null)) {
+              final ColorScheme lightScheme =
+                  lightDynamic ??
+                  ColorScheme.fromSeed(
+                    seedColor: model.seedColor ?? Colors.blue,
+                    brightness: Brightness.light,
+                  );
+
+              final ColorScheme darkScheme =
+                  darkDynamic ??
+                  ColorScheme.fromSeed(
+                    seedColor: model.seedColor ?? Colors.blue,
+                    brightness: Brightness.dark,
+                  );
+
+              return MaterialApp(
+                title: '密码管理器',
+                theme: ThemeData(
+                  colorScheme: lightScheme,
+                  useMaterial3: true,
+                  scaffoldBackgroundColor: lightScheme.surface,
+                  appBarTheme: AppBarTheme(
+                    backgroundColor: lightScheme.surface,
+                    elevation: 0,
+                    iconTheme: IconThemeData(color: lightScheme.primary),
+                    titleTextStyle: TextStyle(
+                      color: lightScheme.onSurface,
+                      fontSize: 20,
+                    ),
+                  ),
                 ),
-              ),
-              darkTheme: ThemeData(
-                colorScheme: darkScheme,
-                brightness: Brightness.dark,
-                scaffoldBackgroundColor: darkScheme.surface,
-                appBarTheme: AppBarTheme(
-                  backgroundColor: darkScheme.surface,
-                  elevation: 0,
+                darkTheme: ThemeData(
+                  colorScheme: darkScheme,
+                  brightness: Brightness.dark,
+                  scaffoldBackgroundColor: darkScheme.surface,
+                  appBarTheme: AppBarTheme(
+                    backgroundColor: darkScheme.surface,
+                    elevation: 0,
+                    iconTheme: IconThemeData(color: darkScheme.primary),
+                    titleTextStyle: TextStyle(
+                      color: darkScheme.onSurface,
+                      fontSize: 20,
+                    ),
+                  ),
                   iconTheme: IconThemeData(color: darkScheme.primary),
-                  titleTextStyle: TextStyle(color: darkScheme.onSurface, fontSize: 20),
+                  cardColor: Colors.grey[850],
+                  inputDecorationTheme: InputDecorationTheme(
+                    filled: true,
+                    fillColor: darkScheme.surface,
+                    labelStyle: TextStyle(
+                      color: darkScheme.onSurface.withOpacity(0.7),
+                    ),
+                    prefixIconColor: darkScheme.primary,
+                    border: OutlineInputBorder(),
+                  ),
+                  elevatedButtonTheme: ElevatedButtonThemeData(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: darkScheme.primary,
+                      foregroundColor: darkScheme.onPrimary,
+                    ),
+                  ),
+                  floatingActionButtonTheme: FloatingActionButtonThemeData(
+                    backgroundColor: darkScheme.primary,
+                    foregroundColor: darkScheme.onPrimary,
+                  ),
+                  listTileTheme: ListTileThemeData(
+                    iconColor: darkScheme.primary,
+                    textColor: darkScheme.onSurface,
+                  ),
+                  bottomNavigationBarTheme: BottomNavigationBarThemeData(
+                    backgroundColor: darkScheme.surface,
+                    selectedItemColor: darkScheme.primary,
+                    unselectedItemColor: darkScheme.onSurface.withOpacity(0.7),
+                  ),
                 ),
-                iconTheme: IconThemeData(color: darkScheme.primary),
-                cardColor: Colors.grey[850],
+                themeMode: ThemeMode.system,
+                home: const SplashScreen(),
+              );
+            } else {
+              // 使用自定义主题方案
+              final currentScheme = model.currentThemeScheme;
+              final ColorScheme colorScheme = currentScheme.toColorScheme();
+
+              final ThemeData themeData = ThemeData(
+                colorScheme: colorScheme,
+                useMaterial3: true,
+                brightness: currentScheme.brightness,
+                scaffoldBackgroundColor: currentScheme.backgroundColor,
+                appBarTheme: AppBarTheme(
+                  backgroundColor: currentScheme.backgroundColor,
+                  elevation: 0,
+                  iconTheme: IconThemeData(color: currentScheme.seedColor),
+                  titleTextStyle: TextStyle(
+                    color: currentScheme.textColor,
+                    fontSize: 20,
+                  ),
+                ),
+                textTheme: TextTheme(
+                  bodyLarge: TextStyle(color: currentScheme.textColor),
+                  bodyMedium: TextStyle(color: currentScheme.textColor),
+                  bodySmall: TextStyle(
+                    color: currentScheme.textColor.withOpacity(0.7),
+                  ),
+                  titleLarge: TextStyle(color: currentScheme.textColor),
+                  titleMedium: TextStyle(color: currentScheme.textColor),
+                  titleSmall: TextStyle(color: currentScheme.textColor),
+                ),
+                iconTheme: IconThemeData(color: currentScheme.seedColor),
+                cardColor: currentScheme.brightness == Brightness.dark
+                    ? Colors.grey[850]
+                    : Colors.white,
                 inputDecorationTheme: InputDecorationTheme(
                   filled: true,
-                  fillColor: darkScheme.surface,
-                  labelStyle: TextStyle(color: darkScheme.onSurface.withOpacity(0.7)),
-                  prefixIconColor: darkScheme.primary,
+                  fillColor: currentScheme.backgroundColor,
+                  labelStyle: TextStyle(
+                    color: currentScheme.textColor.withOpacity(0.7),
+                  ),
+                  prefixIconColor: currentScheme.seedColor,
                   border: OutlineInputBorder(),
                 ),
                 elevatedButtonTheme: ElevatedButtonThemeData(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: darkScheme.primary,
-                    foregroundColor: darkScheme.onPrimary,
+                    backgroundColor: currentScheme.seedColor,
+                    foregroundColor: currentScheme.brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black,
                   ),
                 ),
                 floatingActionButtonTheme: FloatingActionButtonThemeData(
-                  backgroundColor: darkScheme.primary,
-                  foregroundColor: darkScheme.onPrimary,
-                ),
-                listTileTheme: ListTileThemeData(
-                  iconColor: darkScheme.primary,
-                  textColor: darkScheme.onSurface,
-                ),
-                bottomNavigationBarTheme: BottomNavigationBarThemeData(
-                  backgroundColor: darkScheme.surface,
-                  selectedItemColor: darkScheme.primary,
-                  unselectedItemColor: darkScheme.onSurface.withOpacity(0.7),
-                ),
-              ),
-              themeMode: ThemeMode.system,
-              home: const SplashScreen(),
-            );
-          } else {
-            // 使用自定义主题方案
-            final currentScheme = model.currentThemeScheme;
-            final ColorScheme colorScheme = currentScheme.toColorScheme();
-            
-            final ThemeData themeData = ThemeData(
-              colorScheme: colorScheme,
-              useMaterial3: true,
-              brightness: currentScheme.brightness,
-              scaffoldBackgroundColor: currentScheme.backgroundColor,
-              appBarTheme: AppBarTheme(
-                backgroundColor: currentScheme.backgroundColor,
-                elevation: 0,
-                iconTheme: IconThemeData(color: currentScheme.seedColor),
-                titleTextStyle: TextStyle(color: currentScheme.textColor, fontSize: 20),
-              ),
-              textTheme: TextTheme(
-                bodyLarge: TextStyle(color: currentScheme.textColor),
-                bodyMedium: TextStyle(color: currentScheme.textColor),
-                bodySmall: TextStyle(color: currentScheme.textColor.withOpacity(0.7)),
-                titleLarge: TextStyle(color: currentScheme.textColor),
-                titleMedium: TextStyle(color: currentScheme.textColor),
-                titleSmall: TextStyle(color: currentScheme.textColor),
-              ),
-              iconTheme: IconThemeData(color: currentScheme.seedColor),
-              cardColor: currentScheme.brightness == Brightness.dark 
-                  ? Colors.grey[850] 
-                  : Colors.white,
-              inputDecorationTheme: InputDecorationTheme(
-                filled: true,
-                fillColor: currentScheme.backgroundColor,
-                labelStyle: TextStyle(color: currentScheme.textColor.withOpacity(0.7)),
-                prefixIconColor: currentScheme.seedColor,
-                border: OutlineInputBorder(),
-              ),
-              elevatedButtonTheme: ElevatedButtonThemeData(
-                style: ElevatedButton.styleFrom(
                   backgroundColor: currentScheme.seedColor,
-                  foregroundColor: currentScheme.brightness == Brightness.dark 
-                      ? Colors.white 
+                  foregroundColor: currentScheme.brightness == Brightness.dark
+                      ? Colors.white
                       : Colors.black,
                 ),
-              ),
-              floatingActionButtonTheme: FloatingActionButtonThemeData(
-                backgroundColor: currentScheme.seedColor,
-                foregroundColor: currentScheme.brightness == Brightness.dark 
-                    ? Colors.white 
-                    : Colors.black,
-              ),
-              listTileTheme: ListTileThemeData(
-                iconColor: currentScheme.seedColor,
-                textColor: currentScheme.textColor,
-              ),
-              bottomNavigationBarTheme: BottomNavigationBarThemeData(
-                backgroundColor: currentScheme.backgroundColor,
-                selectedItemColor: currentScheme.seedColor,
-                unselectedItemColor: currentScheme.textColor.withOpacity(0.7),
-              ),
-            );
-            
-            return MaterialApp(
-              title: '密码管理器',
-              theme: themeData,
-              home: const SplashScreen(),
-            );
-          }
-        });
+                listTileTheme: ListTileThemeData(
+                  iconColor: currentScheme.seedColor,
+                  textColor: currentScheme.textColor,
+                ),
+                bottomNavigationBarTheme: BottomNavigationBarThemeData(
+                  backgroundColor: currentScheme.backgroundColor,
+                  selectedItemColor: currentScheme.seedColor,
+                  unselectedItemColor: currentScheme.textColor.withOpacity(0.7),
+                ),
+              );
+
+              return MaterialApp(
+                title: '密码管理器',
+                theme: themeData,
+                home: const SplashScreen(),
+              );
+            }
+          },
+        );
       },
     );
   }
@@ -216,7 +238,11 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.security, size: 100, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.security,
+              size: 100,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(height: 24),
             const Text(
               '密码管理器',
@@ -232,7 +258,9 @@ class _SplashScreenState extends State<SplashScreen> {
               style: TextStyle(fontSize: 16, color: Colors.white70),
             ),
             const SizedBox(height: 48),
-            CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+            CircularProgressIndicator(
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ],
         ),
       ),

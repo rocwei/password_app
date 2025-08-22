@@ -14,7 +14,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
@@ -60,10 +60,7 @@ class _RegisterPageState extends State<RegisterPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('注册失败: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('注册失败: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -78,9 +75,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('创建主账户'),
-      ),
+      appBar: AppBar(title: const Text('创建主账户')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -90,7 +85,10 @@ class _RegisterPageState extends State<RegisterPage> {
             children: [
               const Icon(Icons.security, size: 80),
               const SizedBox(height: 24),
-              const Text('密码管理器', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+              const Text(
+                '密码管理器',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               const Text('设置您的主密码来开始使用', style: TextStyle(fontSize: 16)),
               const SizedBox(height: 32),
@@ -102,7 +100,11 @@ class _RegisterPageState extends State<RegisterPage> {
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
-                    icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
+                    icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
                     onPressed: () {
                       setState(() {
                         _isPasswordVisible = !_isPasswordVisible;
@@ -129,7 +131,11 @@ class _RegisterPageState extends State<RegisterPage> {
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
-                    icon: Icon(_isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off),
+                    icon: Icon(
+                      _isConfirmPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
                     onPressed: () {
                       setState(() {
                         _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
@@ -156,9 +162,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     children: [
                       Icon(Icons.warning),
                       SizedBox(width: 8),
-                      Expanded(
-                        child: Text('请牢记您的主密码！如果忘记，将无法恢复您的数据。'),
-                      ),
+                      Expanded(child: Text('请牢记您的主密码！如果忘记，将无法恢复您的数据。')),
                     ],
                   ),
                 ),
@@ -169,9 +173,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _register,
-          child: _isLoading
-            ? const CircularProgressIndicator()
-            : const Text('创建账户', style: TextStyle(fontSize: 16)),
+                  child: _isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('创建账户', style: TextStyle(fontSize: 16)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -183,7 +187,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 },
                 // ignore: sort_child_properties_last
                 child: const Text('已有账户？点击登录'),
-                style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.primary),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ],
           ),

@@ -68,8 +68,9 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
       } else {
         _filteredEntries = _entries.where((entry) {
           return entry.title.toLowerCase().contains(query.toLowerCase()) ||
-                 entry.username.toLowerCase().contains(query.toLowerCase()) ||
-                 (entry.website?.toLowerCase().contains(query.toLowerCase()) ?? false);
+              entry.username.toLowerCase().contains(query.toLowerCase()) ||
+              (entry.website?.toLowerCase().contains(query.toLowerCase()) ??
+                  false);
         }).toList();
       }
     });
@@ -88,7 +89,9 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('删除'),
           ),
         ],
@@ -100,7 +103,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
         final dbHelper = DatabaseHelper();
         await dbHelper.deletePasswordEntry(entry.id!);
         await _loadEntries();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -124,9 +127,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
 
   void _navigateToDetail({PasswordEntry? entry}) async {
     final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (context) => PasswordDetailPage(entry: entry),
-      ),
+      MaterialPageRoute(builder: (context) => PasswordDetailPage(entry: entry)),
     );
 
     if (result == true) {
@@ -146,9 +147,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               controller: _searchController,
-              decoration: InputDecoration(
-                hintText: '搜索密码条目...',
-              ),
+              decoration: InputDecoration(hintText: '搜索密码条目...'),
               onChanged: _filterEntries,
             ),
           ),
@@ -160,16 +159,18 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
               onRefresh: _loadEntries,
               child: _filteredEntries.isEmpty
                   ? // For empty state we still need a scrollable child so RefreshIndicator can work
-                  SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: SizedBox(
-                      // Ensure the scrollable has at least the viewport height so pull works
-                      height: MediaQuery.of(context).size.height -
-                          (Scaffold.of(context).appBarMaxHeight ?? kToolbarHeight) -
-                          60,
-                      child: _buildEmptyState(),
-                    ),
-                  )
+                    SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        // Ensure the scrollable has at least the viewport height so pull works
+                        height:
+                            MediaQuery.of(context).size.height -
+                            (Scaffold.of(context).appBarMaxHeight ??
+                                kToolbarHeight) -
+                            60,
+                        child: _buildEmptyState(),
+                      ),
+                    )
                   : ListView.builder(
                       itemCount: _filteredEntries.length,
                       itemBuilder: (context, index) {
@@ -190,7 +191,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-                    Icon(
+          Icon(
             Icons.lock_outline,
             size: 80,
             color: Theme.of(context).disabledColor,
@@ -198,12 +199,18 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
           const SizedBox(height: 16),
           Text(
             '还没有密码条目',
-            style: TextStyle(fontSize: 20, color: Theme.of(context).textTheme.bodyLarge?.color),
+            style: TextStyle(
+              fontSize: 20,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '点击右下角的 + 按钮添加您的第一个密码',
-            style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color),
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -217,23 +224,23 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
   }
 
   Widget _buildEntryCard(PasswordEntry entry) {
-  return Slidable(
+    return Slidable(
       endActionPane: ActionPane(
         motion: const ScrollMotion(),
         children: [
-      SlidableAction(
-  onPressed: (context) => _navigateToDetail(entry: entry),
-  backgroundColor: Theme.of(context).colorScheme.primary,
-    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-    icon: Icons.edit,
-    label: '编辑',
-      ),
           SlidableAction(
-    onPressed: (context) => _deleteEntry(entry),
-  backgroundColor: Theme.of(context).colorScheme.error,
-    foregroundColor: Theme.of(context).colorScheme.onError,
-    icon: Icons.delete,
-    label: '删除',
+            onPressed: (context) => _navigateToDetail(entry: entry),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            icon: Icons.edit,
+            label: '编辑',
+          ),
+          SlidableAction(
+            onPressed: (context) => _deleteEntry(entry),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Theme.of(context).colorScheme.onError,
+            icon: Icons.delete,
+            label: '删除',
           ),
         ],
       ),
@@ -269,7 +276,9 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
               if (entry.website != null && entry.website!.isNotEmpty)
                 Text(
                   '网址: ${entry.website}',
-                  style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
             ],
           ),

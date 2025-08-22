@@ -22,7 +22,7 @@ class AuthHelper {
   Future<bool> registerSingleUser(String masterPassword) async {
     try {
       final dbHelper = DatabaseHelper();
-      
+
       // 检查是否已有用户注册
       final hasExistingUsers = await dbHelper.hasUsers();
       if (hasExistingUsers) {
@@ -31,10 +31,13 @@ class AuthHelper {
 
       // 生成盐
       final salt = EncryptionHelper.generateSalt();
-      
+
       // 哈希主密码用于验证
-      final hashedPassword = EncryptionHelper.hashMasterPassword(masterPassword, salt);
-      
+      final hashedPassword = EncryptionHelper.hashMasterPassword(
+        masterPassword,
+        salt,
+      );
+
       // 创建用户（使用固定用户名"user"）
       final user = User(
         username: "user",
@@ -46,12 +49,12 @@ class AuthHelper {
 
       // 保存到数据库
       final userId = await dbHelper.insertUser(user);
-      
+
       if (userId > 0) {
         // 自动登录
         return await loginSingleUser(masterPassword);
       }
-      
+
       return false;
     } catch (e) {
       // print('注册失败: $e');
@@ -64,7 +67,7 @@ class AuthHelper {
   Future<bool> register(String username, String masterPassword) async {
     try {
       final dbHelper = DatabaseHelper();
-      
+
       // 检查用户名是否已存在
       final existingUser = await dbHelper.getUser(username);
       if (existingUser != null) {
@@ -73,10 +76,13 @@ class AuthHelper {
 
       // 生成盐
       final salt = EncryptionHelper.generateSalt();
-      
+
       // 哈希主密码用于验证
-      final hashedPassword = EncryptionHelper.hashMasterPassword(masterPassword, salt);
-      
+      final hashedPassword = EncryptionHelper.hashMasterPassword(
+        masterPassword,
+        salt,
+      );
+
       // 创建用户
       final user = User(
         username: username,
@@ -88,12 +94,12 @@ class AuthHelper {
 
       // 保存到数据库
       final userId = await dbHelper.insertUser(user);
-      
+
       if (userId > 0) {
         // 自动登录
         return await login(username, masterPassword);
       }
-      
+
       return false;
     } catch (e) {
       // print('注册失败: $e');
@@ -106,7 +112,7 @@ class AuthHelper {
   Future<bool> loginSingleUser(String masterPassword) async {
     try {
       final dbHelper = DatabaseHelper();
-      
+
       // 获取第一个（唯一）用户
       final user = await dbHelper.getFirstUser();
       if (user == null) {
@@ -114,21 +120,27 @@ class AuthHelper {
       }
 
       // 验证密码
-      final hashedPassword = EncryptionHelper.hashMasterPassword(masterPassword, user.salt);
+      final hashedPassword = EncryptionHelper.hashMasterPassword(
+        masterPassword,
+        user.salt,
+      );
       if (hashedPassword != user.masterPasswordHash) {
         return false; // 密码错误
       }
 
       // 派生加密密钥
-      final encryptionKey = EncryptionHelper.deriveKey(masterPassword, user.salt);
-      
+      final encryptionKey = EncryptionHelper.deriveKey(
+        masterPassword,
+        user.salt,
+      );
+
       // 设置当前用户和加密密钥
       _currentUser = user;
       _encryptionKey = encryptionKey;
-      
+
       // 初始化加密器
       EncryptionHelper().setEncryptionKey(encryptionKey);
-      
+
       return true;
     } catch (e) {
       // print('登录失败: $e');
@@ -141,7 +153,7 @@ class AuthHelper {
   Future<bool> login(String username, String masterPassword) async {
     try {
       final dbHelper = DatabaseHelper();
-      
+
       // 获取用户信息
       final user = await dbHelper.getUser(username);
       if (user == null) {
@@ -149,21 +161,27 @@ class AuthHelper {
       }
 
       // 验证密码
-      final hashedPassword = EncryptionHelper.hashMasterPassword(masterPassword, user.salt);
+      final hashedPassword = EncryptionHelper.hashMasterPassword(
+        masterPassword,
+        user.salt,
+      );
       if (hashedPassword != user.masterPasswordHash) {
         return false; // 密码错误
       }
 
       // 派生加密密钥
-      final encryptionKey = EncryptionHelper.deriveKey(masterPassword, user.salt);
-      
+      final encryptionKey = EncryptionHelper.deriveKey(
+        masterPassword,
+        user.salt,
+      );
+
       // 设置当前用户和加密密钥
       _currentUser = user;
       _encryptionKey = encryptionKey;
-      
+
       // 初始化加密器
       EncryptionHelper().setEncryptionKey(encryptionKey);
-      
+
       return true;
     } catch (e) {
       // print('登录失败: $e');
@@ -173,26 +191,34 @@ class AuthHelper {
   }
 
   // 更改主密码
-  Future<bool> changeMasterPassword(String oldPassword, String newPassword) async {
+  Future<bool> changeMasterPassword(
+    String oldPassword,
+    String newPassword,
+  ) async {
     if (!isLoggedIn) return false;
 
     try {
       final dbHelper = DatabaseHelper();
-      
+
       // 验证旧密码
-      final hashedOldPassword = EncryptionHelper.hashMasterPassword(oldPassword, _currentUser!.salt);
+      final hashedOldPassword = EncryptionHelper.hashMasterPassword(
+        oldPassword,
+        _currentUser!.salt,
+      );
       if (hashedOldPassword != _currentUser!.masterPasswordHash) {
         return false; // 旧密码错误
       }
 
       // 获取所有密码条目
       final entries = await dbHelper.getPasswordEntries(_currentUser!.id!);
-      
+
       // 用旧密钥解密所有密码
       final decryptedPasswords = <int, String>{};
       for (final entry in entries) {
         try {
-          final decryptedPassword = EncryptionHelper().decryptString(entry.encryptedPassword);
+          final decryptedPassword = EncryptionHelper().decryptString(
+            entry.encryptedPassword,
+          );
           decryptedPasswords[entry.id!] = decryptedPassword;
         } catch (e) {
           // print('解密密码失败: $e');
@@ -203,35 +229,40 @@ class AuthHelper {
 
       // 生成新的盐和哈希密码
       final newSalt = EncryptionHelper.generateSalt();
-      final newHashedPassword = EncryptionHelper.hashMasterPassword(newPassword, newSalt);
-      
+      final newHashedPassword = EncryptionHelper.hashMasterPassword(
+        newPassword,
+        newSalt,
+      );
+
       // 派生新的加密密钥
       final newEncryptionKey = EncryptionHelper.deriveKey(newPassword, newSalt);
-      
+
       // 更新用户信息
       final updatedUser = _currentUser!.copyWith(
         masterPasswordHash: newHashedPassword,
         salt: newSalt,
         updatedAt: DateTime.now(),
       );
-      
+
       await dbHelper.updateUser(updatedUser);
-      
+
       // 用新密钥重新加密所有密码
       EncryptionHelper().setEncryptionKey(newEncryptionKey);
-      
+
       for (final entry in entries) {
         final originalPassword = decryptedPasswords[entry.id!]!;
-        final newEncryptedPassword = EncryptionHelper().encryptString(originalPassword);
-        
+        final newEncryptedPassword = EncryptionHelper().encryptString(
+          originalPassword,
+        );
+
         final updatedEntry = entry.copyWith(
           encryptedPassword: newEncryptedPassword,
           updatedAt: DateTime.now(),
         );
-        
+
         await dbHelper.updatePasswordEntry(updatedEntry);
       }
-      
+
       // 更新当前用户和密钥
       _currentUser = updatedUser;
       _encryptionKey = newEncryptionKey;
@@ -249,7 +280,7 @@ class AuthHelper {
         // print('更新生物识别密钥失败: $e');
         Get.snackbar("更新生物识别密钥失败", e.toString());
       }
-      
+
       return true;
     } catch (e) {
       // print('更改主密码失败: $e');
@@ -286,7 +317,7 @@ class AuthHelper {
   Future<bool> loginWithBiometric() async {
     try {
       final biometricHelper = BiometricHelper();
-      
+
       // 检查是否支持生物识别
       final bool hasBiometrics = await biometricHelper.hasBiometrics();
       if (!hasBiometrics) {
@@ -305,13 +336,15 @@ class AuthHelper {
       // 生物识别成功后，从安全存储中获取用户信息
       final dbHelper = DatabaseHelper();
       final user = await dbHelper.getFirstUser();
-      
+
       if (user == null) {
         return false;
       }
 
       // 从安全存储中读取加密密钥（需在首次用主密码登录后保存过）
-      final storedKey = await _secureStorage.read(key: 'encryption_key_${user.id}');
+      final storedKey = await _secureStorage.read(
+        key: 'encryption_key_${user.id}',
+      );
       if (storedKey == null || storedKey.isEmpty) {
         // print('未找到生物识别密钥，请先使用主密码登录并在设置中开启生物识别。');
         Get.snackbar("生物识别", "未找到生物识别密钥，请先使用主密码登录并在设置中开启生物识别。");
@@ -333,7 +366,8 @@ class AuthHelper {
 
   // 启用当前用户的生物识别（在用户用主密码成功登录且选择开启时调用）
   Future<bool> enableBiometricForCurrentUser() async {
-    if (!isLoggedIn || _currentUser?.id == null || _encryptionKey == null) return false;
+    if (!isLoggedIn || _currentUser?.id == null || _encryptionKey == null)
+      return false;
     try {
       await _secureStorage.write(
         key: 'encryption_key_${_currentUser!.id}',
@@ -391,7 +425,9 @@ class AuthHelper {
       final user = await dbHelper.getFirstUser();
       if (user == null) return false;
 
-      final storedKey = await _secureStorage.read(key: 'encryption_key_${user.id}');
+      final storedKey = await _secureStorage.read(
+        key: 'encryption_key_${user.id}',
+      );
       return storedKey != null && storedKey.isNotEmpty;
     } catch (e) {
       return false;
@@ -402,7 +438,9 @@ class AuthHelper {
   Future<bool> isBiometricEnabledForCurrentUser() async {
     try {
       if (_currentUser?.id == null) return false;
-      final storedKey = await _secureStorage.read(key: 'encryption_key_${_currentUser!.id}');
+      final storedKey = await _secureStorage.read(
+        key: 'encryption_key_${_currentUser!.id}',
+      );
       return storedKey != null && storedKey.isNotEmpty;
     } catch (e) {
       return false;

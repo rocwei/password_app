@@ -23,7 +23,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    
+
     _pages = [
       const PasswordVaultPage(),
       const GeneratePasswordPage(),
@@ -33,17 +33,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-  WidgetsBinding.instance.removeObserver(this);
-  _backgroundTimer?.cancel();
-  _backgroundTimer = null;
-  super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _backgroundTimer?.cancel();
+    _backgroundTimer = null;
+    super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     // 当应用进入后台时，启动 3 分钟计时器；如果在 3 分钟内返回则取消
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
       _backgroundTimer?.cancel();
       _backgroundTimer = Timer(_backgroundTimeout, () {
         if (mounted) _logout();
@@ -65,10 +66,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -76,20 +74,31 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             _currentIndex = index;
           });
         },
-  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-  selectedItemColor: Theme.of(context).colorScheme.primary,
-  unselectedItemColor: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Theme.of(
+          context,
+        ).colorScheme.primary.withOpacity(0.7),
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.lock, color: Theme.of(context).colorScheme.primary),
+            icon: Icon(
+              Icons.lock,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             label: '密码库',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.generating_tokens, color: Theme.of(context).colorScheme.primary),
+            icon: Icon(
+              Icons.generating_tokens,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             label: '生成密码',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.primary),
+            icon: Icon(
+              Icons.settings,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             label: '设置',
           ),
         ],
