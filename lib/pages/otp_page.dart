@@ -1,4 +1,7 @@
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:otp/otp.dart';
@@ -51,9 +54,7 @@ class _OtpPageState extends State<OtpPage> {
     });
 
     try {
-      print('开始加载OTP令牌...');
       final tokens = await OtpHelper.getAllTokens();
-      print('成功获取令牌数量: ${tokens.length}');
 
       if (!mounted) return; // 检查widget是否仍然挂载
 
@@ -65,11 +66,9 @@ class _OtpPageState extends State<OtpPage> {
             code = _generateOtpCode(token.secret);
             if (code == 'ERROR') {
               code = '------'; // 显示占位符而不是错误
-              print('令牌ID: ${token.id} 的代码生成失败');
             }
           } catch (e) {
             code = '------'; // 显示占位符而不是错误
-            print('令牌ID: ${token.id} 的代码生成异常: $e');
           }
 
           return {
@@ -82,7 +81,6 @@ class _OtpPageState extends State<OtpPage> {
         _isLoading = false;
       });
     } catch (e) {
-      print('加载OTP令牌错误: $e');
 
       if (!mounted) return; // 检查widget是否仍然挂载
 
@@ -124,17 +122,11 @@ class _OtpPageState extends State<OtpPage> {
   }
 
   void _updateAllOtpCodes() {
-    int currentTime = DateTime.now().millisecondsSinceEpoch;
-    print('更新所有OTP代码，当前时间戳: $currentTime, 时间片: ${currentTime ~/ 30}');
-
     // 先测试一个已知有效的密钥
     _testOtpGeneration();
 
     for (int i = 0; i < _otpList.length; i++) {
       final String newCode = _generateOtpCode(_otpList[i]['secret']);
-      print(
-        'Token ${_otpList[i]['label']} 新代码: $newCode, 密钥: ${_otpList[i]['secret']}',
-      );
 
       setState(() {
         _otpList[i]['code'] = newCode;
@@ -150,12 +142,9 @@ class _OtpPageState extends State<OtpPage> {
 
       // 当前时间戳(秒)
       final currentTimestamp = DateTime.now().millisecondsSinceEpoch;
-      print(
-        '测试OTP生成 - 当前时间戳: $currentTimestamp, 时间片: ${currentTimestamp ~/ 30}',
-      );
 
       // 生成验证码
-      final code = OTP.generateTOTPCodeString(
+      OTP.generateTOTPCodeString(
         testSecret,
         currentTimestamp,
         length: 6,
@@ -164,9 +153,10 @@ class _OtpPageState extends State<OtpPage> {
         isGoogle: true,
       );
 
-      print('测试密钥($testSecret)生成的验证码: $code');
     } catch (e) {
-      print('测试OTP生成失败: $e');
+      if (kDebugMode) {
+        print('测试OTP生成失败: $e');
+      }
     }
   }
 
@@ -207,11 +197,6 @@ class _OtpPageState extends State<OtpPage> {
 
         final id = _generateId();
 
-        // 打印详细信息，帮助调试
-        print(
-          '创建OtpToken: id=$id, label=${_labelController.text}, secret=$cleanedSecret',
-        );
-
         // 创建新令牌
         final newToken = OtpToken(
           id: id,
@@ -236,7 +221,6 @@ class _OtpPageState extends State<OtpPage> {
 
         Navigator.of(context).pop();
       } catch (e) {
-        print('添加OTP错误: $e');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -303,8 +287,6 @@ class _OtpPageState extends State<OtpPage> {
           );
         }
       } catch (e) {
-        print('删除OTP错误: $e');
-
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -331,9 +313,11 @@ class _OtpPageState extends State<OtpPage> {
 
     // 打印清理前后的密钥（不显示全部，防止泄露）
     if (cleaned.length > 4) {
-      print(
-        '密钥清理: ${secret.substring(0, 2)}*** => ${cleaned.substring(0, 2)}***',
-      );
+      if (kDebugMode) {
+        print(
+          '密钥清理: ${secret.substring(0, 2)}*** => ${cleaned.substring(0, 2)}***',
+        );
+      }
     }
 
     return cleaned;
@@ -342,7 +326,6 @@ class _OtpPageState extends State<OtpPage> {
   // 生成OTP代码
   String _generateOtpCode(String secret) {
     if (secret.isEmpty) {
-      print('密钥为空');
       return 'ERROR';
     }
 
@@ -352,20 +335,13 @@ class _OtpPageState extends State<OtpPage> {
 
       // 如果清理后的密钥为空，则返回错误
       if (cleanedSecret.isEmpty) {
-        print('清理后的密钥为空');
         return 'ERROR';
       }
-
-      // 获取当前时间戳(秒)
-      final int timestamp = DateTime.now().millisecondsSinceEpoch;
-      print('当前时间戳(秒): $timestamp, 30秒时间片: ${timestamp ~/ 30}');
-
       // 使用原始密钥和两种处理方法尝试生成
       try {
         // 1. 尝试直接使用清理后的密钥
         // 获取当前时间戳（重要：不能缓存，每次都要重新获取）
         int currentTimestamp = DateTime.now().millisecondsSinceEpoch;
-        print('生成OTP时间戳: $currentTimestamp, 时间片: ${currentTimestamp ~/ 30}');
 
         String code = OTP.generateTOTPCodeString(
           cleanedSecret,
@@ -376,14 +352,11 @@ class _OtpPageState extends State<OtpPage> {
           isGoogle: true,
         );
 
-        print('成功生成OTP代码: $code');
         return code;
       } catch (e) {
-        print('base32解码生成OTP错误: $e');
         return 'ERROR';
       }
     } catch (e) {
-      print('OTP生成总错误: $e');
       return 'ERROR';
     }
   }
@@ -473,10 +446,6 @@ class _OtpPageState extends State<OtpPage> {
         context,
       ).push(MaterialPageRoute(builder: (context) => const QrScannerPage()));
 
-      // 打印结果类型，帮助调试
-      print('扫描结果类型: ${result.runtimeType}');
-      print('扫描结果内容: $result');
-
       if (result != null && result is Map<dynamic, dynamic>) {
         final String label = result['label']?.toString() ?? '';
         final String secret = result['secret']?.toString() ?? '';
@@ -490,7 +459,6 @@ class _OtpPageState extends State<OtpPage> {
         _showAddOtpDialog();
       }
     } catch (e) {
-      print('扫描二维码错误详情: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('扫描二维码出错: ${e.toString()}'),
@@ -716,9 +684,9 @@ class _OtpPageState extends State<OtpPage> {
             heroTag: 'scan_qr',
             onPressed: _scanQrCode,
             mini: true,
-            child: Icon(Icons.qr_code_scanner),
             backgroundColor: Theme.of(context).colorScheme.secondary,
             foregroundColor: Theme.of(context).colorScheme.onSecondary,
+            child: Icon(Icons.qr_code_scanner),
           ),
           // const SizedBox(height: 16),
           // FloatingActionButton(

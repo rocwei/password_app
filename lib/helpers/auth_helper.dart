@@ -366,8 +366,9 @@ class AuthHelper {
 
   // 启用当前用户的生物识别（在用户用主密码成功登录且选择开启时调用）
   Future<bool> enableBiometricForCurrentUser() async {
-    if (!isLoggedIn || _currentUser?.id == null || _encryptionKey == null)
+    if (!isLoggedIn || _currentUser?.id == null || _encryptionKey == null) {
       return false;
+    }
     try {
       await _secureStorage.write(
         key: 'encryption_key_${_currentUser!.id}',

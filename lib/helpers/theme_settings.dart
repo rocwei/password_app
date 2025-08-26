@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use, duplicate_ignore
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -33,7 +35,10 @@ class ThemeScheme {
     return ColorScheme.fromSeed(
       seedColor: seedColor,
       brightness: brightness,
+      // ignore: duplicate_ignore
+      // ignore: deprecated_member_use
       background: backgroundColor,
+      // ignore: deprecated_member_use
       onBackground: textColor,
     );
   }
@@ -134,6 +139,7 @@ class ThemeModel extends ChangeNotifier {
     useSystem = false;
     await _storage.write(
       key: _keySeed,
+      // ignore: deprecated_member_use
       value: color.value.toRadixString(16).padLeft(8, '0'),
     );
     await _storage.write(key: _keyUseSystem, value: '0');
@@ -149,6 +155,7 @@ class ThemeModel extends ChangeNotifier {
     await _storage.write(key: _keyThemeType, value: type.index.toString());
     await _storage.write(
       key: _keySeed,
+      // ignore: deprecated_member_use
       value: scheme.seedColor.value.toRadixString(16).padLeft(8, '0'),
     );
     await _storage.write(key: _keyUseSystem, value: '0');

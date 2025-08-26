@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
@@ -208,7 +210,6 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
                 side: BorderSide(
-                  // ignore: deprecated_member_use
                   color: Theme.of(context).dividerColor.withOpacity(1),
                   width: 0.5,
                 ),
@@ -280,7 +281,6 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                   side: BorderSide(
-                    // ignore: deprecated_member_use
                     color: Theme.of(context).dividerColor.withOpacity(1),
                     width: 0.5,
                   ),

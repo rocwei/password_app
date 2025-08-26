@@ -91,7 +91,6 @@ class _QrScannerPageState extends State<QrScannerPage> {
         'label': label,
         'secret': secret,
       };
-      print('返回扫描结果: $result');
       Navigator.of(context).pop(result);
     }
   }
