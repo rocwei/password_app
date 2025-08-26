@@ -3,6 +3,7 @@ import '../models/user.dart';
 import 'database_helper.dart';
 import 'encryption_helper.dart';
 import 'biometric_helper.dart';
+import 'otp_helper.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthHelper {
@@ -261,6 +262,31 @@ class AuthHelper {
         );
 
         await dbHelper.updatePasswordEntry(updatedEntry);
+      }
+      
+      // 重新加密OTP令牌
+      try {
+        // 获取当前所有OTP令牌
+        final otpTokens = await OtpHelper.getAllTokens();
+        
+        // 解密并重新加密每个令牌
+        for (final token in otpTokens) {
+          try {
+            // 解密密钥 (使用旧的加密密钥)
+            final plainSecret = OtpHelper.decryptSecret(token.secret);
+            
+            // 创建带有相同ID和标签，但使用新的加密密钥加密的令牌
+            await OtpHelper.createAndSaveToken(token.id, token.label, plainSecret);
+          } catch (e) {
+            // 记录错误，但不中断流程
+            // print('重新加密OTP令牌失败：${token.id} - $e');
+            Get.snackbar("重新加密OTP令牌失败", "${token.id} - $e");
+          }
+        }
+      } catch (e) {
+        // 记录错误，但不中断流程
+        // print('处理OTP令牌失败: $e');
+        Get.snackbar("处理OTP令牌失败", e.toString());
       }
 
       // 更新当前用户和密钥

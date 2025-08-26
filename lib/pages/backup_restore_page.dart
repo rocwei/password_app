@@ -4,6 +4,7 @@ import 'dart:convert';
 import '../helpers/database_helper.dart';
 import '../helpers/auth_helper.dart';
 import '../helpers/encryption_helper.dart';
+import '../helpers/otp_helper.dart';
 
 class BackupRestorePage extends StatefulWidget {
   const BackupRestorePage({super.key});
@@ -34,13 +35,17 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       // 导出密码条目
       final dbHelper = DatabaseHelper();
       final entries = await dbHelper.exportPasswordEntries(userId);
+      
+      // 导出OTP令牌
+      final otpTokens = await OtpHelper.exportTokens();
 
       // 创建备份数据
       final backupData = {
-        'version': '1.0',
+        'version': '1.1', // 版本升级以支持OTP
         'timestamp': DateTime.now().toIso8601String(),
         'user_id': userId,
         'entries': entries,
+        'otp_tokens': otpTokens, // 添加OTP令牌数据
       };
 
       // 转换为JSON字符串
@@ -186,22 +191,35 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       // 解析JSON
       final jsonData = jsonDecode(decryptedData) as Map<String, dynamic>;
       final entries = jsonData['entries'] as List<dynamic>;
+      
+      // 获取OTP令牌 (如果有)
+      List<dynamic>? otpTokens;
+      if (jsonData.containsKey('otp_tokens')) {
+        otpTokens = jsonData['otp_tokens'] as List<dynamic>;
+      }
 
       // 确认恢复操作
       if (!mounted) {
         // 如果当前 State 已卸载，则中止以避免使用已失效的 BuildContext
         return;
       }
+      
+      // 构建恢复信息文本
+      String restoreInfoText = '将恢复 ${entries.length} 个密码条目';
+      if (otpTokens != null && otpTokens.isNotEmpty) {
+        restoreInfoText += '和 ${otpTokens.length} 个OTP令牌';
+      }
+      restoreInfoText += '。\n\n注意：这将删除当前所有密码条目';
+      if (otpTokens != null && otpTokens.isNotEmpty) {
+        restoreInfoText += '和OTP令牌';
+      }
+      restoreInfoText += '并替换为备份中的数据。\n\n此操作无法撤销，确定要继续吗？';
 
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('确认恢复'),
-          content: Text(
-            '将恢复 ${entries.length} 个密码条目。\n\n'
-            '注意：这将删除当前所有密码条目并替换为备份中的数据。\n\n'
-            '此操作无法撤销，确定要继续吗？',
-          ),
+          content: Text(restoreInfoText),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -243,11 +261,31 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         );
         restoredCount++;
       }
+      
+      // 恢复OTP令牌(如果有)
+      int restoredOtpCount = 0;
+      if (jsonData.containsKey('otp_tokens') && jsonData['otp_tokens'] is List) {
+        final otpTokens = jsonData['otp_tokens'] as List<dynamic>;
+        if (otpTokens.isNotEmpty) {
+          // 转换为所需格式
+          final List<Map<String, dynamic>> tokensList = 
+              otpTokens.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+          
+          // 导入令牌
+          await OtpHelper.importTokens(tokensList);
+          restoredOtpCount = otpTokens.length;
+        }
+      }
 
       if (mounted) {
+        String successMessage = '成功恢复 $restoredCount 个密码条目';
+        if (restoredOtpCount > 0) {
+          successMessage += '和 $restoredOtpCount 个OTP令牌';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('成功恢复 $restoredCount 个密码条目'),
+            content: Text(successMessage),
             backgroundColor: Colors.green,
           ),
         );

@@ -106,7 +106,7 @@ class _OtpPageState extends State<OtpPage> {
   void _startTimer() {
     // 计算当前时间戳除以30的余数，确定初始剩余秒数
     final int now = DateTime.now().millisecondsSinceEpoch;
-    _secondsRemaining = 30 - (now % 30);
+    _secondsRemaining = 30 - ((now ~/ 1000) % 30);
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
@@ -468,38 +468,6 @@ class _OtpPageState extends State<OtpPage> {
     }
   }
 
-  // 构建时间进度环
-  Widget _buildTimeCircle() {
-    final color = _secondsRemaining <= 5
-        ? Colors.red
-        : Theme.of(context).colorScheme.primary;
-
-    return SizedBox(
-      width: 30,
-      height: 30,
-      child: Stack(
-        children: [
-          CircularProgressIndicator(
-            value: _secondsRemaining / 30,
-            strokeWidth: 3,
-            color: color,
-            backgroundColor: color.withOpacity(0.2),
-          ),
-          Center(
-            child: Text(
-              _secondsRemaining.toString(),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -510,172 +478,150 @@ class _OtpPageState extends State<OtpPage> {
         ),
         elevation: 0,
       ),
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                color: Theme.of(context).colorScheme.primary,
+      body: Column(
+        children: [
+          // 添加30秒倒计时进度条
+          LinearProgressIndicator(
+            value: _secondsRemaining / 30,
+            color: _secondsRemaining <= 5 
+                ? Colors.red 
+                : Theme.of(context).colorScheme.primary,
+            backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+            minHeight: 4,
+          ),
+          // 添加倒计时文本
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            alignment: Alignment.center,
+            child: Text(
+              '${_secondsRemaining}秒后更新',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
-            )
-          : _otpList.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.security,
-                    size: 72,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withOpacity(0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '暂无OTP令牌',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '点击下方按钮添加双因素认证令牌',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _otpList.length,
-              itemBuilder: (context, index) {
-                final otp = _otpList[index];
-                return Dismissible(
-                  key: Key(otp['id']),
-                  background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20),
-                    child: const Icon(Icons.delete, color: Colors.white),
-                  ),
-                  direction: DismissDirection.endToStart,
-                  confirmDismiss: (direction) async {
-                    // 在这里调用删除方法，会显示确认对话框
-                    await _deleteOtp(otp['id']);
-                    // 总是返回false，因为实际删除在_deleteOtp方法中处理
-                    return false;
-                  },
-                  child: Card(
-                    color: Theme.of(context).colorScheme.surface,
-                    elevation: 2,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  otp['label'],
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                  ),
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.refresh,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                      size: 20,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        otp['code'] = _generateOtpCode(
-                                          otp['secret'],
-                                        );
-                                      });
-
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text('验证码已刷新'),
-                                          backgroundColor: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                          duration: const Duration(seconds: 1),
-                                        ),
-                                      );
-                                    },
-                                    constraints: const BoxConstraints(
-                                      minWidth: 36,
-                                      minHeight: 36,
-                                    ),
-                                    padding: EdgeInsets.zero,
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _buildTimeCircle(),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                otp['code'],
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 4,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  Icons.copy,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                onPressed: () {
-                                  Clipboard.setData(
-                                    ClipboardData(text: otp['code']),
-                                  );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('验证码已复制到剪贴板'),
-                                      backgroundColor: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
             ),
+          ),
+          Expanded(
+            child: _isLoading
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  )
+                : _otpList.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.security,
+                              size: 72,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.5),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              '暂无OTP令牌',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '点击下方按钮添加双因素认证令牌',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _otpList.length,
+                        itemBuilder: (context, index) {
+                          final otp = _otpList[index];
+                          return Dismissible(
+                            key: Key(otp['id']),
+                            background: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20),
+                              child: const Icon(Icons.delete, color: Colors.white),
+                            ),
+                            direction: DismissDirection.endToStart,
+                            confirmDismiss: (direction) async {
+                              await _deleteOtp(otp['id']);
+                              return false;
+                            },
+                            child: Card(
+                              color: Theme.of(context).colorScheme.surface,
+                              elevation: 2,
+                              margin: const EdgeInsets.only(bottom: 16),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    // 左侧标签
+                                    Expanded(
+                                      child: Text(
+                                        otp['label'],
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                    // 右侧验证码和复制按钮
+                                    Row(
+                                      children: [
+                                        Text(
+                                          otp['code'],
+                                          style: TextStyle(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 2,
+                                            color: Theme.of(context).colorScheme.primary,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.copy,
+                                            color: Theme.of(context).colorScheme.primary,
+                                          ),
+                                          onPressed: () {
+                                            Clipboard.setData(
+                                              ClipboardData(text: otp['code']),
+                                            );
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('验证码已复制到剪贴板'),
+                                                backgroundColor: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+          ),
+        ],
+      ),
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
