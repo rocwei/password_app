@@ -489,18 +489,6 @@ class _OtpPageState extends State<OtpPage> {
             backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
             minHeight: 4,
           ),
-          // 添加倒计时文本
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            alignment: Alignment.center,
-            child: Text(
-              '${_secondsRemaining}秒后更新',
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-          ),
           Expanded(
             child: _isLoading
                 ? Center(
