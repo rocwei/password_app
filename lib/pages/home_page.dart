@@ -5,6 +5,7 @@ import 'password_vault_page.dart';
 import 'generate_password_page.dart';
 import 'settings_page.dart';
 import 'login_page.dart';
+import 'otp_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -27,6 +28,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _pages = [
       const PasswordVaultPage(),
       const GeneratePasswordPage(),
+      const OtpPage(),
       const SettingsPage(),
     ];
   }
@@ -93,6 +95,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               color: Theme.of(context).colorScheme.primary,
             ),
             label: '生成密码',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.security,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            label: 'OTP验证',
           ),
           BottomNavigationBarItem(
             icon: Icon(
