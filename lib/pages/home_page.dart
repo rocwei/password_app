@@ -26,9 +26,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     _pages = [
+      const OtpPage(),
       const PasswordVaultPage(),
       const GeneratePasswordPage(),
-      const OtpPage(),
       const SettingsPage(),
     ];
   }
@@ -84,6 +84,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         items: [
           BottomNavigationBarItem(
             icon: Icon(
+              Icons.security,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            label: 'OTP验证',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
               Icons.lock,
               color: Theme.of(context).colorScheme.primary,
             ),
@@ -95,13 +102,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               color: Theme.of(context).colorScheme.primary,
             ),
             label: '生成密码',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.security,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            label: 'OTP验证',
           ),
           BottomNavigationBarItem(
             icon: Icon(
