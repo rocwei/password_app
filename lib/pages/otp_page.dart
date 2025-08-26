@@ -251,24 +251,68 @@ class _OtpPageState extends State<OtpPage> {
   }
 
   Future<void> _deleteOtp(String id) async {
-    try {
-      // 从安全存储中删除
-      await OtpHelper.deleteToken(id);
+    // 获取令牌名称用于显示在确认对话框中
+    final String tokenName = _otpList.firstWhere(
+      (otp) => otp['id'] == id,
+      orElse: () => <String, String>{'label': '未知令牌'},
+    )['label'];
 
-      // 更新UI
-      setState(() {
-        _otpList.removeWhere((otp) => otp['id'] == id);
-      });
-    } catch (e) {
-      print('删除OTP错误: $e');
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('删除OTP令牌失败: ${e.toString()}'),
-            backgroundColor: Colors.red,
+    // 显示确认对话框
+    final bool confirmed = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('删除确认'),
+        content: Text('确定要删除"$tokenName"的OTP令牌吗？\n\n此操作无法撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              '取消',
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+            ),
           ),
-        );
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: Text('删除'),
+          ),
+        ],
+      ),
+    ) ?? false;  // 如果对话框被取消，返回false
+
+    // 如果用户确认删除，执行删除操作
+    if (confirmed) {
+      try {
+        // 从安全存储中删除
+        await OtpHelper.deleteToken(id);
+
+        // 更新UI
+        setState(() {
+          _otpList.removeWhere((otp) => otp['id'] == id);
+        });
+        
+        // 显示成功消息
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('已删除"$tokenName"的OTP令牌'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        print('删除OTP错误: $e');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('删除OTP令牌失败: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -551,8 +595,11 @@ class _OtpPageState extends State<OtpPage> {
                     child: const Icon(Icons.delete, color: Colors.white),
                   ),
                   direction: DismissDirection.endToStart,
-                  onDismissed: (direction) {
-                    _deleteOtp(otp['id']);
+                  confirmDismiss: (direction) async {
+                    // 在这里调用删除方法，会显示确认对话框
+                    await _deleteOtp(otp['id']);
+                    // 总是返回false，因为实际删除在_deleteOtp方法中处理
+                    return false;
                   },
                   child: Card(
                     color: Theme.of(context).colorScheme.surface,
