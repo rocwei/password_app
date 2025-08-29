@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:otp/otp.dart';
 import '../helpers/otp_helper.dart';
 import 'dart:math' as math;
@@ -81,7 +82,6 @@ class _OtpPageState extends State<OtpPage> {
         _isLoading = false;
       });
     } catch (e) {
-
       if (!mounted) return; // 检查widget是否仍然挂载
 
       setState(() {
@@ -152,7 +152,6 @@ class _OtpPageState extends State<OtpPage> {
         algorithm: Algorithm.SHA1,
         isGoogle: true,
       );
-
     } catch (e) {
       if (kDebugMode) {
         print('测试OTP生成失败: $e');
@@ -172,13 +171,12 @@ class _OtpPageState extends State<OtpPage> {
       try {
         // 清理密钥
         final cleanedSecret = _cleanSecret(_secretController.text);
-        bool isDuplicate = _otpList.any((otp) => otp['secret'] == cleanedSecret);
+        bool isDuplicate = _otpList.any(
+          (otp) => otp['secret'] == cleanedSecret,
+        );
         if (isDuplicate) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('该密钥已存在'),
-              backgroundColor: Colors.orange,
-            ),
+            SnackBar(content: Text('该密钥已存在'), backgroundColor: Colors.orange),
           );
           return;
         }
@@ -221,7 +219,6 @@ class _OtpPageState extends State<OtpPage> {
 
         Navigator.of(context).pop();
       } catch (e) {
-
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -242,29 +239,31 @@ class _OtpPageState extends State<OtpPage> {
     )['label'];
 
     // 显示确认对话框
-    final bool confirmed = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('删除确认'),
-        content: Text('确定要删除"$tokenName"的OTP令牌吗？\n\n此操作无法撤销。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              '取消',
-              style: TextStyle(color: Theme.of(context).colorScheme.primary),
-            ),
+    final bool confirmed =
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('删除确认'),
+            content: Text('确定要删除"$tokenName"的OTP令牌吗？\n\n此操作无法撤销。'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(
+                  '取消',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: Text('删除'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: Text('删除'),
-          ),
-        ],
-      ),
-    ) ?? false;  // 如果对话框被取消，返回false
+        ) ??
+        false; // 如果对话框被取消，返回false
 
     // 如果用户确认删除，执行删除操作
     if (confirmed) {
@@ -276,7 +275,7 @@ class _OtpPageState extends State<OtpPage> {
         setState(() {
           _otpList.removeWhere((otp) => otp['id'] == id);
         });
-        
+
         // 显示成功消息
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -483,10 +482,12 @@ class _OtpPageState extends State<OtpPage> {
           // 添加30秒倒计时进度条
           LinearProgressIndicator(
             value: _secondsRemaining / 30,
-            color: _secondsRemaining <= 5 
-                ? Colors.red 
+            color: _secondsRemaining <= 5
+                ? Colors.red
                 : Theme.of(context).colorScheme.primary,
-            backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.primary.withOpacity(0.2),
             minHeight: 4,
           ),
           Expanded(
@@ -497,116 +498,167 @@ class _OtpPageState extends State<OtpPage> {
                     ),
                   )
                 : _otpList.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.security,
-                              size: 72,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.5),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              '暂无OTP令牌',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '点击下方按钮添加双因素认证令牌',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.7),
-                              ),
-                            ),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.security,
+                          size: 72,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.5),
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _otpList.length,
-                        itemBuilder: (context, index) {
-                          final otp = _otpList[index];
-                          return Dismissible(
-                            key: Key(otp['id']),
-                            background: Container(
-                              color: Colors.red,
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20),
-                              child: const Icon(Icons.delete, color: Colors.white),
-                            ),
-                            direction: DismissDirection.endToStart,
-                            confirmDismiss: (direction) async {
-                              await _deleteOtp(otp['id']);
-                              return false;
-                            },
-                            child: Card(
-                              color: Theme.of(context).colorScheme.surface,
-                              elevation: 2,
-                              margin: const EdgeInsets.only(bottom: 16),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    // 左侧标签
-                                    Expanded(
-                                      child: Text(
-                                        otp['label'],
+                        const SizedBox(height: 16),
+                        Text(
+                          '暂无OTP令牌',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '点击下方按钮添加双因素认证令牌',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : SlidableAutoCloseBehavior(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _otpList.length,
+                      itemBuilder: (context, index) {
+                        final otp = _otpList[index];
+                        return Slidable(
+                          key: Key(otp['id']),
+                          endActionPane: ActionPane(
+                            motion: const DrawerMotion(),
+                            extentRatio: 0.25, // 删除按钮占1/4
+                            children: [
+                              CustomSlidableAction(
+                                onPressed: (context) async {
+                                  await _deleteOtp(otp['id']);
+                                },
+                                // backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                child: Container(
+                                  height: double.infinity,
+                                  margin: const EdgeInsets.only(
+                                    top: 0,
+                                    bottom: 16,
+                                    left: 0,
+                                    right: 0,
+                                  ),
+                                  padding: const EdgeInsets.only(
+                                    top: 0,
+                                    bottom: 0,
+                                    left: 10,
+                                    right: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.delete,
+                                        color: Colors.white,
+                                        size: 24,
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        '删除',
                                         style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
-                                    ),
-                                    // 右侧验证码和复制按钮
-                                    Row(
-                                      children: [
-                                        Text(
-                                          otp['code'],
-                                          style: TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 2,
-                                            color: Theme.of(context).colorScheme.primary,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: Icon(
-                                            Icons.copy,
-                                            color: Theme.of(context).colorScheme.primary,
-                                          ),
-                                          onPressed: () {
-                                            Clipboard.setData(
-                                              ClipboardData(text: otp['code']),
-                                            );
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                content: Text('验证码已复制到剪贴板'),
-                                                backgroundColor: Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
+                            ],
+                          ),
+                          child: Card(
+                            color: Theme.of(context).colorScheme.surface,
+                            elevation: 2,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // 左侧标签
+                                  Expanded(
+                                    child: Text(
+                                      otp['label'],
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  // 右侧验证码和复制按钮
+                                  Row(
+                                    children: [
+                                      Text(
+                                        otp['code'],
+                                        style: TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 2,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.copy,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                        onPressed: () {
+                                          Clipboard.setData(
+                                            ClipboardData(text: otp['code']),
+                                          );
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text('验证码已复制到剪贴板'),
+                                              backgroundColor: Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -622,14 +674,6 @@ class _OtpPageState extends State<OtpPage> {
             foregroundColor: Theme.of(context).colorScheme.onSecondary,
             child: Icon(Icons.qr_code_scanner),
           ),
-          // const SizedBox(height: 16),
-          // FloatingActionButton(
-          //   heroTag: 'add_manual',
-          //   onPressed: _showAddOtpDialog,
-          //   child: Icon(Icons.add),
-          //   backgroundColor: Theme.of(context).colorScheme.primary,
-          //   foregroundColor: Theme.of(context).colorScheme.onPrimary,
-          // ),
         ],
       ),
     );
