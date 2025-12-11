@@ -36,6 +36,11 @@ class _LoginPageState extends State<LoginPage> {
         _isBiometricAvailable = isAvailable;
         _biometricDisplayName = displayName;
       });
+      
+      // 如果生物识别可用，自动弹出生物识别
+      if (isAvailable) {
+        _loginWithBiometric();
+      }
     }
   }
 

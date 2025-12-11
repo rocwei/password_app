@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+import 'dart:io';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/auth_helper.dart';
 import '../helpers/encryption_helper.dart';
@@ -102,6 +105,80 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
               ],
             ),
             actions: [
+              TextButton.icon(
+                onPressed: () async {
+                  // 保存到系统备忘录
+                  final navigator = Navigator.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
+
+                  final tempContent = encryptedBackup;
+                  
+                  try {
+                    final timestamp = DateTime.now().millisecondsSinceEpoch;
+                    
+                    if (Platform.isWindows) {
+                      // Windows平台：使用记事本打开
+                      final tempDir = Directory.systemTemp;
+                      final file = File('${tempDir.path}\\password_backup_$timestamp.txt');
+                      file.writeAsStringSync(tempContent);
+                      
+                      Process.run('notepad.exe', [file.path]);
+                      
+                      navigator.pop();
+                      if (mounted) {
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('备份已在记事本中打开')),
+                        );
+                      }
+                    } else if (Platform.isAndroid || Platform.isIOS) {
+                      // Android和iOS平台：创建文件并使用分享功能
+                      final directory = await getTemporaryDirectory();
+                      final file = File('${directory.path}/password_backup_$timestamp.txt');
+                      await file.writeAsString(tempContent);
+                      
+                      navigator.pop();
+                      
+                      // 分享文件，用户可以选择保存到备忘录或其他应用
+                      final result = await Share.shareXFiles(
+                        [XFile(file.path)],
+                        text: '密码管理器备份数据',
+                        subject: '密码备份',
+                      );
+                      
+                      if (mounted) {
+                        if (result.status == ShareResultStatus.success) {
+                          messenger.showSnackBar(
+                            const SnackBar(content: Text('备份文件已分享')),
+                          );
+                        }
+                      }
+                    } else {
+                      // 其他平台（macOS、Linux等）
+                      final directory = await getTemporaryDirectory();
+                      final file = File('${directory.path}/password_backup_$timestamp.txt');
+                      await file.writeAsString(tempContent);
+                      
+                      navigator.pop();
+                      if (mounted) {
+                        messenger.showSnackBar(
+                          SnackBar(content: Text('备份已保存到: ${file.path}')),
+                        );
+                      }
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text('保存备份失败: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(Icons.note_add),
+                label: const Text('保存到备忘录'),
+              ),
               TextButton.icon(
                 onPressed: () {
                   // 捕获 NavigatorState 和 ScaffoldMessengerState，避免在 await 之后直接使用 BuildContext
