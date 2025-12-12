@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:share_plus/share_plus.dart';
+// ignore: depend_on_referenced_packages
 import 'package:path_provider/path_provider.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/auth_helper.dart';
@@ -259,9 +260,26 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         throw Exception('无法获取备份密钥');
       }
 
+      // 严格清理备份数据，移除所有不可见字符和非法字符
+      String cleanedBackupData = backupData
+          .trim()
+          // 移除所有换行符（Windows: \r\n, Unix: \n, Mac: \r）
+          .replaceAll(RegExp(r'[\r\n]+'), '')
+          // 移除所有空白字符（包括空格、制表符等）
+          .replaceAll(RegExp(r'\s+'), '')
+          // 移除BOM (Byte Order Mark)
+          .replaceAll('\uFEFF', '')
+          // 移除零宽字符
+          .replaceAll('\u200B', '') // Zero Width Space
+          .replaceAll('\u200C', '') // Zero Width Non-Joiner
+          .replaceAll('\u200D', '') // Zero Width Joiner
+          .replaceAll('\u2060', '') // Word Joiner
+          // 只保留Base64有效字符和冒号（我们的格式是 iv:encrypted）
+          .replaceAll(RegExp(r'[^A-Za-z0-9+/=:]'), '');
+
       // 解密备份数据
       final decryptedData = EncryptionHelper().decryptBackupData(
-        backupData.trim(),
+        cleanedBackupData,
         backupKey,
       );
 
