@@ -26,8 +26,8 @@ workflows:
       
       - name: Build iOS app bundle (no codesign)
         script: |
-          # 免费账户方案：构建未签名的app
-          flutter build ios --debug --no-codesign
+          # 免费账户方案：构建未签名的release版本app
+          flutter build ios --release --no-codesign
           
           # 清理并创建打包目录
           rm -rf $CM_BUILD_DIR/ipa_build
