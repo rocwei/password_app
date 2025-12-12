@@ -24,20 +24,30 @@ workflows:
         script: |
           cd ios && pod install
       
-      - name: Set up code signing
+      - name: Set up code signing for free account
         script: |
-          # 使用Codemagic的自动签名
-          keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_DEVELOPMENT \
-            --create
-          keychain add-certificates
-          xcode-project use-profiles
+          # 免费账户：配置自动签名设置
+          # 在Xcode项目中启用自动签名
+          /usr/libexec/PlistBuddy -c "Set :objects:97C146E11CF9000F007C117D:attributes:TargetAttributes:97C146ED1CF9000F007C117D:ProvisioningStyle Automatic" ios/Runner.xcodeproj/project.pbxproj || true
+          /usr/libexec/PlistBuddy -c "Set :objects:97C146E11CF9000F007C117D:attributes:TargetAttributes:97C146ED1CF9000F007C117D:DevelopmentTeam $DEVELOPMENT_TEAM_ID" ios/Runner.xcodeproj/project.pbxproj || true
       
-      - name: Build IPA for development
+      - name: Build iOS app bundle (no codesign)
         script: |
-          flutter build ipa --debug \
-            --export-options-plist=$CM_BUILD_DIR/ios/ExportOptions.plist
+          # 免费账户方案：构建未签名的app，然后手动打包
+          flutter build ios --debug --no-codesign
+          
+          # 创建Payload目录
+          mkdir -p Payload
+          
+          # 复制app到Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          
+          # 打包为IPA
+          zip -r build/ios/Runner.ipa Payload
+          
+          # 创建ipa目录（匹配artifacts路径）
+          mkdir -p build/ios/ipa
+          mv build/ios/Runner.ipa build/ios/ipa/password.ipa
     
     artifacts:
       - build/ios/ipa/*.ipa
