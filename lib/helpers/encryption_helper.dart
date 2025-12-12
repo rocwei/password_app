@@ -14,7 +14,8 @@ class EncryptionHelper {
   // 设置加密密钥
   void setEncryptionKey(String base64Key) {
     final key = Key.fromBase64(base64Key);
-    _encrypter = Encrypter(AES(key));
+    // 明确指定AES模式和padding，确保跨平台兼容性
+    _encrypter = Encrypter(AES(key, mode: AESMode.cbc, padding: 'PKCS7'));
   }
 
   // 生成随机盐
@@ -95,7 +96,8 @@ class EncryptionHelper {
   // 加密备份数据
   String encryptBackupData(String jsonData, String backupKey) {
     final key = Key.fromBase64(backupKey);
-    final encrypter = Encrypter(AES(key));
+    // 明确指定AES模式和padding，确保跨平台兼容性
+    final encrypter = Encrypter(AES(key, mode: AESMode.cbc, padding: 'PKCS7'));
     final iv = IV.fromSecureRandom(16);
 
     final encrypted = encrypter.encrypt(jsonData, iv: iv);
@@ -110,7 +112,8 @@ class EncryptionHelper {
     }
 
     final key = Key.fromBase64(backupKey);
-    final encrypter = Encrypter(AES(key));
+    // 明确指定AES模式和padding，确保跨平台兼容性
+    final encrypter = Encrypter(AES(key, mode: AESMode.cbc, padding: 'PKCS7'));
     final iv = IV.fromBase64(parts[0]);
     final encrypted = Encrypted.fromBase64(parts[1]);
 
