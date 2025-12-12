@@ -29,20 +29,24 @@ workflows:
           # 免费账户方案：构建未签名的app
           flutter build ios --debug --no-codesign
           
-          # 创建Payload目录
-          mkdir -p Payload
+          # 清理并创建打包目录
+          rm -rf $CM_BUILD_DIR/ipa_build
+          mkdir -p $CM_BUILD_DIR/ipa_build/Payload
           
-          # 复制app到Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
+          # 复制app到Payload目录
+          cp -r $CM_BUILD_DIR/build/ios/iphoneos/Runner.app $CM_BUILD_DIR/ipa_build/Payload/
           
-          # 打包为IPA
-          cd Payload
-          zip -r ../password.ipa .
-          cd ..
+          # 打包为IPA（在ipa_build目录内操作）
+          cd $CM_BUILD_DIR/ipa_build
+          zip -r password.ipa Payload
           
-          # 移动到artifacts目录
-          mkdir -p build/ios/ipa
-          mv password.ipa build/ios/ipa/
+          # 创建artifacts目录并移动IPA
+          mkdir -p $CM_BUILD_DIR/build/ios/ipa
+          mv password.ipa $CM_BUILD_DIR/build/ios/ipa/
+          
+          # 验证IPA结构
+          echo "Verifying IPA structure:"
+          unzip -l $CM_BUILD_DIR/build/ios/ipa/password.ipa | head -20
     
     artifacts:
       - build/ios/ipa/*.ipa
