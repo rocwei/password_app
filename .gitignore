@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+codemagic.yaml
+CONFIG_COMPLETED.md
+IOS_BUILD_GUIDE.md
+IOS_CONFIG_CHECKLIST.md
+update_bundle_id.ps1
+update_bundle_id.sh
+ios/ExportOptions.plist
+ios/Runner.xcodeproj/project.pbxproj
+ios/Runner.xcodeproj/project.pbxproj
