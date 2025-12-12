@@ -24,18 +24,9 @@ workflows:
         script: |
           cd ios && pod install
       
-      - name: Set up project for free account
-        script: |
-          # 添加CODE_SIGN_ENTITLEMENTS到项目配置
-          sed -i '' 's/CLANG_ENABLE_MODULES = YES;/CLANG_ENABLE_MODULES = YES;\
-				CODE_SIGN_ENTITLEMENTS = Runner\/Runner.entitlements;/g' ios/Runner.xcodeproj/project.pbxproj
-          
-          # 确保entitlements文件包含正确的Bundle ID
-          sed -i '' "s/com.rocwei.password/$BUNDLE_ID/g" ios/Runner/Runner.entitlements
-      
       - name: Build iOS app bundle (no codesign)
         script: |
-          # 免费账户方案：构建未签名的app，然后手动打包
+          # 免费账户方案：构建未签名的app
           flutter build ios --debug --no-codesign
           
           # 创建Payload目录
@@ -45,11 +36,13 @@ workflows:
           cp -r build/ios/iphoneos/Runner.app Payload/
           
           # 打包为IPA
-          zip -r build/ios/Runner.ipa Payload
+          cd Payload
+          zip -r ../password.ipa .
+          cd ..
           
-          # 创建ipa目录（匹配artifacts路径）
+          # 移动到artifacts目录
           mkdir -p build/ios/ipa
-          mv build/ios/Runner.ipa build/ios/ipa/password.ipa
+          mv password.ipa build/ios/ipa/
     
     artifacts:
       - build/ios/ipa/*.ipa
