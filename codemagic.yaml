@@ -19,24 +19,21 @@ workflows:
       cocoapods: default
     
     scripts:
-      - name: Set up code signing settings on Xcode project
-        script: |
-          # 使用自动签名（适合免费账户）
-          cd ios
-          xcode-project use-profiles
-      
       - name: Get Flutter packages
         script: |
-          flutter packages pub get
+          flutter pub get
       
       - name: Install pods
         script: |
-          cd ios && pod install
+          find . -name "Podfile" -execdir pod install \;
       
-      - name: Flutter build IPA (Development)
+      - name: Set up code signing settings on Xcode project
         script: |
-          # 使用开发签名构建（免费账户）
-          flutter build ipa --release \
+          xcode-project use-profiles
+      
+      - name: Flutter build IPA (Debug)
+        script: |
+          flutter build ipa --debug \
             --export-options-plist=$CM_BUILD_DIR/ios/ExportOptions.plist
     
     artifacts:
