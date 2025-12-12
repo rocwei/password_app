@@ -24,12 +24,14 @@ workflows:
         script: |
           cd ios && pod install
       
-      - name: Set up code signing for free account
+      - name: Set up project for free account
         script: |
-          # 免费账户：配置自动签名设置
-          # 在Xcode项目中启用自动签名
-          /usr/libexec/PlistBuddy -c "Set :objects:97C146E11CF9000F007C117D:attributes:TargetAttributes:97C146ED1CF9000F007C117D:ProvisioningStyle Automatic" ios/Runner.xcodeproj/project.pbxproj || true
-          /usr/libexec/PlistBuddy -c "Set :objects:97C146E11CF9000F007C117D:attributes:TargetAttributes:97C146ED1CF9000F007C117D:DevelopmentTeam $DEVELOPMENT_TEAM_ID" ios/Runner.xcodeproj/project.pbxproj || true
+          # 添加CODE_SIGN_ENTITLEMENTS到项目配置
+          sed -i '' 's/CLANG_ENABLE_MODULES = YES;/CLANG_ENABLE_MODULES = YES;\
+				CODE_SIGN_ENTITLEMENTS = Runner\/Runner.entitlements;/g' ios/Runner.xcodeproj/project.pbxproj
+          
+          # 确保entitlements文件包含正确的Bundle ID
+          sed -i '' "s/com.rocwei.password/$BUNDLE_ID/g" ios/Runner/Runner.entitlements
       
       - name: Build iOS app bundle (no codesign)
         script: |
