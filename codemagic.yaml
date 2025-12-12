@@ -24,10 +24,15 @@ workflows:
         script: |
           cd ios && pod install
       
-      - name: Set up iOS code signing with Apple ID
+      - name: Set up code signing
         script: |
-          # 为免费账户设置自动签名
-          xcode-project use-profiles --apple-id "$APPLE_ID" --password "$APP_SPECIFIC_PASSWORD"
+          # 使用Codemagic的自动签名
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_DEVELOPMENT \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
       
       - name: Build IPA for development
         script: |
