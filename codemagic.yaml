@@ -5,15 +5,12 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       groups:
-        # 创建环境变量组，在Codemagic控制台配置
         - ios_credentials
       vars:
         XCODE_WORKSPACE: "ios/Runner.xcworkspace"
         XCODE_SCHEME: "Runner"
-        # Bundle ID
         BUNDLE_ID: "com.rocwei.password"
-        # Apple ID（免费账户）
-        # APPLE_ID: "283187631@qq.com"  # 在Codemagic控制台配置
+        APPLE_ID: "283187631@qq.com"
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -25,13 +22,14 @@ workflows:
       
       - name: Install pods
         script: |
-          find . -name "Podfile" -execdir pod install \;
+          cd ios && pod install
       
-      - name: Set up code signing settings on Xcode project
+      - name: Set up iOS code signing with Apple ID
         script: |
-          xcode-project use-profiles
+          # 为免费账户设置自动签名
+          xcode-project use-profiles --apple-id "$APPLE_ID" --password "$APP_SPECIFIC_PASSWORD"
       
-      - name: Flutter build IPA (Debug)
+      - name: Build IPA for development
         script: |
           flutter build ipa --debug \
             --export-options-plist=$CM_BUILD_DIR/ios/ExportOptions.plist
@@ -40,6 +38,7 @@ workflows:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
+      - ios/ExportOptions.plist  # 可选：导出plist方便排查
     
     publishing:
       email:
@@ -48,4 +47,3 @@ workflows:
         notify:
           success: true
           failure: true
-
