@@ -1,0 +1,83 @@
+workflows:
+  ios-workflow:
+    name: iOS Workflow (Free Account)
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      groups:
+        # 创建环境变量组，在Codemagic控制台配置
+        - ios_credentials
+      vars:
+        XCODE_WORKSPACE: "ios/Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
+        # Bundle ID
+        BUNDLE_ID: "com.rocwei.password"
+        # Apple ID（免费账户）
+        # APPLE_ID: "283187631@qq.com"  # 在Codemagic控制台配置
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    
+    scripts:
+      - name: Set up code signing settings on Xcode project
+        script: |
+          # 使用自动签名（适合免费账户）
+          cd ios
+          xcode-project use-profiles
+      
+      - name: Get Flutter packages
+        script: |
+          flutter packages pub get
+      
+      - name: Install pods
+        script: |
+          cd ios && pod install
+      
+      - name: Flutter build IPA (Development)
+        script: |
+          # 使用开发签名构建（免费账户）
+          flutter build ipa --release \
+            --export-options-plist=$CM_BUILD_DIR/ios/ExportOptions.plist
+    
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    
+    publishing:
+      email:
+        recipients:
+          - 283187631@qq.com
+        notify:
+          success: true
+          failure: true
+  
+  # Android工作流（如果需要）
+  android-workflow:
+    name: Android Workflow
+    max_build_duration: 120
+    instance_type: linux_x2
+    environment:
+      flutter: stable
+    
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter packages pub get
+      
+      - name: Build APK
+        script: |
+          flutter build apk --release
+    
+    artifacts:
+      - build/**/outputs/**/*.apk
+      - build/**/outputs/**/mapping.txt
+      - flutter_drive.log
+    
+    publishing:
+      email:
+        recipients:
+          - 283187631@qq.com
+        notify:
+          success: true
+          failure: true
