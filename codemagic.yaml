@@ -48,7 +48,7 @@ workflows:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
-      - ios/ExportOptions.plist  # 可选：导出plist方便排查
+      # - ios/ExportOptions.plist  # 可选：导出plist方便排查
     
     publishing:
       email:
