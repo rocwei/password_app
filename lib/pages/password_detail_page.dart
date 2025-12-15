@@ -30,7 +30,10 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
   void initState() {
     super.initState();
     if (_isEditing) {
-      _loadEntryData();
+      // 延迟到下一帧执行，确保 context 已经初始化
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadEntryData();
+      });
     } else {
       // 如果传入了 initialPassword（来自生成器），自动填充密码字段
       if (widget.initialPassword != null &&

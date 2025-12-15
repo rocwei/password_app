@@ -10,9 +10,13 @@ class EncryptionHelper {
   EncryptionHelper._internal();
 
   Encrypter? _encrypter;
+  
+  // 存储密钥的 base64 字符串，用于向后兼容
+  String? _keyBase64;
 
   // 设置加密密钥
   void setEncryptionKey(String base64Key) {
+    _keyBase64 = base64Key; // 保存密钥用于向后兼容
     final key = Key.fromBase64(base64Key);
     // 明确指定AES模式为CBC和PKCS7 padding，确保跨平台兼容性
     _encrypter = Encrypter(AES(key, mode: AESMode.cbc, padding: 'PKCS7'));
@@ -76,7 +80,7 @@ class EncryptionHelper {
     return '${iv.base64}:${encrypted.base64}';
   }
 
-  // 解密字符串
+  // 解密字符串（支持向后兼容）
   String decryptString(String encryptedText) {
     if (_encrypter == null) {
       throw Exception('加密器未初始化，请先设置加密密钥');
@@ -90,7 +94,23 @@ class EncryptionHelper {
     final iv = IV.fromBase64(parts[0]);
     final encrypted = Encrypted.fromBase64(parts[1]);
 
-    return _encrypter!.decrypt(encrypted, iv: iv);
+    // 先尝试使用当前配置解密
+    try {
+      return _encrypter!.decrypt(encrypted, iv: iv);
+    } catch (e) {
+      // 如果失败，尝试使用旧的默认配置解密（兼容旧数据）
+      try {
+        if (_keyBase64 != null) {
+          final key = Key.fromBase64(_keyBase64!);
+          final legacyEncrypter = Encrypter(AES(key)); // 使用默认配置
+          return legacyEncrypter.decrypt(encrypted, iv: iv);
+        }
+      } catch (legacyError) {
+        // 两种方式都失败，抛出原始错误
+        throw Exception('解密失败: $e');
+      }
+      throw Exception('解密失败: $e');
+    }
   }
 
   // 使用固定salt派生备份密钥（确保跨平台一致性）
@@ -174,5 +194,6 @@ class EncryptionHelper {
   // 清除加密密钥
   void clearKey() {
     _encrypter = null;
+    _keyBase64 = null;
   }
 }
