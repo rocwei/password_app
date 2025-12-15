@@ -1,11 +1,9 @@
-import 'package:flutter/material.dart' hide Key;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:share_plus/share_plus.dart';
-// ignore: depend_on_referenced_packages
 import 'package:path_provider/path_provider.dart';
-import 'package:encrypt/encrypt.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/auth_helper.dart';
 import '../helpers/encryption_helper.dart';
@@ -20,22 +18,18 @@ class BackupRestorePage extends StatefulWidget {
 
 class _BackupRestorePageState extends State<BackupRestorePage> {
   bool _isLoading = false;
-  
-  // 固定的备份专用salt，用于所有设备的备份加密
-  // 这样只需要主密码就可以跨平台恢复备份
-  static const String _backupSalt = 'PasswordManager_Backup_Salt_V1';
 
   Future<void> _createBackup() async {
-    // 首先要求用户输入主密码进行确认
+    // 首先要求用户输入主密码以生成备份密钥
     final masterPassword = await showDialog<String>(
       context: context,
-      builder: (context) => _PasswordConfirmDialog(),
+      builder: (context) => _MasterPasswordDialog(),
     );
-    
+
     if (masterPassword == null || masterPassword.trim().isEmpty) {
       return;
     }
-    
+
     setState(() {
       _isLoading = true;
     });
@@ -46,26 +40,11 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         throw Exception('用户未登录');
       }
 
-      // 验证主密码是否正确
-      final currentUser = AuthHelper().currentUser;
-      if (currentUser == null) {
-        throw Exception('无法获取用户信息');
+      // 生成备份密钥（使用固定salt+主密码）
+      final backupKey = AuthHelper().getBackupKey(masterPassword);
+      if (backupKey == null) {
+        throw Exception('无法生成备份密钥');
       }
-      
-      final hashedPassword = EncryptionHelper.hashMasterPassword(
-        masterPassword,
-        currentUser.salt,
-      );
-      
-      if (hashedPassword != currentUser.masterPasswordHash) {
-        throw Exception('主密码错误');
-      }
-
-      // 使用主密码和固定salt派生备份密钥
-      final backupKey = EncryptionHelper.deriveKey(
-        masterPassword,
-        _backupSalt,
-      );
 
       // 导出密码条目
       final dbHelper = DatabaseHelper();
@@ -74,27 +53,50 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       // 导出OTP令牌
       final otpTokens = await OtpHelper.exportTokens();
 
+      // 步骤1: 用当前账户密钥解密所有密码，得到明文
+      // 步骤2: 用备份密钥重新加密每个密码
+      final reEncryptedEntries = <Map<String, dynamic>>[];
+      for (final entry in entries) {
+        try {
+          // 解密密码（使用当前设备密钥）
+          final plainPassword = EncryptionHelper().decryptString(
+            entry['password'],
+          );
+          
+          // 用备份密钥重新加密密码
+          final backupEncryptedPassword = EncryptionHelper.encryptPasswordWithBackupKey(
+            plainPassword,
+            backupKey,
+          );
+          
+          // 创建新的条目数据（使用备份加密的密码）
+          final reEncryptedEntry = Map<String, dynamic>.from(entry);
+          reEncryptedEntry['password'] = backupEncryptedPassword;
+          reEncryptedEntries.add(reEncryptedEntry);
+        } catch (e) {
+          throw Exception('重新加密密码失败: $e');
+        }
+      }
+
       // 创建备份数据
       final backupData = {
-        'version': '1.3', // 版本升级：使用固定salt实现跨平台恢复
+        'version': '2.0', // 版本升级以支持新的备份格式
         'timestamp': DateTime.now().toIso8601String(),
         'user_id': userId,
-        'entries': entries,
-        'otp_tokens': otpTokens, // 添加OTP令牌数据
+        'entries': reEncryptedEntries, // 使用备份密钥加密的条目
+        'otp_tokens': otpTokens,
       };
 
       // 转换为JSON字符串
       final jsonString = jsonEncode(backupData);
 
-      // 使用固定的备份salt和主密码派生密钥（跨平台通用）
-      // 注意：这里需要获取用户的主密码，但我们无法直接获取
-      // 所以仍然使用backupKey，但它应该是用固定salt派生的
+      // 步骤3: 整体用备份密钥加密
       final encryptedBackup = EncryptionHelper().encryptBackupData(
         jsonString,
         backupKey,
       );
 
-      // 显示备份数据（实际应用中这里应该保存到文件或上传到云端）
+      // 显示备份数据
       if (mounted) {
         showDialog(
           context: context,
@@ -268,20 +270,26 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
   }
 
   Future<void> _restoreBackup() async {
-    // 显示输入备份数据和主密码的对话框
-    final result = await showDialog<Map<String, String>>(
+    // 显示输入备份数据的对话框
+    final backupData = await showDialog<String>(
       context: context,
       builder: (context) => _RestoreBackupDialog(),
     );
 
-    if (result == null || 
-        result['backupData'] == null || 
-        result['backupData']!.trim().isEmpty) {
+    if (backupData == null || backupData.trim().isEmpty) {
       return;
     }
-    
-    final backupData = result['backupData']!;
-    final masterPassword = result['masterPassword']!;
+
+    // 要求用户输入主密码以生成备份密钥
+    if (!mounted) return;
+    final masterPassword = await showDialog<String>(
+      context: context,
+      builder: (context) => _MasterPasswordDialog(isForRestore: true),
+    );
+
+    if (masterPassword == null || masterPassword.trim().isEmpty) {
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -293,32 +301,15 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         throw Exception('用户未登录');
       }
 
-      // 严格清理备份数据，移除所有不可见字符和非法字符
-      String cleanedBackupData = backupData
-          .trim()
-          // 移除所有换行符（Windows: \r\n, Unix: \n, Mac: \r）
-          .replaceAll(RegExp(r'[\r\n]+'), '')
-          // 移除所有空白字符（包括空格、制表符等）
-          .replaceAll(RegExp(r'\s+'), '')
-          // 移除BOM (Byte Order Mark)
-          .replaceAll('\uFEFF', '')
-          // 移除零宽字符
-          .replaceAll('\u200B', '') // Zero Width Space
-          .replaceAll('\u200C', '') // Zero Width Non-Joiner
-          .replaceAll('\u200D', '') // Zero Width Joiner
-          .replaceAll('\u2060', '') // Word Joiner
-          // 只保留Base64有效字符和冒号（格式是 iv:encrypted）
-          .replaceAll(RegExp(r'[^A-Za-z0-9+/=:]'), '');
+      // 生成备份密钥
+      final backupKey = AuthHelper().getBackupKey(masterPassword);
+      if (backupKey == null) {
+        throw Exception('无法生成备份密钥');
+      }
 
-      // 使用主密码和固定的备份salt派生密钥
-      final backupKey = EncryptionHelper.deriveKey(
-        masterPassword,
-        _backupSalt,
-      );
-      
-      // 解密备份数据
+      // 步骤1: 用备份密钥解密整体数据
       final decryptedData = EncryptionHelper().decryptBackupData(
-        cleanedBackupData,
+        backupData.trim(),
         backupKey,
       );
 
@@ -333,10 +324,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       }
 
       // 确认恢复操作
-      if (!mounted) {
-        // 如果当前 State 已卸载，则中止以避免使用已失效的 BuildContext
-        return;
-      }
+      if (!mounted) return;
       
       // 构建恢复信息文本
       String restoreInfoText = '将恢复 ${entries.length} 个密码条目';
@@ -376,45 +364,42 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       final dbHelper = DatabaseHelper();
       await dbHelper.clearPasswordEntries(userId);
 
-      // 创建临时加密器用于解密备份数据中的密码
-      final backupEncrypter = Encrypter(AES(Key.fromBase64(backupKey), mode: AESMode.cbc, padding: 'PKCS7'));
-      
-      // 恢复密码条目
+      // 步骤2: 用备份密钥解密每个密码 → 得到明文
+      // 步骤3: 用当前设备密钥重新加密密码
+      // 步骤4: 保存到数据库
       int restoredCount = 0;
       for (final entryData in entries) {
-        // 用备份密钥解密密码
-        String decryptedPassword;
         try {
-          final encryptedPassword = entryData['password'] as String;
-          final parts = encryptedPassword.split(':');
-          if (parts.length != 2) {
-            throw Exception('密码格式错误');
-          }
-          final iv = IV.fromBase64(parts[0]);
-          final encrypted = Encrypted.fromBase64(parts[1]);
-          decryptedPassword = backupEncrypter.decrypt(encrypted, iv: iv);
-        } catch (e) {
-          throw Exception('解密密码失败: $e');
-        }
-        
-        // 用当前设备的密钥重新加密密码
-        final reencryptedPassword = EncryptionHelper().encryptString(decryptedPassword);
-        
-        final entry = {
-          'user_id': userId,
-          'title': entryData['title'],
-          'username': entryData['username'],
-          'password': reencryptedPassword, // 用当前设备密钥重新加密的密码
-          'website': entryData['website'],
-          'note': entryData['note'],
-          'created_at': entryData['created_at'],
-          'updated_at': DateTime.now().toIso8601String(),
-        };
+          // 解密密码（使用备份密钥）
+          final plainPassword = EncryptionHelper.decryptPasswordWithBackupKey(
+            entryData['password'],
+            backupKey,
+          );
+          
+          // 用当前设备密钥重新加密
+          final deviceEncryptedPassword = EncryptionHelper().encryptString(
+            plainPassword,
+          );
+          
+          // 创建条目并保存
+          final entry = {
+            'user_id': userId,
+            'title': entryData['title'],
+            'username': entryData['username'],
+            'password': deviceEncryptedPassword, // 使用当前设备密钥加密的密码
+            'website': entryData['website'],
+            'note': entryData['note'],
+            'created_at': entryData['created_at'],
+            'updated_at': DateTime.now().toIso8601String(),
+          };
 
-        await dbHelper.database.then(
-          (db) => db.insert('password_entries', entry),
-        );
-        restoredCount++;
+          await dbHelper.database.then(
+            (db) => db.insert('password_entries', entry),
+          );
+          restoredCount++;
+        } catch (e) {
+          throw Exception('恢复密码条目失败: $e');
+        }
       }
       
       // 恢复OTP令牌(如果有)
@@ -610,48 +595,36 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
   }
 }
 
-class _PasswordConfirmDialog extends StatefulWidget {
+class _RestoreBackupDialog extends StatefulWidget {
   @override
-  State<_PasswordConfirmDialog> createState() => _PasswordConfirmDialogState();
+  State<_RestoreBackupDialog> createState() => _RestoreBackupDialogState();
 }
 
-class _PasswordConfirmDialogState extends State<_PasswordConfirmDialog> {
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+class _RestoreBackupDialogState extends State<_RestoreBackupDialog> {
+  final _controller = TextEditingController();
 
   @override
   void dispose() {
-    _passwordController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('确认主密码'),
+      title: const Text('输入备份数据'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('为了创建备份，请输入您的主密码：'),
+          const Text('请粘贴您的加密备份数据：'),
           const SizedBox(height: 16),
           TextField(
-            controller: _passwordController,
-            obscureText: _obscurePassword,
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(),
-              hintText: '主密码',
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
-              ),
+            controller: _controller,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: '粘贴备份数据...',
             ),
+            maxLines: 5,
           ),
         ],
       ),
@@ -662,105 +635,8 @@ class _PasswordConfirmDialogState extends State<_PasswordConfirmDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            if (_passwordController.text.trim().isNotEmpty) {
-              Navigator.of(context).pop(_passwordController.text.trim());
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
-          ),
-          child: const Text('确认'),
-        ),
-      ],
-    );
-  }
-}
-
-class _RestoreBackupDialog extends StatefulWidget {
-  @override
-  State<_RestoreBackupDialog> createState() => _RestoreBackupDialogState();
-}
-
-class _RestoreBackupDialogState extends State<_RestoreBackupDialog> {
-  final _backupDataController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
-
-  @override
-  void dispose() {
-    _backupDataController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('恢复备份'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '1. 请粘贴您的加密备份数据：',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _backupDataController,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: '粘贴备份数据...',
-              ),
-              maxLines: 4,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              '2. 输入您的主密码：',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _passwordController,
-              obscureText: _obscurePassword,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                hintText: '主密码',
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '提示：使用创建此备份时的主密码即可跨设备恢复',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (_backupDataController.text.trim().isNotEmpty &&
-                _passwordController.text.trim().isNotEmpty) {
-              Navigator.of(context).pop({
-                'backupData': _backupDataController.text.trim(),
-                'masterPassword': _passwordController.text.trim(),
-              });
+            if (_controller.text.trim().isNotEmpty) {
+              Navigator.of(context).pop(_controller.text.trim());
             }
           },
           style: ElevatedButton.styleFrom(
@@ -773,3 +649,78 @@ class _RestoreBackupDialogState extends State<_RestoreBackupDialog> {
     );
   }
 }
+
+class _MasterPasswordDialog extends StatefulWidget {
+  final bool isForRestore;
+  
+  const _MasterPasswordDialog({this.isForRestore = false});
+
+  @override
+  State<_MasterPasswordDialog> createState() => _MasterPasswordDialogState();
+}
+
+class _MasterPasswordDialogState extends State<_MasterPasswordDialog> {
+  final _controller = TextEditingController();
+  bool _obscureText = true;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.isForRestore ? '输入主密码以恢复备份' : '输入主密码以创建备份'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.isForRestore 
+              ? '请输入创建备份时使用的主密码：'
+              : '请输入您的主密码以生成备份密钥：',
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _controller,
+            obscureText: _obscureText,
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              labelText: '主密码',
+              suffixIcon: IconButton(
+                icon: Icon(_obscureText ? Icons.visibility : Icons.visibility_off),
+                onPressed: () {
+                  setState(() {
+                    _obscureText = !_obscureText;
+                  });
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '提示：备份使用固定的加密密钥，可在不同设备间互通。',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('取消'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (_controller.text.trim().isNotEmpty) {
+              Navigator.of(context).pop(_controller.text.trim());
+            }
+          },
+          child: const Text('确认'),
+        ),
+      ],
+    );
+  }
+}
+

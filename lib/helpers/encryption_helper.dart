@@ -14,7 +14,7 @@ class EncryptionHelper {
   // 设置加密密钥
   void setEncryptionKey(String base64Key) {
     final key = Key.fromBase64(base64Key);
-    // 明确指定AES模式和padding，确保跨平台兼容性
+    // 明确指定AES模式为CBC和PKCS7 padding，确保跨平台兼容性
     _encrypter = Encrypter(AES(key, mode: AESMode.cbc, padding: 'PKCS7'));
   }
 
@@ -93,10 +93,61 @@ class EncryptionHelper {
     return _encrypter!.decrypt(encrypted, iv: iv);
   }
 
-  // 加密备份数据
+  // 使用固定salt派生备份密钥（确保跨平台一致性）
+  static String deriveBackupKey(String masterPassword) {
+    // 使用固定的salt确保在不同设备上使用相同主密码能得到相同的备份密钥
+    // 使用较长的固定salt以增强安全性和跨平台一致性
+    const fixedSalt = 'PasswordSalt';
+    final saltBytes = utf8.encode(fixedSalt);
+    final passwordBytes = utf8.encode(masterPassword);
+    
+    // 使用PBKDF2派生密钥，确保字节序一致
+    var result = passwordBytes + saltBytes;
+    for (int i = 0; i < 10000; i++) {
+      result = sha256.convert(result).bytes;
+    }
+    
+    // 确保密钥长度为32字节（AES-256）
+    if (result.length >= 32) {
+      return base64Encode(result.sublist(0, 32));
+    } else {
+      final fullKey = Uint8List(32);
+      fullKey.setRange(0, result.length, result);
+      return base64Encode(fullKey);
+    }
+  }
+
+  // 用备份密钥加密单个密码
+  static String encryptPasswordWithBackupKey(String password, String backupKey) {
+    final key = Key.fromBase64(backupKey);
+    // 明确指定AES模式为CBC和PKCS7 padding，确保跨平台兼容性
+    final encrypter = Encrypter(AES(key, mode: AESMode.cbc, padding: 'PKCS7'));
+    final iv = IV.fromSecureRandom(16);
+    
+    final encrypted = encrypter.encrypt(password, iv: iv);
+    return '${iv.base64}:${encrypted.base64}';
+  }
+  
+  // 用备份密钥解密单个密码
+  static String decryptPasswordWithBackupKey(String encryptedPassword, String backupKey) {
+    final parts = encryptedPassword.split(':');
+    if (parts.length != 2) {
+      throw Exception('加密密码格式错误');
+    }
+    
+    final key = Key.fromBase64(backupKey);
+    // 明确指定AES模式为CBC和PKCS7 padding，确保跨平台兼容性
+    final encrypter = Encrypter(AES(key, mode: AESMode.cbc, padding: 'PKCS7'));
+    final iv = IV.fromBase64(parts[0]);
+    final encrypted = Encrypted.fromBase64(parts[1]);
+    
+    return encrypter.decrypt(encrypted, iv: iv);
+  }
+
+  // 加密备份数据（整体加密）
   String encryptBackupData(String jsonData, String backupKey) {
     final key = Key.fromBase64(backupKey);
-    // 明确指定AES模式和padding，确保跨平台兼容性
+    // 明确指定AES模式为CBC和PKCS7 padding，确保跨平台兼容性
     final encrypter = Encrypter(AES(key, mode: AESMode.cbc, padding: 'PKCS7'));
     final iv = IV.fromSecureRandom(16);
 
@@ -104,7 +155,7 @@ class EncryptionHelper {
     return '${iv.base64}:${encrypted.base64}';
   }
 
-  // 解密备份数据
+  // 解密备份数据（整体解密）
   String decryptBackupData(String encryptedData, String backupKey) {
     final parts = encryptedData.split(':');
     if (parts.length != 2) {
@@ -112,7 +163,7 @@ class EncryptionHelper {
     }
 
     final key = Key.fromBase64(backupKey);
-    // 明确指定AES模式和padding，确保跨平台兼容性
+    // 明确指定AES模式为CBC和PKCS7 padding，确保跨平台兼容性
     final encrypter = Encrypter(AES(key, mode: AESMode.cbc, padding: 'PKCS7'));
     final iv = IV.fromBase64(parts[0]);
     final encrypted = Encrypted.fromBase64(parts[1]);

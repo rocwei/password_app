@@ -321,10 +321,18 @@ class AuthHelper {
     return await dbHelper.hasUsers();
   }
 
-  // 获取备份密钥
-  String? getBackupKey() {
-    if (!isLoggedIn) return null;
-    return _encryptionKey; // 使用相同的密钥进行备份加密
+  // 获取备份密钥（使用固定salt和主密码）
+  // 注意：此方法需要主密码，所以在备份/恢复时需要用户重新输入主密码
+  String? getBackupKey(String masterPassword) {
+    if (!isLoggedIn || _currentUser == null) return null;
+    
+    // 使用固定salt和主密码生成备份密钥，确保跨平台一致性
+    return EncryptionHelper.deriveBackupKey(masterPassword);
+  }
+
+  // 获取当前加密密钥（用于解密当前设备上的密码）
+  String? getCurrentEncryptionKey() {
+    return _encryptionKey;
   }
 
   // 登出
