@@ -147,7 +147,26 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               controller: _searchController,
-              decoration: InputDecoration(hintText: '搜索密码条目...'),
+              decoration: InputDecoration(
+                hintText: '搜索密码条目...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: const Color.fromARGB(255, 133, 88, 236),
+                    width: 1,
+                  ),
+                ),
+                prefixIcon: const Icon(Icons.search),
+                // helperText: '搜索密码条目标题、用户名或网址',
+              ),
               onChanged: _filterEntries,
             ),
           ),
@@ -234,13 +253,16 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
             foregroundColor: Theme.of(context).colorScheme.onPrimary,
             icon: Icons.edit,
             label: '编辑',
+            borderRadius: BorderRadius.circular(10), // 10px圆角
           ),
+          const SizedBox(width: 8),
           SlidableAction(
             onPressed: (context) => _deleteEntry(entry),
             backgroundColor: Theme.of(context).colorScheme.error,
             foregroundColor: Theme.of(context).colorScheme.onError,
             icon: Icons.delete,
             label: '删除',
+            borderRadius: BorderRadius.circular(10), // 10px圆角
           ),
         ],
       ),
@@ -248,11 +270,11 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         color: Theme.of(context).scaffoldBackgroundColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10), // 10px圆角
           side: BorderSide(
             // ignore: deprecated_member_use
-            color: Theme.of(context).dividerColor.withOpacity(1),
-            width: 0.5,
+            color: Colors.blue.shade300,
+            width: 1,
           ),
         ),
         elevation: 0.5,

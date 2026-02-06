@@ -204,11 +204,34 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
           children: [
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(
+              maxLines: 5, // 设为null表示无最大行数，高度完全自适应；也可设固定值如3/5
+              minLines: 1, // 初始最小行数，默认1行，和原输入框一致
+              expands: false, // 不扩展填满父容器
+              decoration: InputDecoration(
                 labelText: '标题 *',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.title),
+                prefixIcon: const Icon(Icons.title),
                 helperText: '例如：Gmail、微信、银行卡等',
+                isDense: false,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 16,
+                ),
+                // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: const Color.fromARGB(255, 133, 88, 236),
+                    width: 1,
+                  ),
+                ),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -220,14 +243,33 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _usernameController,
+              maxLines: 5, // 设为null表示无最大行数，高度完全自适应；也可设固定值如3/5
+              minLines: 1, // 初始最小行数，默认1行，和原输入框一致
+              expands: false, // 不扩展填满父容器
               decoration: InputDecoration(
                 labelText: '用户名 *',
-                border: const OutlineInputBorder(),
+                // border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.person),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.copy),
                   onPressed: () =>
                       _copyToClipboard(_usernameController.text, '用户名'),
+                ),
+                // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: const Color.fromARGB(255, 133, 88, 236),
+                    width: 1,
+                  ),
                 ),
               ),
               validator: (value) {
@@ -240,9 +282,28 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _passwordController,
+              maxLines: 5, // 设为null表示无最大行数，高度完全自适应；也可设固定值如3/5
+              minLines: 2, // 初始最小行数，默认1行，和原输入框一致
+              expands: false, // 不扩展填满父容器
               decoration: InputDecoration(
                 labelText: '密码 *',
-                border: const OutlineInputBorder(),
+                // border: const OutlineInputBorder(),
+                // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: const Color.fromARGB(255, 133, 88, 236),
+                    width: 1,
+                  ),
+                ),
                 prefixIcon: const Icon(Icons.lock),
                 suffixIcon: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -265,9 +326,28 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _websiteController,
+              maxLines: 5, // 设为null表示无最大行数，高度完全自适应；也可设固定值如3/5
+              minLines: 2, // 初始最小行数，默认1行，和原输入框一致
+              expands: false, // 不扩展填满父容器
               decoration: InputDecoration(
                 labelText: '网址',
-                border: const OutlineInputBorder(),
+                // border: const OutlineInputBorder(),
+                // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: const Color.fromARGB(255, 133, 88, 236),
+                    width: 1,
+                  ),
+                ),
                 prefixIcon: const Icon(Icons.web),
                 suffixIcon: _websiteController.text.isNotEmpty
                     ? IconButton(
@@ -286,13 +366,32 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _noteController,
-              decoration: const InputDecoration(
+              maxLines: null, // 设为null表示无最大行数，高度完全自适应；也可设固定值如3/5
+              minLines: 5, // 初始最小行数，默认1行，和原输入框一致
+              expands: false, // 不扩展填满父容器
+              decoration: InputDecoration(
                 labelText: '备注',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.note),
+                // border: const OutlineInputBorder(),
+                // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: const Color.fromARGB(255, 133, 88, 236),
+                    width: 1,
+                  ),
+                ),
+                prefixIcon: const Icon(Icons.note),
                 helperText: '添加额外的备注信息',
               ),
-              maxLines: 3,
+              // maxLines: 3,
             ),
             const SizedBox(height: 24),
             SizedBox(
