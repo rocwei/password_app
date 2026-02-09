@@ -8,6 +8,7 @@ import '../helpers/database_helper.dart';
 import '../helpers/auth_helper.dart';
 import '../helpers/encryption_helper.dart';
 import '../helpers/otp_helper.dart';
+import 'home_page.dart';
 
 class BackupRestorePage extends StatefulWidget {
   const BackupRestorePage({super.key});
@@ -429,6 +430,13 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
             backgroundColor: Colors.green,
           ),
         );
+        
+        // 导航回首页并刷新数据
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomePage()),
+          (route) => false,
+        );
+        return; // 提前返回，不执行 finally 中的 setState
       }
     } catch (e) {
       if (mounted) {
