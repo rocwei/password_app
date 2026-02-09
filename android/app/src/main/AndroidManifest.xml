@@ -8,7 +8,7 @@
     <uses-feature android:name="android.hardware.camera.autofocus" />
     
     <application
-        android:label="密码管理器"
+        android:label="密盾安存"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
