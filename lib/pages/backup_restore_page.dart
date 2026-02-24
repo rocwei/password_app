@@ -221,10 +221,17 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
   /// 通过系统分享面板分享备份文件
   Future<void> _shareBackupFile(File backupFile, String fileName) async {
     try {
+      // 获取分享按钮的位置，iOS（尤其 iPad）需要 sharePositionOrigin 作为弹出锚点
+      final box = context.findRenderObject() as RenderBox?;
+      final sharePositionOrigin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : const Rect.fromLTWH(0, 0, 100, 100);
+
       final result = await Share.shareXFiles(
         [XFile(backupFile.path, name: fileName)],
         subject: '密盾安存 - 密码备份文件',
         text: '这是「密盾安存」生成的加密备份文件，请妥善保管。恢复时需要输入备份密码。',
+        sharePositionOrigin: sharePositionOrigin,
       );
 
       if (!mounted) return;
