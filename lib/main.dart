@@ -6,10 +6,16 @@ import 'package:dynamic_color/dynamic_color.dart';
 
 import 'helpers/auth_helper.dart';
 import 'helpers/theme_settings.dart';
+import 'helpers/file_intent_helper.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 初始化文件 Intent 监听，用于接收外部应用传入的 .passbackup 文件
+  FileIntentHelper().init();
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeModel()..load(),
@@ -45,7 +51,7 @@ class MyApp extends StatelessWidget {
                   );
 
               return MaterialApp(
-                title: '密码管理器',
+                title: '密盾安存',
                 theme: ThemeData(
                   colorScheme: lightScheme,
                   useMaterial3: true,
@@ -175,7 +181,7 @@ class MyApp extends StatelessWidget {
               );
 
               return MaterialApp(
-                title: '密码管理器',
+                title: '密盾安存',
                 theme: themeData,
                 home: const SplashScreen(),
               );
@@ -247,7 +253,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 24),
             const Text(
-              '密码管理器',
+              '密盾安存',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,

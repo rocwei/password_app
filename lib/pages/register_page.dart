@@ -86,7 +86,7 @@ class _RegisterPageState extends State<RegisterPage> {
               const Icon(Icons.security, size: 80),
               const SizedBox(height: 24),
               const Text(
-                '密码管理器',
+                '密盾安存',
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),

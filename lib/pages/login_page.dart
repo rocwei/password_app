@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../helpers/auth_helper.dart';
+import '../helpers/file_intent_helper.dart';
 import 'register_page.dart';
 import 'home_page.dart';
+import 'backup_restore_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -61,9 +63,7 @@ class _LoginPageState extends State<LoginPage> {
 
       if (success) {
         if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomePage()),
-          );
+          _navigateAfterLogin();
         }
       } else {
         if (mounted) {
@@ -106,9 +106,7 @@ class _LoginPageState extends State<LoginPage> {
 
       if (success) {
         if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomePage()),
-          );
+          _navigateAfterLogin();
         }
       } else {
         if (mounted) {
@@ -132,6 +130,31 @@ class _LoginPageState extends State<LoginPage> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  /// 登录成功后的导航：如果有待恢复的备份文件，直接进入备份恢复页
+  void _navigateAfterLogin() {
+    final pendingFile = FileIntentHelper().consumePendingFilePath();
+    if (pendingFile != null) {
+      // 有待恢复的 .passbackup 文件 → 进入主页后自动打开备份恢复页
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+      // 稍等一帧让 HomePage 挂载后再 push 备份恢复页
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => BackupRestorePage(
+              initialFilePath: pendingFile,
+            ),
+          ),
+        );
+      });
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
     }
   }
 
@@ -166,7 +189,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    '密码管理器',
+                    '密盾安存',
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),

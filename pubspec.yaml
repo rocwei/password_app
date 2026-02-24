@@ -75,6 +75,12 @@ dependencies:
   # 分享功能
   share_plus: ^7.2.2
 
+  # 文件选择器（用于备份恢复时选择 .passbackup 文件）
+  file_picker: ^8.0.0
+
+  # 路径提供（用于获取临时目录等）
+  path_provider: ^2.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

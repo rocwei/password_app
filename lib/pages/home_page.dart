@@ -3,11 +3,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../helpers/auth_helper.dart';
+import '../helpers/file_intent_helper.dart';
 import 'password_vault_page.dart';
 import 'generate_password_page.dart';
 import 'settings_page.dart';
 import 'login_page.dart';
 import 'otp_page.dart';
+import 'backup_restore_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,6 +23,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late List<Widget> _pages;
   Timer? _backgroundTimer;
   static const Duration _backgroundTimeout = Duration(minutes: 3);
+  StreamSubscription<String>? _fileIntentSubscription;
 
   @override
   void initState() {
@@ -33,6 +36,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       const OtpPage(),
       const SettingsPage(),
     ];
+
+    // 监听应用在前台运行时收到的外部 .passbackup 文件 Intent
+    _fileIntentSubscription =
+        FileIntentHelper().onFileIntent.listen(_handleIncomingFile);
+  }
+
+  /// 收到外部 .passbackup 文件时，自动跳转到备份恢复页
+  void _handleIncomingFile(String filePath) {
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BackupRestorePage(initialFilePath: filePath),
+      ),
+    );
   }
 
   @override
@@ -40,6 +57,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _backgroundTimer?.cancel();
     _backgroundTimer = null;
+    _fileIntentSubscription?.cancel();
     super.dispose();
   }
 
