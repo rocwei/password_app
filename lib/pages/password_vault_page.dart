@@ -295,13 +295,13 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('用户名: ${entry.username}'),
-              if (entry.website != null && entry.website!.isNotEmpty)
-                Text(
-                  '网址: ${entry.website}',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
+              // if (entry.website != null && entry.website!.isNotEmpty)
+              //   Text(
+              //     '网址: ${entry.website}',
+              //     style: TextStyle(
+              //       color: Theme.of(context).colorScheme.primary,
+              //     ),
+              //   ),
             ],
           ),
           trailing: const Icon(Icons.arrow_forward_ios),

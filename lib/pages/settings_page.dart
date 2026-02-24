@@ -98,70 +98,70 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         children: [
           // 用户信息
-          Card(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            margin: const EdgeInsets.all(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '用户信息',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).textTheme.titleLarge?.color,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        radius: 24,
-                        child: Text(
-                          user?.username.isNotEmpty == true
-                              ? user!.username[0].toUpperCase()
-                              : '?',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user?.username ?? '未知用户',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (user?.createdAt != null)
-                              Text(
-                                '注册时间: ${_formatDateTime(user!.createdAt!)}',
-                                style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).textTheme.bodySmall?.color,
-                                  fontSize: 12,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // Card(
+          //   color: Theme.of(context).scaffoldBackgroundColor,
+          //   margin: const EdgeInsets.all(16),
+          //   child: Padding(
+          //     padding: const EdgeInsets.all(16),
+          //     child: Column(
+          //       crossAxisAlignment: CrossAxisAlignment.start,
+          //       children: [
+          //         Text(
+          //           '用户信息',
+          //           style: TextStyle(
+          //             fontSize: 18,
+          //             fontWeight: FontWeight.bold,
+          //             color: Theme.of(context).textTheme.titleLarge?.color,
+          //           ),
+          //         ),
+          //         const SizedBox(height: 16),
+          //         Row(
+          //           children: [
+          //             CircleAvatar(
+          //               backgroundColor: Theme.of(context).colorScheme.primary,
+          //               foregroundColor: Colors.white,
+          //               radius: 24,
+          //               child: Text(
+          //                 user?.username.isNotEmpty == true
+          //                     ? user!.username[0].toUpperCase()
+          //                     : '?',
+          //                 style: const TextStyle(
+          //                   fontSize: 20,
+          //                   fontWeight: FontWeight.bold,
+          //                 ),
+          //               ),
+          //             ),
+          //             const SizedBox(width: 16),
+          //             Expanded(
+          //               child: Column(
+          //                 crossAxisAlignment: CrossAxisAlignment.start,
+          //                 children: [
+          //                   Text(
+          //                     user?.username ?? '未知用户',
+          //                     style: const TextStyle(
+          //                       fontSize: 16,
+          //                       fontWeight: FontWeight.bold,
+          //                     ),
+          //                   ),
+          //                   if (user?.createdAt != null)
+          //                     Text(
+          //                       '注册时间: ${_formatDateTime(user!.createdAt!)}',
+          //                       style: TextStyle(
+          //                         color: Theme.of(
+          //                           context,
+          //                         ).textTheme.bodySmall?.color,
+          //                         fontSize: 12,
+          //                       ),
+          //                     ),
+          //                 ],
+          //               ),
+          //             ),
+          //           ],
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          // ),
 
           // 安全设置
           const Padding(

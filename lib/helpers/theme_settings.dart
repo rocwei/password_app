@@ -7,9 +7,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 enum ThemeType {
   yellowDark, // 黄黑经典
   blueLight, // 蓝白简约
-  greenDark, // 绿灰自然
-  purpleLight, // 紫色优雅
-  tealDark, // 青蓝海洋
+  // greenDark, // 绿灰自然
+  // purpleLight, // 紫色优雅
+  // tealDark, // 青蓝海洋
 }
 
 // 定义主题方案
@@ -68,30 +68,30 @@ class ThemeModel extends ChangeNotifier {
       brightness: Brightness.light,
       type: ThemeType.blueLight,
     ),
-    ThemeType.greenDark: const ThemeScheme(
-      name: '绿灰自然',
-      seedColor: Colors.green, // 绿色按钮
-      backgroundColor: Color(0xFF303030), // 深灰背景
-      textColor: Color(0xFFE0E0E0), // 浅色文字
-      brightness: Brightness.dark,
-      type: ThemeType.greenDark,
-    ),
-    ThemeType.purpleLight: const ThemeScheme(
-      name: '紫色优雅',
-      seedColor: Colors.purple, // 紫色按钮
-      backgroundColor: Color(0xFFF3E5F5), // 淡紫背景
-      textColor: Color(0xFF3E2723), // 深色文字
-      brightness: Brightness.light,
-      type: ThemeType.purpleLight,
-    ),
-    ThemeType.tealDark: const ThemeScheme(
-      name: '青蓝海洋',
-      seedColor: Colors.teal, // 青色按钮
-      backgroundColor: Color.fromARGB(255, 90, 145, 226), // 深蓝背景
-      textColor: Colors.white, // 白色文字
-      brightness: Brightness.dark,
-      type: ThemeType.tealDark,
-    ),
+    // ThemeType.greenDark: const ThemeScheme(
+    //   name: '绿灰自然',
+    //   seedColor: Colors.green, // 绿色按钮
+    //   backgroundColor: Color(0xFF303030), // 深灰背景
+    //   textColor: Color(0xFFE0E0E0), // 浅色文字
+    //   brightness: Brightness.dark,
+    //   type: ThemeType.greenDark,
+    // ),
+    // ThemeType.purpleLight: const ThemeScheme(
+    //   name: '紫色优雅',
+    //   seedColor: Colors.purple, // 紫色按钮
+    //   backgroundColor: Color(0xFFF3E5F5), // 淡紫背景
+    //   textColor: Color(0xFF3E2723), // 深色文字
+    //   brightness: Brightness.light,
+    //   type: ThemeType.purpleLight,
+    // ),
+    // ThemeType.tealDark: const ThemeScheme(
+    //   name: '青蓝海洋',
+    //   seedColor: Colors.teal, // 青色按钮
+    //   backgroundColor: Color.fromARGB(255, 90, 145, 226), // 深蓝背景
+    //   textColor: Colors.white, // 白色文字
+    //   brightness: Brightness.dark,
+    //   type: ThemeType.tealDark,
+    // ),
   };
 
   // 获取所有预定义主题方案列表

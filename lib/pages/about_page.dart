@@ -35,7 +35,7 @@ class AboutPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        '密码管理器',
+                        '密盾安存',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -54,7 +54,7 @@ class AboutPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        '安全、简单、可靠的本地密码管理解决方案',
+                        '安全、简单、可靠的本地密码管理解决方案。PS：都不上传网络，放心用！',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
@@ -174,26 +174,26 @@ class AboutPage extends StatelessWidget {
                           color: Theme.of(context).textTheme.titleLarge?.color,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '基于 Flutter 框架开发',
-                        style: TextStyle(
-                          color: Theme.of(context).textTheme.bodySmall?.color,
-                          fontSize: 12,
-                        ),
-                      ),
+                      // const SizedBox(height: 8),
+                      // Text(
+                      //   '基于 Flutter 框架开发',
+                      //   style: TextStyle(
+                      //     color: Theme.of(context).textTheme.bodySmall?.color,
+                      //     fontSize: 12,
+                      //   ),
+                      // ),
                       const SizedBox(height: 8),
                       GestureDetector(
-                        onTap: () {
-                          Clipboard.setData(
-                            const ClipboardData(text: '283187631@qq.com'),
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('邮箱地址已复制到剪贴板')),
-                          );
-                        },
+                        // onTap: () {
+                        //   Clipboard.setData(
+                        //     const ClipboardData(text: '283187631@qq.com'),
+                        //   );
+                        //   ScaffoldMessenger.of(context).showSnackBar(
+                        //     const SnackBar(content: Text('邮箱地址已复制到剪贴板')),
+                        //   );
+                        // },
                         child: Text(
-                          '联系邮箱: 283187631@qq.com',
+                          '联系邮箱: 请不要联系我',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.primary,
                             decoration: TextDecoration.underline,
@@ -202,7 +202,7 @@ class AboutPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        '© ${DateTime.now().year} 密码管理器. 保留所有权利.',
+                        '© ${DateTime.now().year} 密盾安存. 保留所有权利. 你随便用，我也不管。开心就好。',
                         style: TextStyle(
                           color: Theme.of(context).textTheme.bodySmall?.color,
                           fontSize: 12,
