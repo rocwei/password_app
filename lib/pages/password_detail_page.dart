@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/password_entry.dart';
+import '../models/category.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/auth_helper.dart';
 import '../helpers/encryption_helper.dart';
+import 'add_category_page.dart';
 
 class PasswordDetailPage extends StatefulWidget {
   final PasswordEntry? entry;
   final String? initialPassword;
+  final int? initialCategoryId; // 从分类列表页传入的默认分类ID
 
-  const PasswordDetailPage({super.key, this.entry, this.initialPassword});
+  const PasswordDetailPage({
+    super.key,
+    this.entry,
+    this.initialPassword,
+    this.initialCategoryId,
+  });
 
   @override
   State<PasswordDetailPage> createState() => _PasswordDetailPageState();
@@ -26,20 +34,40 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
   bool _isLoading = false;
   bool get _isEditing => widget.entry != null;
 
+  // 分类相关
+  List<Category> _categories = [];
+  int? _selectedCategoryId; // null 表示"默认分类"
+
   @override
   void initState() {
     super.initState();
+    _loadCategories();
+
     if (_isEditing) {
       // 延迟到下一帧执行，确保 context 已经初始化
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadEntryData();
       });
     } else {
+      // 设置初始分类
+      _selectedCategoryId = widget.initialCategoryId;
+
       // 如果传入了 initialPassword（来自生成器），自动填充密码字段
       if (widget.initialPassword != null &&
           widget.initialPassword!.isNotEmpty) {
         _passwordController.text = widget.initialPassword!;
       }
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    final userId = AuthHelper().getCurrentUserId();
+    if (userId != null) {
+      final dbHelper = DatabaseHelper();
+      final categories = await dbHelper.getCategories(userId);
+      setState(() {
+        _categories = categories;
+      });
     }
   }
 
@@ -68,6 +96,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
         _passwordController.text = decryptedPassword;
         _websiteController.text = widget.entry!.website ?? '';
         _noteController.text = widget.entry!.note ?? '';
+        _selectedCategoryId = widget.entry!.categoryId;
       });
     } catch (e) {
       if (mounted) {
@@ -110,6 +139,8 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
           title: _titleController.text.trim(),
           username: _usernameController.text.trim(),
           encryptedPassword: encryptedPassword,
+          categoryId: _selectedCategoryId,
+          clearCategoryId: _selectedCategoryId == null,
           website: _websiteController.text.trim().isEmpty
               ? null
               : _websiteController.text.trim(),
@@ -124,6 +155,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
         // 创建新条目
         final newEntry = PasswordEntry(
           userId: userId,
+          categoryId: _selectedCategoryId,
           title: _titleController.text.trim(),
           username: _usernameController.text.trim(),
           encryptedPassword: encryptedPassword,
@@ -202,6 +234,9 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
+            // 分类选择器
+            _buildCategorySelector(),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _titleController,
               maxLines: 5, // 设为null表示无最大行数，高度完全自适应；也可设固定值如3/5
@@ -449,5 +484,88 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
         '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  /// 构建分类选择器
+  Widget _buildCategorySelector() {
+    return InputDecorator(
+      decoration: InputDecoration(
+        labelText: '分类',
+        prefixIcon: const Icon(Icons.folder),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color.fromARGB(255, 133, 88, 236),
+            width: 1,
+          ),
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int?>(
+          value: _selectedCategoryId,
+          isExpanded: true,
+          isDense: true,
+          hint: const Text('选择分类'),
+          items: [
+            // 默认分类
+            const DropdownMenuItem<int?>(
+              value: null,
+              child: Text('默认分类'),
+            ),
+            // 用户自定义分类
+            ..._categories.map((category) {
+              return DropdownMenuItem<int?>(
+                value: category.id,
+                child: Text(category.name),
+              );
+            }),
+            // 新建分类选项
+            const DropdownMenuItem<int?>(
+              value: -1, // 特殊值，表示新建分类
+              child: Row(
+                children: [
+                  Icon(Icons.add, size: 18),
+                  SizedBox(width: 8),
+                  Text('新建分类...', style: TextStyle(fontStyle: FontStyle.italic)),
+                ],
+              ),
+            ),
+          ],
+          onChanged: (value) {
+            if (value == -1) {
+              // 跳转到新建分类页面
+              _navigateToAddCategory();
+            } else {
+              setState(() {
+                _selectedCategoryId = value;
+              });
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  /// 跳转到新建分类页面
+  Future<void> _navigateToAddCategory() async {
+    final result = await Navigator.of(context).push<Category>(
+      MaterialPageRoute(builder: (context) => const AddCategoryPage()),
+    );
+
+    if (result != null) {
+      // 重新加载分类列表并选中新创建的分类
+      await _loadCategories();
+      setState(() {
+        _selectedCategoryId = result.id;
+      });
+    }
   }
 }

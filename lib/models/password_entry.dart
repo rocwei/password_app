@@ -1,6 +1,7 @@
 class PasswordEntry {
   final int? id;
   final int userId;
+  final int? categoryId; // 分类ID，null表示默认分类
   final String title;
   final String username;
   final String encryptedPassword; // 加密后的密码
@@ -12,6 +13,7 @@ class PasswordEntry {
   PasswordEntry({
     this.id,
     required this.userId,
+    this.categoryId,
     required this.title,
     required this.username,
     required this.encryptedPassword,
@@ -25,6 +27,7 @@ class PasswordEntry {
     return {
       'id': id,
       'user_id': userId,
+      'category_id': categoryId,
       'title': title,
       'username': username,
       'password': encryptedPassword,
@@ -39,6 +42,7 @@ class PasswordEntry {
     return PasswordEntry(
       id: map['id'],
       userId: map['user_id'],
+      categoryId: map['category_id'],
       title: map['title'],
       username: map['username'],
       encryptedPassword: map['password'],
@@ -56,6 +60,8 @@ class PasswordEntry {
   PasswordEntry copyWith({
     int? id,
     int? userId,
+    int? categoryId,
+    bool clearCategoryId = false,
     String? title,
     String? username,
     String? encryptedPassword,
@@ -67,6 +73,7 @@ class PasswordEntry {
     return PasswordEntry(
       id: id ?? this.id,
       userId: userId ?? this.userId,
+      categoryId: clearCategoryId ? null : (categoryId ?? this.categoryId),
       title: title ?? this.title,
       username: username ?? this.username,
       encryptedPassword: encryptedPassword ?? this.encryptedPassword,

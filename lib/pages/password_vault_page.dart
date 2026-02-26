@@ -1,10 +1,14 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import '../models/password_entry.dart';
+import '../models/category.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/auth_helper.dart';
-import 'password_detail_page.dart';
+import 'category_entries_page.dart';
+import 'add_category_page.dart';
 
+/// 密码库首页 —— 显示分类列表
 class PasswordVaultPage extends StatefulWidget {
   const PasswordVaultPage({super.key});
 
@@ -13,75 +17,109 @@ class PasswordVaultPage extends StatefulWidget {
 }
 
 class _PasswordVaultPageState extends State<PasswordVaultPage> {
-  List<PasswordEntry> _entries = [];
+  List<Category> _categories = [];
+  Map<int?, int> _countMap = {}; // categoryId -> count
   bool _isLoading = true;
-  final _searchController = TextEditingController();
-  List<PasswordEntry> _filteredEntries = [];
 
   @override
   void initState() {
     super.initState();
-    _loadEntries();
+    _loadData();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadEntries() async {
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
 
     try {
       final userId = AuthHelper().getCurrentUserId();
       if (userId != null) {
         final dbHelper = DatabaseHelper();
-        final entries = await dbHelper.getPasswordEntries(userId);
+        final categories = await dbHelper.getCategories(userId);
+        final countMap = await dbHelper.getPasswordCountByCategory(userId);
         setState(() {
-          _entries = entries;
-          _filteredEntries = entries;
+          _categories = categories;
+          _countMap = countMap;
         });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('加载密码条目失败: $e'),
+            content: Text('加载分类失败: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
-  void _filterEntries(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredEntries = _entries;
-      } else {
-        _filteredEntries = _entries.where((entry) {
-          return entry.title.toLowerCase().contains(query.toLowerCase()) ||
-              entry.username.toLowerCase().contains(query.toLowerCase()) ||
-              (entry.website?.toLowerCase().contains(query.toLowerCase()) ??
-                  false);
-        }).toList();
-      }
-    });
+  /// 跳转到新建分类页面
+  Future<Category?> _navigateToAddCategory() async {
+    final result = await Navigator.of(context).push<Category>(
+      MaterialPageRoute(builder: (context) => const AddCategoryPage()),
+    );
+    if (result != null) {
+      await _loadData();
+    }
+    return result;
   }
 
-  Future<void> _deleteEntry(PasswordEntry entry) async {
+  /// 显示编辑分类对话框
+  Future<void> _showEditCategoryDialog(Category category) async {
+    final controller = TextEditingController(text: category.name);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('编辑分类'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: '分类名称',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.trim().isNotEmpty) {
+      final updatedCategory = category.copyWith(
+        name: result.trim(),
+        updatedAt: DateTime.now(),
+      );
+      final dbHelper = DatabaseHelper();
+      await dbHelper.updateCategory(updatedCategory);
+      await _loadData();
+    }
+  }
+
+  /// 删除分类
+  Future<void> _deleteCategory(Category category) async {
+    final count = _countMap[category.id] ?? 0;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('确认删除'),
-        content: Text('确定要删除密码条目"${entry.title}"吗？此操作无法撤销。'),
+        content: Text(
+          '确定要删除分类"${category.name}"吗？'
+          '${count > 0 ? '\n该分类下的 $count 条密码将移至"默认分类"。' : ''}'
+          '\n此操作无法撤销。',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -101,13 +139,15 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
     if (confirmed == true) {
       try {
         final dbHelper = DatabaseHelper();
-        await dbHelper.deletePasswordEntry(entry.id!);
-        await _loadEntries();
+        // 先将该分类下的密码移到默认分类
+        await dbHelper.moveCategoryEntriesToDefault(category.id!);
+        await dbHelper.deleteCategory(category.id!);
+        await _loadData();
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('密码条目已删除'),
+              content: const Text('分类已删除'),
               backgroundColor: Theme.of(context).colorScheme.secondary,
             ),
           );
@@ -125,82 +165,154 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
     }
   }
 
-  void _navigateToDetail({PasswordEntry? entry}) async {
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (context) => PasswordDetailPage(entry: entry)),
+  /// 进入分类密码列表
+  void _navigateToCategory({int? categoryId, required String categoryName}) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CategoryEntriesPage(
+          categoryId: categoryId,
+          categoryName: categoryName,
+        ),
+      ),
     );
+    // 返回后刷新数据（数量可能变化）
+    await _loadData();
+  }
 
-    if (result == true) {
-      await _loadEntries();
+  /// 获取分类图标
+  IconData _getCategoryIcon(String name) {
+    final lowerName = name.toLowerCase();
+    if (lowerName.contains('邮箱') || lowerName.contains('email') || lowerName.contains('mail')) {
+      return Icons.email;
+    } else if (lowerName.contains('银行') || lowerName.contains('bank')) {
+      return Icons.account_balance;
+    } else if (lowerName.contains('社交') || lowerName.contains('social')) {
+      return Icons.people;
+    } else if (lowerName.contains('游戏') || lowerName.contains('game')) {
+      return Icons.sports_esports;
+    } else if (lowerName.contains('购物') || lowerName.contains('shop')) {
+      return Icons.shopping_cart;
+    } else if (lowerName.contains('工作') || lowerName.contains('work')) {
+      return Icons.work;
+    } else if (lowerName.contains('服务器') || lowerName.contains('server')) {
+      return Icons.dns;
+    } else if (lowerName.contains('wifi') || lowerName.contains('网络')) {
+      return Icons.wifi;
     }
+    return Icons.folder;
   }
 
   @override
   Widget build(BuildContext context) {
+    // 默认分类的条目数
+    final defaultCount = _countMap[null] ?? 0;
+    // 全部条目总数
+    final totalCount = _countMap.values.fold(0, (a, b) => a + b);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('密码库'),
         elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: '搜索密码条目...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color: const Color.fromARGB(255, 133, 88, 236),
-                    width: 1,
-                  ),
-                ),
-                prefixIcon: const Icon(Icons.search),
-                // helperText: '搜索密码条目标题、用户名或网址',
-              ),
-              onChanged: _filterEntries,
-            ),
-          ),
-        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _loadEntries,
-              child: _filteredEntries.isEmpty
-                  ? // For empty state we still need a scrollable child so RefreshIndicator can work
-                    SingleChildScrollView(
+              onRefresh: _loadData,
+              child: (_categories.isEmpty && defaultCount == 0)
+                  ? SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: SizedBox(
-                        // Ensure the scrollable has at least the viewport height so pull works
-                        height:
-                            MediaQuery.of(context).size.height -
-                            (Scaffold.of(context).appBarMaxHeight ??
-                                kToolbarHeight) -
-                            60,
+                        height: MediaQuery.of(context).size.height -
+                            (Scaffold.of(context).appBarMaxHeight ?? kToolbarHeight),
                         child: _buildEmptyState(),
                       ),
                     )
-                  : ListView.builder(
-                      itemCount: _filteredEntries.length,
-                      itemBuilder: (context, index) {
-                        final entry = _filteredEntries[index];
-                        return _buildEntryCard(entry);
-                      },
+                  : ListView(
+                      children: [
+                        // 顶部统计卡片
+                        _buildStatsCard(totalCount),
+                        const SizedBox(height: 8),
+                        // 默认分类
+                        _buildCategoryTile(
+                          icon: Icons.inbox,
+                          name: '默认分类',
+                          count: defaultCount,
+                          onTap: () => _navigateToCategory(
+                            categoryId: null,
+                            categoryName: '默认分类',
+                          ),
+                          canSlide: false,
+                        ),
+                        // 用户自定义分类
+                        ..._categories.map((category) {
+                          final count = _countMap[category.id] ?? 0;
+                          return _buildCategoryTile(
+                            icon: _getCategoryIcon(category.name),
+                            name: category.name,
+                            count: count,
+                            onTap: () => _navigateToCategory(
+                              categoryId: category.id,
+                              categoryName: category.name,
+                            ),
+                            canSlide: true,
+                            onEdit: () => _showEditCategoryDialog(category),
+                            onDelete: () => _deleteCategory(category),
+                          );
+                        }),
+                        const SizedBox(height: 80), // 留空给FAB
+                      ],
                     ),
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToDetail(),
-        child: const Icon(Icons.add),
+        onPressed: _navigateToAddCategory,
+        tooltip: '新建分类',
+        child: const Icon(Icons.create_new_folder),
+      ),
+    );
+  }
+
+  Widget _buildStatsCard(int totalCount) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Card(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        elevation: 0.5,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(
+                Icons.lock,
+                size: 32,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '共 $totalCount 条密码',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                  Text(
+                    '${_categories.length + 1} 个分类',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -211,13 +323,13 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.lock_outline,
+            Icons.folder_open,
             size: 80,
             color: Theme.of(context).disabledColor,
           ),
           const SizedBox(height: 16),
           Text(
-            '还没有密码条目',
+            '还没有分类和密码',
             style: TextStyle(
               fontSize: 20,
               color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -225,7 +337,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            '点击右下角的 + 按钮添加您的第一个密码',
+            '点击右下角按钮新建分类开始管理密码',
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -233,81 +345,77 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => _navigateToDetail(),
-            icon: const Icon(Icons.add),
-            label: const Text('添加密码'),
+            onPressed: _navigateToAddCategory,
+            icon: const Icon(Icons.create_new_folder),
+            label: const Text('新建分类'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEntryCard(PasswordEntry entry) {
+  Widget _buildCategoryTile({
+    required IconData icon,
+    required String name,
+    required int count,
+    required VoidCallback onTap,
+    required bool canSlide,
+    VoidCallback? onEdit,
+    VoidCallback? onDelete,
+  }) {
+    final tile = Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      color: Theme.of(context).scaffoldBackgroundColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(
+          color: Colors.blue.shade300,
+          width: 1,
+        ),
+      ),
+      elevation: 0.5,
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          child: Icon(icon, size: 20),
+        ),
+        title: Text(
+          name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text('$count 条密码'),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: onTap,
+      ),
+    );
+
+    if (!canSlide) return tile;
+
     return Slidable(
       endActionPane: ActionPane(
         motion: const ScrollMotion(),
         children: [
           SlidableAction(
-            onPressed: (context) => _navigateToDetail(entry: entry),
+            onPressed: (_) => onEdit?.call(),
             backgroundColor: Theme.of(context).colorScheme.primary,
             foregroundColor: Theme.of(context).colorScheme.onPrimary,
             icon: Icons.edit,
             label: '编辑',
-            borderRadius: BorderRadius.circular(10), // 10px圆角
+            borderRadius: BorderRadius.circular(10),
           ),
           const SizedBox(width: 8),
           SlidableAction(
-            onPressed: (context) => _deleteEntry(entry),
+            onPressed: (_) => onDelete?.call(),
             backgroundColor: Theme.of(context).colorScheme.error,
             foregroundColor: Theme.of(context).colorScheme.onError,
             icon: Icons.delete,
             label: '删除',
-            borderRadius: BorderRadius.circular(10), // 10px圆角
+            borderRadius: BorderRadius.circular(10),
           ),
         ],
       ),
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        color: Theme.of(context).scaffoldBackgroundColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10), // 10px圆角
-          side: BorderSide(
-            // ignore: deprecated_member_use
-            color: Colors.blue.shade300,
-            width: 1,
-          ),
-        ),
-        elevation: 0.5,
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Theme.of(context).colorScheme.onPrimary,
-            child: Text(
-              entry.title.isNotEmpty ? entry.title[0].toUpperCase() : '?',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          title: Text(
-            entry.title,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('用户名: ${entry.username}'),
-              // if (entry.website != null && entry.website!.isNotEmpty)
-              //   Text(
-              //     '网址: ${entry.website}',
-              //     style: TextStyle(
-              //       color: Theme.of(context).colorScheme.primary,
-              //     ),
-              //   ),
-            ],
-          ),
-          trailing: const Icon(Icons.arrow_forward_ios),
-          onTap: () => _navigateToDetail(entry: entry),
-        ),
-      ),
+      child: tile,
     );
   }
 }

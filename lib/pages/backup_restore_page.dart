@@ -81,10 +81,11 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       final backupKey = AuthHelper().getBackupKey(masterPassword);
       if (backupKey == null) throw Exception('无法生成备份密钥');
 
-      // 4. 导出密码条目 & OTP 令牌
+      // 4. 导出密码条目 & OTP 令牌 & 分类
       final dbHelper = DatabaseHelper();
       final entries = await dbHelper.exportPasswordEntries(userId);
       final otpTokens = await OtpHelper.exportTokens();
+      final categories = await dbHelper.exportCategories(userId);
 
       // 5. 逐条用备份密钥重新加密密码
       final reEncryptedEntries = <Map<String, dynamic>>[];
@@ -106,11 +107,12 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
 
       // 6. 组装备份 JSON 结构
       final backupData = {
-        'version': '3.0', // 文件备份版本
+        'version': '3.1', // 文件备份版本（包含分类）
         'timestamp': DateTime.now().toIso8601String(),
         'user_id': userId,
         'entries': reEncryptedEntries,
         'otp_tokens': otpTokens,
+        'categories': categories,
       };
       final jsonString = jsonEncode(backupData);
 
@@ -361,10 +363,19 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         otpTokens = jsonData['otp_tokens'] as List<dynamic>;
       }
 
+      // 获取分类数据（兼容旧版本备份）
+      List<dynamic>? backupCategories;
+      if (jsonData.containsKey('categories')) {
+        backupCategories = jsonData['categories'] as List<dynamic>;
+      }
+
       if (!mounted) return;
 
       // 8. 确认恢复操作
       String restoreInfoText = '将恢复 ${entries.length} 个密码条目';
+      if (backupCategories != null && backupCategories.isNotEmpty) {
+        restoreInfoText += '、${backupCategories.length} 个分类';
+      }
       if (otpTokens != null && otpTokens.isNotEmpty) {
         restoreInfoText += ' 和 ${otpTokens.length} 个 OTP 令牌';
       }
@@ -414,6 +425,30 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       // 9. 清除当前数据
       final dbHelper = DatabaseHelper();
       await dbHelper.clearPasswordEntries(userId);
+      await dbHelper.clearCategories(userId);
+
+      // 9.5 恢复分类（如果有）并建立旧ID到新ID的映射
+      final Map<int, int> categoryIdMapping = {}; // oldId -> newId
+      if (backupCategories != null && backupCategories.isNotEmpty) {
+        for (final catData in backupCategories) {
+          try {
+            final oldId = catData['id'] as int;
+            final categoryMap = {
+              'user_id': userId,
+              'name': catData['name'],
+              'icon': catData['icon'],
+              'created_at': catData['created_at'],
+              'updated_at': DateTime.now().toIso8601String(),
+            };
+            final newId = await dbHelper.database.then(
+              (db) => db.insert('categories', categoryMap),
+            );
+            categoryIdMapping[oldId] = newId;
+          } catch (e) {
+            // 忽略单条分类恢复失败，继续恢复其他数据
+          }
+        }
+      }
 
       // 10. 逐条恢复密码条目
       int restoredCount = 0;
@@ -429,8 +464,16 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
           final deviceEncryptedPassword =
               EncryptionHelper().encryptString(plainPassword);
 
+          // 映射分类ID
+          int? newCategoryId;
+          if (entryData['category_id'] != null) {
+            final oldCatId = entryData['category_id'] as int;
+            newCategoryId = categoryIdMapping[oldCatId];
+          }
+
           final entry = {
             'user_id': userId,
+            'category_id': newCategoryId,
             'title': entryData['title'],
             'username': entryData['username'],
             'password': deviceEncryptedPassword,
@@ -463,6 +506,9 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
 
       // 12. 显示恢复成功提示并跳转到首页
       String successMessage = '成功恢复 $restoredCount 个密码条目';
+      if (categoryIdMapping.isNotEmpty) {
+        successMessage += '、${categoryIdMapping.length} 个分类';
+      }
       if (restoredOtpCount > 0) {
         successMessage += ' 和 $restoredOtpCount 个 OTP 令牌';
       }
