@@ -52,9 +52,10 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
           userId,
           widget.categoryId,
         );
+        if (!mounted) return;
         setState(() {
           _entries = entries;
-          _filteredEntries = entries;
+          _filteredEntries = _getFilteredEntries(_searchController.text);
         });
       }
     } catch (e) {
@@ -67,23 +68,29 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
         );
       }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   void _filterEntries(String query) {
     setState(() {
-      if (query.isEmpty) {
-        _filteredEntries = _entries;
-      } else {
-        _filteredEntries = _entries.where((entry) {
-          return entry.title.toLowerCase().contains(query.toLowerCase()) ||
-              entry.username.toLowerCase().contains(query.toLowerCase()) ||
-              (entry.website?.toLowerCase().contains(query.toLowerCase()) ??
-                  false);
-        }).toList();
-      }
+      _filteredEntries = _getFilteredEntries(query);
     });
+  }
+
+  List<PasswordEntry> _getFilteredEntries(String query) {
+    final normalizedQuery = query.trim().toLowerCase();
+    if (normalizedQuery.isEmpty) {
+      return _entries;
+    }
+
+    return _entries.where((entry) {
+      return entry.title.toLowerCase().contains(normalizedQuery) ||
+          entry.username.toLowerCase().contains(normalizedQuery) ||
+          (entry.website?.toLowerCase().contains(normalizedQuery) ?? false);
+    }).toList();
   }
 
   Future<void> _deleteEntry(PasswordEntry entry) async {
@@ -203,26 +210,32 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadEntries,
-              child: _filteredEntries.isEmpty
-                  ? SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: SizedBox(
-                        height: MediaQuery.of(context).size.height -
-                            (Scaffold.of(context).appBarMaxHeight ??
-                                kToolbarHeight) -
-                            60,
-                        child: _buildEmptyState(),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: _filteredEntries.length,
-                      itemBuilder: (context, index) {
-                        final entry = _filteredEntries[index];
-                        return _buildEntryCard(entry);
-                      },
-                    ),
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                return RefreshIndicator(
+                  onRefresh: _loadEntries,
+                  child: _filteredEntries.isEmpty
+                      ? SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: _buildEmptyState(
+                              isSearching:
+                                  _searchController.text.trim().isNotEmpty,
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: _filteredEntries.length,
+                          itemBuilder: (context, index) {
+                            final entry = _filteredEntries[index];
+                            return _buildEntryCard(entry);
+                          },
+                        ),
+                );
+              },
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToDetail(),
@@ -231,19 +244,19 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState({required bool isSearching}) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.lock_outline,
+            isSearching ? Icons.search_off : Icons.lock_outline,
             size: 80,
             color: Theme.of(context).disabledColor,
           ),
           const SizedBox(height: 16),
           Text(
-            '该分类还没有密码条目',
+            isSearching ? '没有找到匹配的密码条目' : '该分类还没有密码条目',
             style: TextStyle(
               fontSize: 20,
               color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -251,18 +264,20 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            '点击右下角的 + 按钮添加密码',
+            isSearching ? '请尝试其他关键词' : '点击右下角的 + 按钮添加密码',
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => _navigateToDetail(),
-            icon: const Icon(Icons.add),
-            label: const Text('添加密码'),
-          ),
+          if (!isSearching) ...[
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => _navigateToDetail(),
+              icon: const Icon(Icons.add),
+              label: const Text('添加密码'),
+            ),
+          ],
         ],
       ),
     );

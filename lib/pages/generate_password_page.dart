@@ -286,7 +286,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                   ),
                 ),
                 elevation: 0.5,
-                child: Padding(
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,6 +321,9 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
 
                       // 字符类型选择
                       CheckboxListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
                         title: const Text('包含大写字母 (A-Z)'),
                         value: _includeUppercase,
                         onChanged: (value) {
@@ -331,6 +334,9 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                         },
                       ),
                       CheckboxListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
                         title: const Text('包含小写字母 (a-z)'),
                         value: _includeLowercase,
                         onChanged: (value) {
@@ -341,6 +347,9 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                         },
                       ),
                       CheckboxListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
                         title: const Text('包含数字 (0-9)'),
                         value: _includeNumbers,
                         onChanged: (value) {
@@ -351,6 +360,9 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                         },
                       ),
                       CheckboxListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
                         title: const Text('包含特殊字符 (!@#\$%^&*)'),
                         value: _includeSpecialChars,
                         onChanged: (value) {
@@ -361,6 +373,9 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                         },
                       ),
                       CheckboxListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
                         title: const Text('排除相似字符 (il1Lo0O)'),
                         value: _excludeSimilar,
                         onChanged: (value) {
