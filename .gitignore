@@ -48,3 +48,4 @@ IOS_BUILD_GUIDE.md
 IOS_CONFIG_CHECKLIST.md
 update_bundle_id.ps1
 update_bundle_id.sh
+docs/
