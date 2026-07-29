@@ -26,15 +26,15 @@ class LocalVaultDeletionService {
       return LocalVaultDeletionResult.unavailable;
     }
 
-    final passwordHash = EncryptionHelper.hashMasterPassword(
-      masterPassword,
-      user.salt,
-    );
-    if (passwordHash != user.masterPasswordHash) {
-      return LocalVaultDeletionResult.incorrectPassword;
-    }
-
     try {
+      final passwordHash = EncryptionHelper.hashMasterPassword(
+        masterPassword,
+        user.salt,
+      );
+      if (passwordHash != user.masterPasswordHash) {
+        return LocalVaultDeletionResult.incorrectPassword;
+      }
+
       await deleteDatabase();
       await clearSecureStorage();
       clearSession();

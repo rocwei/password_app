@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:password_manager/helpers/encryption_helper.dart';
 import 'package:password_manager/helpers/local_vault_deletion_service.dart';
@@ -58,19 +60,36 @@ void main() {
 
   test('deletes database, storage, and session in order', () async {
     final calls = <String>[];
+    final databaseCompleter = Completer<void>();
+    final storageCompleter = Completer<void>();
     final service = LocalVaultDeletionService(
-      deleteDatabase: () async => calls.add('database'),
-      clearSecureStorage: () async => calls.add('storage'),
+      deleteDatabase: () {
+        calls.add('database');
+        return databaseCompleter.future;
+      },
+      clearSecureStorage: () {
+        calls.add('storage');
+        return storageCompleter.future;
+      },
     );
 
-    final result = await service.delete(
+    final deletion = service.delete(
       user: user,
       masterPassword: 'StrongPass123',
       clearSession: () => calls.add('session'),
     );
 
-    expect(result, LocalVaultDeletionResult.success);
+    await Future<void>.value();
+    expect(calls, ['database']);
+
+    databaseCompleter.complete();
+    await Future<void>.value();
+    expect(calls, ['database', 'storage']);
+
+    storageCompleter.complete();
+    await Future<void>.value();
     expect(calls, ['database', 'storage', 'session']);
+    expect(await deletion, LocalVaultDeletionResult.success);
   });
 
   test('returns failed without clearing session when storage throws', () async {
@@ -92,4 +111,30 @@ void main() {
     expect(result, LocalVaultDeletionResult.failed);
     expect(calls, ['database', 'storage']);
   });
+
+  test(
+    'returns failed without invoking callbacks when salt is invalid',
+    () async {
+      final calls = <String>[];
+      final invalidUser = User(
+        id: 1,
+        username: 'user',
+        masterPasswordHash: user.masterPasswordHash,
+        salt: 'not-valid-base64!',
+      );
+      final service = LocalVaultDeletionService(
+        deleteDatabase: () async => calls.add('database'),
+        clearSecureStorage: () async => calls.add('storage'),
+      );
+
+      final result = await service.delete(
+        user: invalidUser,
+        masterPassword: 'StrongPass123',
+        clearSession: () => calls.add('session'),
+      );
+
+      expect(result, LocalVaultDeletionResult.failed);
+      expect(calls, isEmpty);
+    },
+  );
 }
