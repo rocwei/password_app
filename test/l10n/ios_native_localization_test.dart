@@ -8,19 +8,22 @@ void main() {
   const projectPath = 'ios/Runner.xcodeproj/project.pbxproj';
   const englishStringsPath = 'ios/Runner/en.lproj/InfoPlist.strings';
   const chineseStringsPath = 'ios/Runner/zh-Hans.lproj/InfoPlist.strings';
+  const traditionalChineseStringsPath =
+      'ios/Runner/zh-Hant.lproj/InfoPlist.strings';
 
   test('iOS Info.plist declares the supported native localizations', () {
     final infoPlist = _readPlist(infoPlistPath);
 
     expect(
       infoPlist['CFBundleLocalizations'],
-      containsAll(<String>['en', 'zh-Hans']),
+      containsAll(<String>['en', 'zh-Hans', 'zh-Hant']),
     );
   });
 
   test('iOS native Info.plist strings are valid and complete', () {
     final english = _readPlist(englishStringsPath);
     final chinese = _readPlist(chineseStringsPath);
+    final traditionalChinese = _readPlist(traditionalChineseStringsPath);
 
     expect(english, <String, dynamic>{
       'CFBundleDisplayName': 'Secure Vault',
@@ -40,6 +43,14 @@ void main() {
       'CFBundleTypeName': '密盾安存备份',
       'UTTypeDescription': '密盾安存备份文件',
     });
+    expect(traditionalChinese, <String, dynamic>{
+      'CFBundleDisplayName': '密盾安存',
+      'CFBundleName': '密盾安存',
+      'NSCameraUsageDescription': '用於掃描 OTP 二維碼並新增驗證器帳戶。',
+      'NSFaceIDUsageDescription': '用於透過 Face ID 解鎖本機密碼庫。',
+      'CFBundleTypeName': '密盾安存備份',
+      'UTTypeDescription': '密盾安存備份檔案',
+    });
   });
 
   test('Xcode includes one localized InfoPlist.strings resource group', () {
@@ -53,8 +64,13 @@ void main() {
       _occurrences(project, 'path = "zh-Hans.lproj/InfoPlist.strings";'),
       1,
     );
+    expect(
+      _occurrences(project, 'path = "zh-Hant.lproj/InfoPlist.strings";'),
+      1,
+    );
     expect(_occurrences(project, 'InfoPlist.strings in Resources'), 2);
     expect(_occurrences(project, '\n\t\t\t\t"zh-Hans",'), 1);
+    expect(_occurrences(project, '\n\t\t\t\t"zh-Hant",'), 1);
   });
 }
 
