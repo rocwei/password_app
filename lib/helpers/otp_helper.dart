@@ -94,8 +94,13 @@ class OtpHelper {
 
   static Future<List<OtpToken>> _getAllTokensUnlocked() async {
     try {
-      await _recoverPendingTransaction(OtpStorageOperation.load);
+      await _recoverPendingTransaction();
       return _tokensFromSnapshot(await _captureSnapshot());
+    } on _OtpRecoveryFailure {
+      throw const OtpStorageException(
+        OtpStorageOperation.load,
+        recoveryPending: true,
+      );
     } on OtpStorageException {
       rethrow;
     } catch (error) {
@@ -208,7 +213,11 @@ class OtpHelper {
     OtpStorageOperation operation,
     _OtpStorageSnapshot Function(_OtpStorageSnapshot before) buildAfter,
   ) async {
-    await _recoverPendingTransaction(operation);
+    try {
+      await _recoverPendingTransaction();
+    } on _OtpRecoveryFailure {
+      throw OtpStorageException(operation, recoveryPending: true);
+    }
 
     try {
       final before = await _captureSnapshot();
@@ -229,6 +238,7 @@ class OtpHelper {
     _OtpStorageSnapshot after,
   ) async {
     final affectedIds = {...before.records.keys, ...after.records.keys};
+    var commitIntentPersisted = false;
     final preparedJournal = _OtpStorageJournal(
       recovery: _OtpRecoveryTarget.before,
       phase: _OtpTransactionPhase.prepared,
@@ -255,26 +265,35 @@ class OtpHelper {
         key: _transactionKey,
         value: jsonEncode(commitJournal.toJson()),
       );
+      commitIntentPersisted = true;
 
       await _writeIndex(after.index);
       await _deleteUnreferencedRecords(affectedIds, after.records.keys.toSet());
       await _storage.delete(key: _transactionKey);
     } catch (error) {
       _debugLog('${operation.name} OTP 事务中断', error);
-      final recoveredTarget = await _recoverPendingTransaction(operation);
-      if (recoveredTarget == _OtpRecoveryTarget.after) return;
-      throw OtpStorageException(operation);
+      try {
+        final recoveredTarget = await _recoverPendingTransaction();
+        if (recoveredTarget == _OtpRecoveryTarget.after) return;
+        throw OtpStorageException(operation);
+      } on _OtpRecoveryFailure catch (recoveryFailure) {
+        if (commitIntentPersisted ||
+            recoveryFailure.target == _OtpRecoveryTarget.after) {
+          return;
+        }
+        throw OtpStorageException(operation, recoveryPending: true);
+      }
     }
   }
 
-  static Future<_OtpRecoveryTarget?> _recoverPendingTransaction(
-    OtpStorageOperation operation,
-  ) async {
+  static Future<_OtpRecoveryTarget?> _recoverPendingTransaction() async {
+    _OtpRecoveryTarget? recoveryTarget;
     try {
       final journalJson = await _storage.read(key: _transactionKey);
       if (journalJson == null) return null;
 
       final journal = _OtpStorageJournal.fromJson(journalJson);
+      recoveryTarget = journal.recovery;
       final snapshot = journal.recovery == _OtpRecoveryTarget.before
           ? journal.before
           : journal.after;
@@ -284,7 +303,7 @@ class OtpHelper {
       return journal.recovery;
     } catch (error) {
       _debugLog('OTP 事务恢复出错', error);
-      throw OtpStorageException(operation, recoveryPending: true);
+      throw _OtpRecoveryFailure(recoveryTarget);
     }
   }
 
@@ -393,6 +412,12 @@ class OtpHelper {
 enum _OtpRecoveryTarget { before, after }
 
 enum _OtpTransactionPhase { prepared, commitIntent }
+
+class _OtpRecoveryFailure implements Exception {
+  const _OtpRecoveryFailure(this.target);
+
+  final _OtpRecoveryTarget? target;
+}
 
 class _OtpStorageSnapshot {
   const _OtpStorageSnapshot({required this.index, required this.records});

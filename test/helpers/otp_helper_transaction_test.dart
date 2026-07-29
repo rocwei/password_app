@@ -282,24 +282,50 @@ void main() {
   );
 
   test(
-    'failed after recovery keeps journal and a later load commits it',
+    'failed after recovery returns save success and later load commits once',
     () async {
-      backend.values.addAll(_storedToken('old', 'Old', 'JBSWY3DPEHPK3PXP'));
       backend.failWriteOnCall(_indexKey, 1);
       backend.failWriteOnCall(_indexKey, 2);
 
-      await expectLater(
-        OtpHelper.saveToken(_newToken()),
-        throwsA(
-          isStorageFailure(OtpStorageOperation.save, recoveryPending: true),
-        ),
-      );
+      await OtpHelper.saveToken(_newToken());
 
       expect(_journalRecovery(backend), 'after');
       _expectNoDanglingIndex(backend);
 
       final loaded = await OtpHelper.getAllTokens();
-      expect(loaded.map((token) => token.id), ['old', 'new']);
+      expect(loaded.map((token) => token.id), ['new']);
+      expect(backend.values, isNot(contains(_journalKey)));
+      _expectNoDanglingIndex(backend);
+    },
+  );
+
+  test(
+    'before-pending retry with the same id stores exactly one token',
+    () async {
+      final token = OtpToken(
+        id: 'same',
+        label: 'Same',
+        secret: 'JBSWY3DPEHPK3PXP',
+      );
+      backend.failWriteOnCall('otp_token_same', 1);
+      backend.failDeleteOnCall(_indexKey, 1);
+
+      await expectLater(
+        OtpHelper.saveToken(token),
+        throwsA(
+          isStorageFailure(OtpStorageOperation.save, recoveryPending: true),
+        ),
+      );
+      expect(_journalRecovery(backend), 'before');
+
+      await OtpHelper.saveToken(token);
+
+      final loaded = await OtpHelper.getAllTokens();
+      expect(loaded, hasLength(1));
+      expect(loaded.single.id, 'same');
+      expect((jsonDecode(backend.values[_indexKey]!) as List<dynamic>), [
+        'same',
+      ]);
       expect(backend.values, isNot(contains(_journalKey)));
       _expectNoDanglingIndex(backend);
     },
@@ -329,21 +355,24 @@ void main() {
   );
 
   test(
-    'import after-index failure completes the full after snapshot',
+    'failed after recovery returns import success and later load commits once',
     () async {
       backend.values.addAll(_storedToken('old', 'Old', 'JBSWY3DPEHPK3PXP'));
       backend.failWriteOnCall(_indexKey, 1);
+      backend.failWriteOnCall(_indexKey, 2);
 
       await OtpHelper.importTokens([
-        {'id': 'new-one', 'label': 'New One', 'secret': 'JBSWY3DPEHPK3PXP'},
-        {'id': 'new-two', 'label': 'New Two', 'secret': 'KRUGS4ZANFZSAYJA'},
+        {'id': 'target', 'label': 'Target', 'secret': 'KRUGS4ZANFZSAYJA'},
       ]);
 
+      expect(_journalRecovery(backend), 'after');
+      _expectNoDanglingIndex(backend);
+
       expect((await OtpHelper.getAllTokens()).map((token) => token.id), [
-        'new-one',
-        'new-two',
+        'target',
       ]);
       expect(backend.values, isNot(contains('otp_token_old')));
+      expect(backend.values, isNot(contains(_journalKey)));
       _expectNoDanglingIndex(backend);
     },
   );
@@ -360,12 +389,7 @@ void main() {
       backend.failDeleteOnCall('otp_token_one', 1);
       backend.failDeleteOnCall('otp_token_one', 2);
 
-      await expectLater(
-        OtpHelper.clearAllTokens(),
-        throwsA(
-          isStorageFailure(OtpStorageOperation.clear, recoveryPending: true),
-        ),
-      );
+      await OtpHelper.clearAllTokens();
 
       expect(_journalRecovery(backend), 'after');
       _expectNoDanglingIndex(backend);
