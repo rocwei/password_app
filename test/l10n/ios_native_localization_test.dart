@@ -56,8 +56,10 @@ void main() {
   test('Xcode includes one localized InfoPlist.strings resource group', () {
     final project = File(projectPath).readAsStringSync();
 
-    expect(_occurrences(project, '/* InfoPlist.strings */ = {'),
-        greaterThanOrEqualTo(1));
+    expect(
+      _occurrences(project, '/* InfoPlist.strings */ = {'),
+      greaterThanOrEqualTo(1),
+    );
     expect(_occurrences(project, 'name = InfoPlist.strings;'), 1);
     expect(_occurrences(project, 'path = en.lproj/InfoPlist.strings;'), 1);
     expect(
@@ -75,10 +77,13 @@ void main() {
 }
 
 Map<String, dynamic> _readPlist(String path) {
-  final result = Process.runSync(
-    'plutil',
-    <String>['-convert', 'json', '-o', '-', path],
-  );
+  final result = Process.runSync('plutil', <String>[
+    '-convert',
+    'json',
+    '-o',
+    '-',
+    path,
+  ]);
   expect(
     result.exitCode,
     0,
