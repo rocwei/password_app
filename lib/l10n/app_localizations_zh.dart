@@ -231,4 +231,278 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get languageChangeFailed => '无法保存语言设置，请重试';
+
+  @override
+  String get vault => '密码库';
+
+  @override
+  String get generatePasswordNavigationLabel => '生成密码';
+
+  @override
+  String get otpNavigationLabel => 'OTP 验证';
+
+  @override
+  String get loadingVault => '正在加载密码库';
+
+  @override
+  String get vaultLoadFailed => '无法加载密码库，请重试';
+
+  @override
+  String passwordCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 条密码',
+      zero: '0 条密码',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String categoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个分类',
+      zero: '0 个分类',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get defaultCategory => '默认分类';
+
+  @override
+  String get addCategory => '新建分类';
+
+  @override
+  String get editCategory => '编辑分类';
+
+  @override
+  String get categoryName => '分类名称';
+
+  @override
+  String get categoryIcon => '分类图标';
+
+  @override
+  String get categoryNameRequiredLabel => '分类名称 *';
+
+  @override
+  String get categoryNameExample => '例如：邮箱、银行卡或社交';
+
+  @override
+  String get categoryNameHelper => '给分类取一个容易辨识的名称';
+
+  @override
+  String get categoryNameRequired => '请输入分类名称';
+
+  @override
+  String get categoryNameDuplicate => '已存在同名分类';
+
+  @override
+  String get saveCategory => '保存分类';
+
+  @override
+  String get updateCategory => '更新分类';
+
+  @override
+  String categoryCreated(String categoryName) {
+    return '分类“$categoryName”已创建';
+  }
+
+  @override
+  String categoryUpdated(String categoryName) {
+    return '分类“$categoryName”已更新';
+  }
+
+  @override
+  String get categorySaveFailed => '无法保存分类，请重试';
+
+  @override
+  String get noPasswordsYet => '还没有密码';
+
+  @override
+  String get emptyVaultDescription => '新建分类或添加密码，开始使用密码库';
+
+  @override
+  String get edit => '编辑';
+
+  @override
+  String get delete => '删除';
+
+  @override
+  String get confirm => '确定';
+
+  @override
+  String get confirmDelete => '确认删除';
+
+  @override
+  String deleteCategoryConfirmation(String categoryName) {
+    return '确定要删除分类“$categoryName”吗？';
+  }
+
+  @override
+  String deleteCategoryMovePasswords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '该分类下的 $count 条密码将移至默认分类。',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get actionCannotBeUndone => '此操作无法撤销。';
+
+  @override
+  String get categoryDeleted => '分类已删除';
+
+  @override
+  String get categoryDeleteFailed => '无法删除分类，请重试';
+
+  @override
+  String get searchPasswordsHint => '搜索密码条目...';
+
+  @override
+  String get clearSearch => '清除搜索';
+
+  @override
+  String get passwordEntriesLoadFailed => '无法加载密码条目，请重试';
+
+  @override
+  String noResultsFor(String query) {
+    return '没有“$query”的搜索结果';
+  }
+
+  @override
+  String get tryAnotherSearch => '请尝试其他关键词';
+
+  @override
+  String get emptyCategory => '该分类还没有密码';
+
+  @override
+  String get emptyCategoryDescription => '点击添加按钮保存密码';
+
+  @override
+  String get addPassword => '添加密码';
+
+  @override
+  String get editPassword => '编辑密码';
+
+  @override
+  String get passwordDetails => '密码详情';
+
+  @override
+  String deletePasswordConfirmation(String title) {
+    return '确定要删除密码“$title”吗？此操作无法撤销。';
+  }
+
+  @override
+  String get passwordDeleted => '密码已删除';
+
+  @override
+  String get passwordDeleteFailed => '无法删除密码，请重试';
+
+  @override
+  String usernameValue(String username) {
+    return '用户名：$username';
+  }
+
+  @override
+  String get titleRequiredLabel => '标题 *';
+
+  @override
+  String get titleExample => '例如：Gmail、微信或银行卡';
+
+  @override
+  String get titleRequired => '请输入标题';
+
+  @override
+  String get username => '用户名';
+
+  @override
+  String get usernameRequiredLabel => '用户名 *';
+
+  @override
+  String get usernameRequired => '请输入用户名';
+
+  @override
+  String get password => '密码';
+
+  @override
+  String get passwordRequiredLabel => '密码 *';
+
+  @override
+  String get passwordRequired => '请输入密码';
+
+  @override
+  String get website => '网址';
+
+  @override
+  String get websiteExample => '例如：https://www.example.com';
+
+  @override
+  String get notes => '备注';
+
+  @override
+  String get notesHelper => '添加额外的备注信息';
+
+  @override
+  String get category => '分类';
+
+  @override
+  String get selectCategory => '选择分类';
+
+  @override
+  String get newCategoryOption => '新建分类...';
+
+  @override
+  String get showPassword => '显示密码';
+
+  @override
+  String get hidePassword => '隐藏密码';
+
+  @override
+  String get copyPassword => '复制密码';
+
+  @override
+  String copyField(String fieldName) {
+    return '复制$fieldName';
+  }
+
+  @override
+  String fieldCopied(String fieldName) {
+    return '$fieldName已复制到剪贴板';
+  }
+
+  @override
+  String get save => '保存';
+
+  @override
+  String get savePassword => '保存密码';
+
+  @override
+  String get updatePassword => '更新密码';
+
+  @override
+  String get passwordSaved => '密码已保存';
+
+  @override
+  String get passwordUpdated => '密码已更新';
+
+  @override
+  String get passwordSaveFailed => '无法保存密码，请重试';
+
+  @override
+  String get passwordDecryptFailed => '无法读取密码，请重试';
+
+  @override
+  String createdAt(String date) {
+    return '创建时间：$date';
+  }
+
+  @override
+  String updatedAt(String date) {
+    return '更新时间：$date';
+  }
 }

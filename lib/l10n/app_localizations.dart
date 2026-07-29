@@ -517,6 +517,468 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'无法保存语言设置，请重试'**
   String get languageChangeFailed;
+
+  /// Password vault page title and bottom navigation label
+  ///
+  /// In zh, this message translates to:
+  /// **'密码库'**
+  String get vault;
+
+  /// Bottom navigation label for the password generator
+  ///
+  /// In zh, this message translates to:
+  /// **'生成密码'**
+  String get generatePasswordNavigationLabel;
+
+  /// Bottom navigation label for one-time passwords
+  ///
+  /// In zh, this message translates to:
+  /// **'OTP 验证'**
+  String get otpNavigationLabel;
+
+  /// Accessibility label shown while the vault is loading
+  ///
+  /// In zh, this message translates to:
+  /// **'正在加载密码库'**
+  String get loadingVault;
+
+  /// Generic error shown when vault categories and counts cannot be loaded
+  ///
+  /// In zh, this message translates to:
+  /// **'无法加载密码库，请重试'**
+  String get vaultLoadFailed;
+
+  /// Number of passwords shown in vault statistics and category cards
+  ///
+  /// In zh, this message translates to:
+  /// **'{count, plural, =0{0 条密码} other{{count} 条密码}}'**
+  String passwordCount(int count);
+
+  /// Number of categories shown in vault statistics
+  ///
+  /// In zh, this message translates to:
+  /// **'{count, plural, =0{0 个分类} other{{count} 个分类}}'**
+  String categoryCount(int count);
+
+  /// Built-in category name for passwords without a user category
+  ///
+  /// In zh, this message translates to:
+  /// **'默认分类'**
+  String get defaultCategory;
+
+  /// Title and action for creating a category
+  ///
+  /// In zh, this message translates to:
+  /// **'新建分类'**
+  String get addCategory;
+
+  /// Title and action for editing a user category
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑分类'**
+  String get editCategory;
+
+  /// Label for a category name field
+  ///
+  /// In zh, this message translates to:
+  /// **'分类名称'**
+  String get categoryName;
+
+  /// Accessibility label for the category icon
+  ///
+  /// In zh, this message translates to:
+  /// **'分类图标'**
+  String get categoryIcon;
+
+  /// Required category name field label
+  ///
+  /// In zh, this message translates to:
+  /// **'分类名称 *'**
+  String get categoryNameRequiredLabel;
+
+  /// Example category names shown in the category form
+  ///
+  /// In zh, this message translates to:
+  /// **'例如：邮箱、银行卡或社交'**
+  String get categoryNameExample;
+
+  /// Helper text for choosing a category name
+  ///
+  /// In zh, this message translates to:
+  /// **'给分类取一个容易辨识的名称'**
+  String get categoryNameHelper;
+
+  /// Validation message when the category name is empty
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入分类名称'**
+  String get categoryNameRequired;
+
+  /// Validation message when a category name is already in use
+  ///
+  /// In zh, this message translates to:
+  /// **'已存在同名分类'**
+  String get categoryNameDuplicate;
+
+  /// Action that saves a new category
+  ///
+  /// In zh, this message translates to:
+  /// **'保存分类'**
+  String get saveCategory;
+
+  /// Action that saves changes to a category
+  ///
+  /// In zh, this message translates to:
+  /// **'更新分类'**
+  String get updateCategory;
+
+  /// Success message after creating a category
+  ///
+  /// In zh, this message translates to:
+  /// **'分类“{categoryName}”已创建'**
+  String categoryCreated(String categoryName);
+
+  /// Success message after updating a category
+  ///
+  /// In zh, this message translates to:
+  /// **'分类“{categoryName}”已更新'**
+  String categoryUpdated(String categoryName);
+
+  /// Generic error shown when a category cannot be created or updated
+  ///
+  /// In zh, this message translates to:
+  /// **'无法保存分类，请重试'**
+  String get categorySaveFailed;
+
+  /// Vault empty-state title
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有密码'**
+  String get noPasswordsYet;
+
+  /// Vault empty-state explanation
+  ///
+  /// In zh, this message translates to:
+  /// **'新建分类或添加密码，开始使用密码库'**
+  String get emptyVaultDescription;
+
+  /// Generic edit action
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑'**
+  String get edit;
+
+  /// Generic delete action
+  ///
+  /// In zh, this message translates to:
+  /// **'删除'**
+  String get delete;
+
+  /// Generic confirm action
+  ///
+  /// In zh, this message translates to:
+  /// **'确定'**
+  String get confirm;
+
+  /// Title for delete confirmation dialogs
+  ///
+  /// In zh, this message translates to:
+  /// **'确认删除'**
+  String get confirmDelete;
+
+  /// Question shown before deleting a user category
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除分类“{categoryName}”吗？'**
+  String deleteCategoryConfirmation(String categoryName);
+
+  /// Warning that passwords are moved before their category is deleted
+  ///
+  /// In zh, this message translates to:
+  /// **'{count, plural, other{该分类下的 {count} 条密码将移至默认分类。}}'**
+  String deleteCategoryMovePasswords(int count);
+
+  /// Generic warning for destructive actions
+  ///
+  /// In zh, this message translates to:
+  /// **'此操作无法撤销。'**
+  String get actionCannotBeUndone;
+
+  /// Success message after deleting a category
+  ///
+  /// In zh, this message translates to:
+  /// **'分类已删除'**
+  String get categoryDeleted;
+
+  /// Generic error shown when deleting a category fails
+  ///
+  /// In zh, this message translates to:
+  /// **'无法删除分类，请重试'**
+  String get categoryDeleteFailed;
+
+  /// Search field hint on a category password list
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索密码条目...'**
+  String get searchPasswordsHint;
+
+  /// Accessibility tooltip for clearing the password search
+  ///
+  /// In zh, this message translates to:
+  /// **'清除搜索'**
+  String get clearSearch;
+
+  /// Generic error shown when category password entries cannot be loaded
+  ///
+  /// In zh, this message translates to:
+  /// **'无法加载密码条目，请重试'**
+  String get passwordEntriesLoadFailed;
+
+  /// Empty result message containing the original password search query
+  ///
+  /// In zh, this message translates to:
+  /// **'没有“{query}”的搜索结果'**
+  String noResultsFor(String query);
+
+  /// Suggestion shown when a password search has no results
+  ///
+  /// In zh, this message translates to:
+  /// **'请尝试其他关键词'**
+  String get tryAnotherSearch;
+
+  /// Title shown when a category contains no password entries
+  ///
+  /// In zh, this message translates to:
+  /// **'该分类还没有密码'**
+  String get emptyCategory;
+
+  /// Explanation shown when a category contains no password entries
+  ///
+  /// In zh, this message translates to:
+  /// **'点击添加按钮保存密码'**
+  String get emptyCategoryDescription;
+
+  /// Title and action for creating a password entry
+  ///
+  /// In zh, this message translates to:
+  /// **'添加密码'**
+  String get addPassword;
+
+  /// Action for editing a password entry
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑密码'**
+  String get editPassword;
+
+  /// Title shown when viewing and editing an existing password entry
+  ///
+  /// In zh, this message translates to:
+  /// **'密码详情'**
+  String get passwordDetails;
+
+  /// Question shown before deleting a password entry
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除密码“{title}”吗？此操作无法撤销。'**
+  String deletePasswordConfirmation(String title);
+
+  /// Success message after deleting a password entry
+  ///
+  /// In zh, this message translates to:
+  /// **'密码已删除'**
+  String get passwordDeleted;
+
+  /// Generic error shown when deleting a password entry fails
+  ///
+  /// In zh, this message translates to:
+  /// **'无法删除密码，请重试'**
+  String get passwordDeleteFailed;
+
+  /// Username subtitle on a password card
+  ///
+  /// In zh, this message translates to:
+  /// **'用户名：{username}'**
+  String usernameValue(String username);
+
+  /// Required password title field label
+  ///
+  /// In zh, this message translates to:
+  /// **'标题 *'**
+  String get titleRequiredLabel;
+
+  /// Example text for a password title
+  ///
+  /// In zh, this message translates to:
+  /// **'例如：Gmail、微信或银行卡'**
+  String get titleExample;
+
+  /// Validation message when a password title is empty
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入标题'**
+  String get titleRequired;
+
+  /// Username field and clipboard name
+  ///
+  /// In zh, this message translates to:
+  /// **'用户名'**
+  String get username;
+
+  /// Required username field label
+  ///
+  /// In zh, this message translates to:
+  /// **'用户名 *'**
+  String get usernameRequiredLabel;
+
+  /// Validation message when a username is empty
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入用户名'**
+  String get usernameRequired;
+
+  /// Password field and clipboard name
+  ///
+  /// In zh, this message translates to:
+  /// **'密码'**
+  String get password;
+
+  /// Required password field label
+  ///
+  /// In zh, this message translates to:
+  /// **'密码 *'**
+  String get passwordRequiredLabel;
+
+  /// Validation message when a password is empty
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入密码'**
+  String get passwordRequired;
+
+  /// Website field and clipboard name
+  ///
+  /// In zh, this message translates to:
+  /// **'网址'**
+  String get website;
+
+  /// Example text for a website URL
+  ///
+  /// In zh, this message translates to:
+  /// **'例如：https://www.example.com'**
+  String get websiteExample;
+
+  /// Notes field label
+  ///
+  /// In zh, this message translates to:
+  /// **'备注'**
+  String get notes;
+
+  /// Helper text for password entry notes
+  ///
+  /// In zh, this message translates to:
+  /// **'添加额外的备注信息'**
+  String get notesHelper;
+
+  /// Category selector label
+  ///
+  /// In zh, this message translates to:
+  /// **'分类'**
+  String get category;
+
+  /// Hint for the password category selector
+  ///
+  /// In zh, this message translates to:
+  /// **'选择分类'**
+  String get selectCategory;
+
+  /// Dropdown option that opens the new category page
+  ///
+  /// In zh, this message translates to:
+  /// **'新建分类...'**
+  String get newCategoryOption;
+
+  /// Tooltip for revealing a password field
+  ///
+  /// In zh, this message translates to:
+  /// **'显示密码'**
+  String get showPassword;
+
+  /// Tooltip for obscuring a password field
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏密码'**
+  String get hidePassword;
+
+  /// Tooltip for copying a password
+  ///
+  /// In zh, this message translates to:
+  /// **'复制密码'**
+  String get copyPassword;
+
+  /// Tooltip for copying a named password field
+  ///
+  /// In zh, this message translates to:
+  /// **'复制{fieldName}'**
+  String copyField(String fieldName);
+
+  /// Confirmation after copying a password field
+  ///
+  /// In zh, this message translates to:
+  /// **'{fieldName}已复制到剪贴板'**
+  String fieldCopied(String fieldName);
+
+  /// Generic save action
+  ///
+  /// In zh, this message translates to:
+  /// **'保存'**
+  String get save;
+
+  /// Action that saves a new password entry
+  ///
+  /// In zh, this message translates to:
+  /// **'保存密码'**
+  String get savePassword;
+
+  /// Action that saves changes to a password entry
+  ///
+  /// In zh, this message translates to:
+  /// **'更新密码'**
+  String get updatePassword;
+
+  /// Success message after creating a password entry
+  ///
+  /// In zh, this message translates to:
+  /// **'密码已保存'**
+  String get passwordSaved;
+
+  /// Success message after updating a password entry
+  ///
+  /// In zh, this message translates to:
+  /// **'密码已更新'**
+  String get passwordUpdated;
+
+  /// Generic error shown when saving a password entry fails
+  ///
+  /// In zh, this message translates to:
+  /// **'无法保存密码，请重试'**
+  String get passwordSaveFailed;
+
+  /// Generic error shown when an existing password cannot be decrypted
+  ///
+  /// In zh, this message translates to:
+  /// **'无法读取密码，请重试'**
+  String get passwordDecryptFailed;
+
+  /// Localized creation date for a password entry
+  ///
+  /// In zh, this message translates to:
+  /// **'创建时间：{date}'**
+  String createdAt(String date);
+
+  /// Localized update date for a password entry
+  ///
+  /// In zh, this message translates to:
+  /// **'更新时间：{date}'**
+  String updatedAt(String date);
 }
 
 class _AppLocalizationsDelegate

@@ -2,10 +2,23 @@ import 'package:flutter/material.dart';
 import '../models/category.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/auth_helper.dart';
+import '../l10n/l10n.dart';
 
 /// 新建分类页面
 class AddCategoryPage extends StatefulWidget {
-  const AddCategoryPage({super.key});
+  const AddCategoryPage({
+    super.key,
+    this.category,
+    this.currentUserId,
+    this.categoryNameExists,
+    this.saveCategory,
+  });
+
+  final Category? category;
+  final int? Function()? currentUserId;
+  final Future<bool> Function(String name, int? excludingCategoryId)?
+  categoryNameExists;
+  final Future<Category> Function(Category category)? saveCategory;
 
   @override
   State<AddCategoryPage> createState() => _AddCategoryPageState();
@@ -15,6 +28,13 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   bool _isLoading = false;
+  bool get _isEditing => widget.category != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.text = widget.category?.name ?? '';
+  }
 
   @override
   void dispose() {
@@ -28,35 +48,61 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     setState(() => _isLoading = true);
 
     try {
-      final userId = AuthHelper().getCurrentUserId();
-      if (userId == null) throw Exception('密码库尚未解锁');
+      final userId =
+          widget.currentUserId?.call() ??
+          widget.category?.userId ??
+          AuthHelper().getCurrentUserId();
+      if (userId == null) throw StateError('Vault is locked');
+
+      final name = _nameController.text.trim();
+      final isDuplicate =
+          await (widget.categoryNameExists ?? _categoryNameExists)(
+            name,
+            widget.category?.id,
+          );
+      if (!mounted) return;
+      if (isDuplicate) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.categoryNameDuplicate),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        return;
+      }
 
       final now = DateTime.now();
       final category = Category(
+        id: widget.category?.id,
         userId: userId,
-        name: _nameController.text.trim(),
-        createdAt: now,
+        name: name,
+        icon: widget.category?.icon,
+        createdAt: widget.category?.createdAt ?? now,
         updatedAt: now,
       );
 
-      final dbHelper = DatabaseHelper();
-      final id = await dbHelper.insertCategory(category);
-      final newCategory = category.copyWith(id: id);
+      final savedCategory = await (widget.saveCategory ?? _persistCategory)(
+        category,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('分类"${newCategory.name}"已创建'),
+            content: Text(
+              _isEditing
+                  ? context.l10n.categoryUpdated(savedCategory.name)
+                  : context.l10n.categoryCreated(savedCategory.name),
+            ),
             backgroundColor: Theme.of(context).colorScheme.secondary,
           ),
         );
-        Navigator.of(context).pop(newCategory);
+        Navigator.of(context).pop(savedCategory);
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('创建分类失败: $e'),
+            content: Text(context.l10n.categorySaveFailed),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -66,17 +112,47 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     }
   }
 
+  Future<bool> _categoryNameExists(
+    String name,
+    int? excludingCategoryId,
+  ) async {
+    final userId =
+        widget.currentUserId?.call() ??
+        widget.category?.userId ??
+        AuthHelper().getCurrentUserId();
+    if (userId == null) return false;
+    final categories = await DatabaseHelper().getCategories(userId);
+    final normalizedName = name.toLowerCase();
+    return categories.any(
+      (category) =>
+          category.id != excludingCategoryId &&
+          category.name.trim().toLowerCase() == normalizedName,
+    );
+  }
+
+  Future<Category> _persistCategory(Category category) async {
+    final dbHelper = DatabaseHelper();
+    if (_isEditing) {
+      await dbHelper.updateCategory(category);
+      return category;
+    }
+    final id = await dbHelper.insertCategory(category);
+    return category.copyWith(id: id);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('新建分类'),
+        title: Text(_isEditing ? l10n.editCategory : l10n.addCategory),
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
             onPressed: _isLoading ? null : _saveCategory,
-            tooltip: '保存',
+            tooltip: l10n.save,
           ),
         ],
       ),
@@ -89,10 +165,13 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
               controller: _nameController,
               autofocus: true,
               decoration: InputDecoration(
-                labelText: '分类名称 *',
-                prefixIcon: const Icon(Icons.folder),
-                hintText: '例如：邮箱、银行卡、社交等',
-                helperText: '给分类取一个容易辨识的名称',
+                labelText: l10n.categoryNameRequiredLabel,
+                prefixIcon: Tooltip(
+                  message: l10n.categoryIcon,
+                  child: const Icon(Icons.folder),
+                ),
+                hintText: l10n.categoryNameExample,
+                helperText: l10n.categoryNameHelper,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
@@ -111,7 +190,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return '请输入分类名称';
+                  return l10n.categoryNameRequired;
                 }
                 return null;
               },
@@ -124,7 +203,10 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                 onPressed: _isLoading ? null : _saveCategory,
                 child: _isLoading
                     ? const CircularProgressIndicator()
-                    : const Text('保存分类', style: TextStyle(fontSize: 16)),
+                    : Text(
+                        _isEditing ? l10n.updateCategory : l10n.saveCategory,
+                        style: const TextStyle(fontSize: 16),
+                      ),
               ),
             ),
           ],

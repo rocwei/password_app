@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../helpers/auth_helper.dart';
 import '../helpers/file_intent_helper.dart';
+import '../l10n/l10n.dart';
 import 'password_vault_page.dart';
 import 'generate_password_page.dart';
 import 'settings_page.dart';
@@ -38,8 +39,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     ];
 
     // 监听应用在前台运行时收到的外部 .passbackup 文件 Intent
-    _fileIntentSubscription =
-        FileIntentHelper().onFileIntent.listen(_handleIncomingFile);
+    _fileIntentSubscription = FileIntentHelper().onFileIntent.listen(
+      _handleIncomingFile,
+    );
   }
 
   /// 收到外部 .passbackup 文件时，自动跳转到备份恢复页
@@ -87,6 +89,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
@@ -107,28 +111,28 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               Icons.lock,
               color: Theme.of(context).colorScheme.primary,
             ),
-            label: '密码库',
+            label: l10n.vault,
           ),
           BottomNavigationBarItem(
             icon: Icon(
               Icons.generating_tokens,
               color: Theme.of(context).colorScheme.primary,
             ),
-            label: '生成密码',
+            label: l10n.generatePasswordNavigationLabel,
           ),
           BottomNavigationBarItem(
             icon: Icon(
               Icons.security,
               color: Theme.of(context).colorScheme.primary,
             ),
-            label: 'OTP验证',
+            label: l10n.otpNavigationLabel,
           ),
           BottomNavigationBarItem(
             icon: Icon(
               Icons.settings,
               color: Theme.of(context).colorScheme.primary,
             ),
-            label: '设置',
+            label: l10n.settings,
           ),
         ],
       ),

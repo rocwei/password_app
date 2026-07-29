@@ -249,4 +249,291 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get languageChangeFailed =>
       'Could not save language setting. Please try again.';
+
+  @override
+  String get vault => 'Vault';
+
+  @override
+  String get generatePasswordNavigationLabel => 'Generate Password';
+
+  @override
+  String get otpNavigationLabel => 'OTP';
+
+  @override
+  String get loadingVault => 'Loading vault';
+
+  @override
+  String get vaultLoadFailed => 'Could not load the vault. Please try again.';
+
+  @override
+  String passwordCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count passwords',
+      one: '1 password',
+      zero: 'No passwords',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String categoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count categories',
+      one: '1 category',
+      zero: 'No categories',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get defaultCategory => 'Default Category';
+
+  @override
+  String get addCategory => 'Add Category';
+
+  @override
+  String get editCategory => 'Edit Category';
+
+  @override
+  String get categoryName => 'Category Name';
+
+  @override
+  String get categoryIcon => 'Category icon';
+
+  @override
+  String get categoryNameRequiredLabel => 'Category Name *';
+
+  @override
+  String get categoryNameExample => 'For example: Email, Banking, or Social';
+
+  @override
+  String get categoryNameHelper => 'Choose a name you can recognize easily.';
+
+  @override
+  String get categoryNameRequired => 'Enter a category name.';
+
+  @override
+  String get categoryNameDuplicate =>
+      'A category with this name already exists.';
+
+  @override
+  String get saveCategory => 'Save Category';
+
+  @override
+  String get updateCategory => 'Update Category';
+
+  @override
+  String categoryCreated(String categoryName) {
+    return 'Category \"$categoryName\" created.';
+  }
+
+  @override
+  String categoryUpdated(String categoryName) {
+    return 'Category \"$categoryName\" updated.';
+  }
+
+  @override
+  String get categorySaveFailed =>
+      'Could not save the category. Please try again.';
+
+  @override
+  String get noPasswordsYet => 'No passwords yet';
+
+  @override
+  String get emptyVaultDescription =>
+      'Add a category or password to start using your vault.';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get confirmDelete => 'Confirm Delete';
+
+  @override
+  String deleteCategoryConfirmation(String categoryName) {
+    return 'Delete category \"$categoryName\"?';
+  }
+
+  @override
+  String deleteCategoryMovePasswords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count passwords in this category will be moved to Default Category.',
+      one: '1 password in this category will be moved to Default Category.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get actionCannotBeUndone => 'This action cannot be undone.';
+
+  @override
+  String get categoryDeleted => 'Category deleted.';
+
+  @override
+  String get categoryDeleteFailed =>
+      'Could not delete the category. Please try again.';
+
+  @override
+  String get searchPasswordsHint => 'Search passwords...';
+
+  @override
+  String get clearSearch => 'Clear search';
+
+  @override
+  String get passwordEntriesLoadFailed =>
+      'Could not load passwords. Please try again.';
+
+  @override
+  String noResultsFor(String query) {
+    return 'No results for \"$query\"';
+  }
+
+  @override
+  String get tryAnotherSearch => 'Try another search.';
+
+  @override
+  String get emptyCategory => 'No passwords in this category';
+
+  @override
+  String get emptyCategoryDescription =>
+      'Use the add button to save a password here.';
+
+  @override
+  String get addPassword => 'Add Password';
+
+  @override
+  String get editPassword => 'Edit Password';
+
+  @override
+  String get passwordDetails => 'Password Details';
+
+  @override
+  String deletePasswordConfirmation(String title) {
+    return 'Delete password \"$title\"? This action cannot be undone.';
+  }
+
+  @override
+  String get passwordDeleted => 'Password deleted.';
+
+  @override
+  String get passwordDeleteFailed =>
+      'Could not delete the password. Please try again.';
+
+  @override
+  String usernameValue(String username) {
+    return 'Username: $username';
+  }
+
+  @override
+  String get titleRequiredLabel => 'Title *';
+
+  @override
+  String get titleExample => 'For example: Gmail, WeChat, or Bank';
+
+  @override
+  String get titleRequired => 'Enter a title.';
+
+  @override
+  String get username => 'Username';
+
+  @override
+  String get usernameRequiredLabel => 'Username *';
+
+  @override
+  String get usernameRequired => 'Enter a username.';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get passwordRequiredLabel => 'Password *';
+
+  @override
+  String get passwordRequired => 'Enter a password.';
+
+  @override
+  String get website => 'Website';
+
+  @override
+  String get websiteExample => 'For example: https://www.example.com';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get notesHelper => 'Add any extra information.';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get selectCategory => 'Select Category';
+
+  @override
+  String get newCategoryOption => 'New category...';
+
+  @override
+  String get showPassword => 'Show password';
+
+  @override
+  String get hidePassword => 'Hide password';
+
+  @override
+  String get copyPassword => 'Copy password';
+
+  @override
+  String copyField(String fieldName) {
+    return 'Copy $fieldName';
+  }
+
+  @override
+  String fieldCopied(String fieldName) {
+    return '$fieldName copied to clipboard.';
+  }
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get savePassword => 'Save Password';
+
+  @override
+  String get updatePassword => 'Update Password';
+
+  @override
+  String get passwordSaved => 'Password saved.';
+
+  @override
+  String get passwordUpdated => 'Password updated.';
+
+  @override
+  String get passwordSaveFailed =>
+      'Could not save the password. Please try again.';
+
+  @override
+  String get passwordDecryptFailed =>
+      'Could not read the password. Please try again.';
+
+  @override
+  String createdAt(String date) {
+    return 'Created: $date';
+  }
+
+  @override
+  String updatedAt(String date) {
+    return 'Updated: $date';
+  }
 }

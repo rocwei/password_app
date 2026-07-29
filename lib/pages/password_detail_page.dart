@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import '../models/password_entry.dart';
 import '../models/category.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/auth_helper.dart';
 import '../helpers/encryption_helper.dart';
+import '../l10n/l10n.dart';
 import 'add_category_page.dart';
 
 class PasswordDetailPage extends StatefulWidget {
@@ -17,7 +19,20 @@ class PasswordDetailPage extends StatefulWidget {
     this.entry,
     this.initialPassword,
     this.initialCategoryId,
+    this.currentUserId,
+    this.loadCategories,
+    this.decryptPassword,
+    this.encryptPassword,
+    this.saveEntry,
+    this.deleteEntry,
   });
+
+  final int? Function()? currentUserId;
+  final Future<List<Category>> Function()? loadCategories;
+  final String Function(String encryptedPassword)? decryptPassword;
+  final String Function(String plainPassword)? encryptPassword;
+  final Future<void> Function(PasswordEntry entry)? saveEntry;
+  final Future<void> Function(PasswordEntry entry)? deleteEntry;
 
   @override
   State<PasswordDetailPage> createState() => _PasswordDetailPageState();
@@ -32,6 +47,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
   final _noteController = TextEditingController();
 
   bool _isLoading = false;
+  bool _obscurePassword = true;
   bool get _isEditing => widget.entry != null;
 
   // 分类相关
@@ -61,14 +77,27 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
   }
 
   Future<void> _loadCategories() async {
-    final userId = AuthHelper().getCurrentUserId();
-    if (userId != null) {
-      final dbHelper = DatabaseHelper();
-      final categories = await dbHelper.getCategories(userId);
+    try {
+      final categories = await (widget.loadCategories ?? _readCategories)();
+      if (!mounted) return;
       setState(() {
         _categories = categories;
       });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.vaultLoadFailed),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
+  }
+
+  Future<List<Category>> _readCategories() async {
+    final userId = AuthHelper().getCurrentUserId();
+    if (userId == null) return [];
+    return DatabaseHelper().getCategories(userId);
   }
 
   @override
@@ -86,10 +115,12 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
 
     try {
       // 解密密码
-      final decryptedPassword = EncryptionHelper().decryptString(
-        widget.entry!.encryptedPassword,
-      );
+      final decryptedPassword =
+          (widget.decryptPassword ?? EncryptionHelper().decryptString)(
+            widget.entry!.encryptedPassword,
+          );
 
+      if (!mounted) return;
       setState(() {
         _titleController.text = widget.entry!.title;
         _usernameController.text = widget.entry!.username;
@@ -98,11 +129,11 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
         _noteController.text = widget.entry!.note ?? '';
         _selectedCategoryId = widget.entry!.categoryId;
       });
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('解密密码失败: $e'),
+            content: Text(context.l10n.passwordDecryptFailed),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -120,22 +151,26 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
     });
 
     try {
-      final userId = AuthHelper().getCurrentUserId();
+      final userId =
+          widget.currentUserId?.call() ??
+          widget.entry?.userId ??
+          AuthHelper().getCurrentUserId();
       if (userId == null) {
-        throw Exception('密码库尚未解锁');
+        throw StateError('Vault is locked');
       }
 
       // 加密密码
-      final encryptedPassword = EncryptionHelper().encryptString(
-        _passwordController.text,
-      );
+      final encryptedPassword =
+          (widget.encryptPassword ?? EncryptionHelper().encryptString)(
+            _passwordController.text,
+          );
 
       final now = DateTime.now();
-      final dbHelper = DatabaseHelper();
+      late final PasswordEntry entryToSave;
 
       if (_isEditing) {
         // 更新现有条目
-        final updatedEntry = widget.entry!.copyWith(
+        entryToSave = widget.entry!.copyWith(
           title: _titleController.text.trim(),
           username: _usernameController.text.trim(),
           encryptedPassword: encryptedPassword,
@@ -149,11 +184,9 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
               : _noteController.text.trim(),
           updatedAt: now,
         );
-
-        await dbHelper.updatePasswordEntry(updatedEntry);
       } else {
         // 创建新条目
-        final newEntry = PasswordEntry(
+        entryToSave = PasswordEntry(
           userId: userId,
           categoryId: _selectedCategoryId,
           title: _titleController.text.trim(),
@@ -168,24 +201,34 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
           createdAt: now,
           updatedAt: now,
         );
+      }
 
-        await dbHelper.insertPasswordEntry(newEntry);
+      if (widget.saveEntry != null) {
+        await widget.saveEntry!(entryToSave);
+      } else if (_isEditing) {
+        await DatabaseHelper().updatePasswordEntry(entryToSave);
+      } else {
+        await DatabaseHelper().insertPasswordEntry(entryToSave);
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isEditing ? '密码条目已更新' : '密码条目已保存'),
+            content: Text(
+              _isEditing
+                  ? context.l10n.passwordUpdated
+                  : context.l10n.passwordSaved,
+            ),
             backgroundColor: Theme.of(context).colorScheme.secondary,
           ),
         );
         Navigator.of(context).pop(true);
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('保存失败: $e'),
+            content: Text(context.l10n.passwordSaveFailed),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -199,11 +242,68 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
     }
   }
 
+  Future<void> _deleteEntry() async {
+    final entry = widget.entry;
+    if (entry == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.l10n.confirmDelete),
+        content: Text(context.l10n.deletePasswordConfirmation(entry.title)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(context.l10n.delete),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isLoading = true);
+    try {
+      if (widget.deleteEntry != null) {
+        await widget.deleteEntry!(entry);
+      } else {
+        await DatabaseHelper().deletePasswordEntry(entry.id!);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.passwordDeleted),
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+        ),
+      );
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.passwordDeleteFailed),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   void _copyToClipboard(String text, String fieldName) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$fieldName已复制到剪贴板'),
+        content: Text(context.l10n.fieldCopied(fieldName)),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -211,21 +311,30 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? '编辑密码' : '添加密码'),
+        title: Text(_isEditing ? l10n.passwordDetails : l10n.addPassword),
         elevation: 0,
         actions: [
           if (_isEditing)
             IconButton(
               icon: const Icon(Icons.copy),
-              onPressed: () => _copyToClipboard(_passwordController.text, '密码'),
-              tooltip: '复制密码',
+              onPressed: () =>
+                  _copyToClipboard(_passwordController.text, l10n.password),
+              tooltip: l10n.copyPassword,
+            ),
+          if (_isEditing)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _isLoading ? null : _deleteEntry,
+              tooltip: l10n.delete,
             ),
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: _isLoading ? null : _saveEntry,
-            tooltip: '保存',
+            tooltip: l10n.save,
           ),
         ],
       ),
@@ -243,9 +352,9 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
               minLines: 1, // 初始最小行数，默认1行，和原输入框一致
               expands: false, // 不扩展填满父容器
               decoration: InputDecoration(
-                labelText: '标题 *',
+                labelText: l10n.titleRequiredLabel,
                 prefixIcon: const Icon(Icons.title),
-                helperText: '例如：Gmail、微信、银行卡等',
+                helperText: l10n.titleExample,
                 isDense: false,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -270,7 +379,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return '请输入标题';
+                  return l10n.titleRequired;
                 }
                 return null;
               },
@@ -282,13 +391,14 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
               minLines: 1, // 初始最小行数，默认1行，和原输入框一致
               expands: false, // 不扩展填满父容器
               decoration: InputDecoration(
-                labelText: '用户名 *',
+                labelText: l10n.usernameRequiredLabel,
                 // border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.person),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.copy),
                   onPressed: () =>
-                      _copyToClipboard(_usernameController.text, '用户名'),
+                      _copyToClipboard(_usernameController.text, l10n.username),
+                  tooltip: l10n.copyField(l10n.username),
                 ),
                 // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
                 border: OutlineInputBorder(
@@ -309,7 +419,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return '请输入用户名';
+                  return l10n.usernameRequired;
                 }
                 return null;
               },
@@ -317,11 +427,11 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _passwordController,
-              maxLines: 5, // 设为null表示无最大行数，高度完全自适应；也可设固定值如3/5
-              minLines: 2, // 初始最小行数，默认1行，和原输入框一致
-              expands: false, // 不扩展填满父容器
+              maxLines: 1,
+              expands: false,
+              obscureText: _obscurePassword,
               decoration: InputDecoration(
-                labelText: '密码 *',
+                labelText: l10n.passwordRequiredLabel,
                 // border: const OutlineInputBorder(),
                 // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
                 border: OutlineInputBorder(
@@ -345,15 +455,31 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.copy),
-                      onPressed: () =>
-                          _copyToClipboard(_passwordController.text, '密码'),
+                      onPressed: () => _copyToClipboard(
+                        _passwordController.text,
+                        l10n.password,
+                      ),
+                      tooltip: l10n.copyField(l10n.password),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      tooltip: _obscurePassword
+                          ? l10n.showPassword
+                          : l10n.hidePassword,
+                      onPressed: () {
+                        setState(() => _obscurePassword = !_obscurePassword);
+                      },
                     ),
                   ],
                 ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return '请输入密码';
+                  return l10n.passwordRequired;
                 }
                 return null;
               },
@@ -365,7 +491,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
               minLines: 2, // 初始最小行数，默认1行，和原输入框一致
               expands: false, // 不扩展填满父容器
               decoration: InputDecoration(
-                labelText: '网址',
+                labelText: l10n.website,
                 // border: const OutlineInputBorder(),
                 // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
                 border: OutlineInputBorder(
@@ -387,11 +513,14 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                 suffixIcon: _websiteController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.copy),
-                        onPressed: () =>
-                            _copyToClipboard(_websiteController.text, '网址'),
+                        onPressed: () => _copyToClipboard(
+                          _websiteController.text,
+                          l10n.website,
+                        ),
+                        tooltip: l10n.copyField(l10n.website),
                       )
                     : null,
-                helperText: '例如：https://www.example.com',
+                helperText: l10n.websiteExample,
               ),
               keyboardType: TextInputType.url,
               onChanged: (value) {
@@ -405,7 +534,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
               minLines: 5, // 初始最小行数，默认1行，和原输入框一致
               expands: false, // 不扩展填满父容器
               decoration: InputDecoration(
-                labelText: '备注',
+                labelText: l10n.notes,
                 // border: const OutlineInputBorder(),
                 // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
                 border: OutlineInputBorder(
@@ -424,7 +553,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                   ),
                 ),
                 prefixIcon: const Icon(Icons.note),
-                helperText: '添加额外的备注信息',
+                helperText: l10n.notesHelper,
               ),
               // maxLines: 3,
             ),
@@ -436,7 +565,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                 child: _isLoading
                     ? const CircularProgressIndicator()
                     : Text(
-                        _isEditing ? '更新密码' : '保存密码',
+                        _isEditing ? l10n.updatePassword : l10n.savePassword,
                         style: const TextStyle(fontSize: 16),
                       ),
               ),
@@ -455,7 +584,12 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                       children: [
                         if (widget.entry!.createdAt != null)
                           Text(
-                            '创建时间: ${_formatDateTime(widget.entry!.createdAt!)}',
+                            l10n.createdAt(
+                              _formatDateTime(
+                                widget.entry!.createdAt!,
+                                Localizations.localeOf(context),
+                              ),
+                            ),
                             style: const TextStyle(
                               color: Colors.grey,
                               fontSize: 12,
@@ -463,7 +597,12 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                           ),
                         if (widget.entry!.updatedAt != null)
                           Text(
-                            '更新时间: ${_formatDateTime(widget.entry!.updatedAt!)}',
+                            l10n.updatedAt(
+                              _formatDateTime(
+                                widget.entry!.updatedAt!,
+                                Localizations.localeOf(context),
+                              ),
+                            ),
                             style: const TextStyle(
                               color: Colors.grey,
                               fontSize: 12,
@@ -481,16 +620,17 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
     );
   }
 
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
-        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  String _formatDateTime(DateTime dateTime, Locale locale) {
+    return DateFormat.yMMMd(
+      locale.toLanguageTag(),
+    ).add_jm().format(dateTime.toLocal());
   }
 
   /// 构建分类选择器
   Widget _buildCategorySelector() {
     return InputDecorator(
       decoration: InputDecoration(
-        labelText: '分类',
+        labelText: context.l10n.category,
         prefixIcon: const Icon(Icons.folder),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -510,13 +650,22 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int?>(
-          value: _selectedCategoryId,
+          value:
+              _selectedCategoryId == null ||
+                  _categories.any(
+                    (category) => category.id == _selectedCategoryId,
+                  )
+              ? _selectedCategoryId
+              : null,
           isExpanded: true,
           isDense: true,
-          hint: const Text('选择分类'),
+          hint: Text(context.l10n.selectCategory),
           items: [
             // 默认分类
-            const DropdownMenuItem<int?>(value: null, child: Text('默认分类')),
+            DropdownMenuItem<int?>(
+              value: null,
+              child: Text(context.l10n.defaultCategory),
+            ),
             // 用户自定义分类
             ..._categories.map((category) {
               return DropdownMenuItem<int?>(
@@ -525,15 +674,15 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
               );
             }),
             // 新建分类选项
-            const DropdownMenuItem<int?>(
+            DropdownMenuItem<int?>(
               value: -1, // 特殊值，表示新建分类
               child: Row(
                 children: [
-                  Icon(Icons.add, size: 18),
-                  SizedBox(width: 8),
+                  const Icon(Icons.add, size: 18),
+                  const SizedBox(width: 8),
                   Text(
-                    '新建分类...',
-                    style: TextStyle(fontStyle: FontStyle.italic),
+                    context.l10n.newCategoryOption,
+                    style: const TextStyle(fontStyle: FontStyle.italic),
                   ),
                 ],
               ),
@@ -560,9 +709,10 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
       MaterialPageRoute(builder: (context) => const AddCategoryPage()),
     );
 
-    if (result != null) {
+    if (result != null && mounted) {
       // 重新加载分类列表并选中新创建的分类
       await _loadCategories();
+      if (!mounted) return;
       setState(() {
         _selectedCategoryId = result.id;
       });

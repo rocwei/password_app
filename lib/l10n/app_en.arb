@@ -309,5 +309,391 @@
   "languageChangeFailed": "Could not save language setting. Please try again.",
   "@languageChangeFailed": {
     "description": "Message shown when saving the selected language fails"
+  },
+  "vault": "Vault",
+  "@vault": {
+    "description": "Password vault page title and bottom navigation label"
+  },
+  "generatePasswordNavigationLabel": "Generate Password",
+  "@generatePasswordNavigationLabel": {
+    "description": "Bottom navigation label for the password generator"
+  },
+  "otpNavigationLabel": "OTP",
+  "@otpNavigationLabel": {
+    "description": "Bottom navigation label for one-time passwords"
+  },
+  "loadingVault": "Loading vault",
+  "@loadingVault": {
+    "description": "Accessibility label shown while the vault is loading"
+  },
+  "vaultLoadFailed": "Could not load the vault. Please try again.",
+  "@vaultLoadFailed": {
+    "description": "Generic error shown when vault categories and counts cannot be loaded"
+  },
+  "passwordCount": "{count, plural, =0{No passwords} =1{1 password} other{{count} passwords}}",
+  "@passwordCount": {
+    "description": "Number of passwords shown in vault statistics and category cards",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "categoryCount": "{count, plural, =0{No categories} =1{1 category} other{{count} categories}}",
+  "@categoryCount": {
+    "description": "Number of categories shown in vault statistics",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "defaultCategory": "Default Category",
+  "@defaultCategory": {
+    "description": "Built-in category name for passwords without a user category"
+  },
+  "addCategory": "Add Category",
+  "@addCategory": {
+    "description": "Title and action for creating a category"
+  },
+  "editCategory": "Edit Category",
+  "@editCategory": {
+    "description": "Title and action for editing a user category"
+  },
+  "categoryName": "Category Name",
+  "@categoryName": {
+    "description": "Label for a category name field"
+  },
+  "categoryIcon": "Category icon",
+  "@categoryIcon": {
+    "description": "Accessibility label for the category icon"
+  },
+  "categoryNameRequiredLabel": "Category Name *",
+  "@categoryNameRequiredLabel": {
+    "description": "Required category name field label"
+  },
+  "categoryNameExample": "For example: Email, Banking, or Social",
+  "@categoryNameExample": {
+    "description": "Example category names shown in the category form"
+  },
+  "categoryNameHelper": "Choose a name you can recognize easily.",
+  "@categoryNameHelper": {
+    "description": "Helper text for choosing a category name"
+  },
+  "categoryNameRequired": "Enter a category name.",
+  "@categoryNameRequired": {
+    "description": "Validation message when the category name is empty"
+  },
+  "categoryNameDuplicate": "A category with this name already exists.",
+  "@categoryNameDuplicate": {
+    "description": "Validation message when a category name is already in use"
+  },
+  "saveCategory": "Save Category",
+  "@saveCategory": {
+    "description": "Action that saves a new category"
+  },
+  "updateCategory": "Update Category",
+  "@updateCategory": {
+    "description": "Action that saves changes to a category"
+  },
+  "categoryCreated": "Category \"{categoryName}\" created.",
+  "@categoryCreated": {
+    "description": "Success message after creating a category",
+    "placeholders": {
+      "categoryName": {
+        "type": "String",
+        "example": "Work"
+      }
+    }
+  },
+  "categoryUpdated": "Category \"{categoryName}\" updated.",
+  "@categoryUpdated": {
+    "description": "Success message after updating a category",
+    "placeholders": {
+      "categoryName": {
+        "type": "String",
+        "example": "Work"
+      }
+    }
+  },
+  "categorySaveFailed": "Could not save the category. Please try again.",
+  "@categorySaveFailed": {
+    "description": "Generic error shown when a category cannot be created or updated"
+  },
+  "noPasswordsYet": "No passwords yet",
+  "@noPasswordsYet": {
+    "description": "Vault empty-state title"
+  },
+  "emptyVaultDescription": "Add a category or password to start using your vault.",
+  "@emptyVaultDescription": {
+    "description": "Vault empty-state explanation"
+  },
+  "edit": "Edit",
+  "@edit": {
+    "description": "Generic edit action"
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Generic delete action"
+  },
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Generic confirm action"
+  },
+  "confirmDelete": "Confirm Delete",
+  "@confirmDelete": {
+    "description": "Title for delete confirmation dialogs"
+  },
+  "deleteCategoryConfirmation": "Delete category \"{categoryName}\"?",
+  "@deleteCategoryConfirmation": {
+    "description": "Question shown before deleting a user category",
+    "placeholders": {
+      "categoryName": {
+        "type": "String",
+        "example": "Work"
+      }
+    }
+  },
+  "deleteCategoryMovePasswords": "{count, plural, =1{1 password in this category will be moved to Default Category.} other{{count} passwords in this category will be moved to Default Category.}}",
+  "@deleteCategoryMovePasswords": {
+    "description": "Warning that passwords are moved before their category is deleted",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "actionCannotBeUndone": "This action cannot be undone.",
+  "@actionCannotBeUndone": {
+    "description": "Generic warning for destructive actions"
+  },
+  "categoryDeleted": "Category deleted.",
+  "@categoryDeleted": {
+    "description": "Success message after deleting a category"
+  },
+  "categoryDeleteFailed": "Could not delete the category. Please try again.",
+  "@categoryDeleteFailed": {
+    "description": "Generic error shown when deleting a category fails"
+  },
+  "searchPasswordsHint": "Search passwords...",
+  "@searchPasswordsHint": {
+    "description": "Search field hint on a category password list"
+  },
+  "clearSearch": "Clear search",
+  "@clearSearch": {
+    "description": "Accessibility tooltip for clearing the password search"
+  },
+  "passwordEntriesLoadFailed": "Could not load passwords. Please try again.",
+  "@passwordEntriesLoadFailed": {
+    "description": "Generic error shown when category password entries cannot be loaded"
+  },
+  "noResultsFor": "No results for \"{query}\"",
+  "@noResultsFor": {
+    "description": "Empty result message containing the original password search query",
+    "placeholders": {
+      "query": {
+        "type": "String",
+        "example": "github"
+      }
+    }
+  },
+  "tryAnotherSearch": "Try another search.",
+  "@tryAnotherSearch": {
+    "description": "Suggestion shown when a password search has no results"
+  },
+  "emptyCategory": "No passwords in this category",
+  "@emptyCategory": {
+    "description": "Title shown when a category contains no password entries"
+  },
+  "emptyCategoryDescription": "Use the add button to save a password here.",
+  "@emptyCategoryDescription": {
+    "description": "Explanation shown when a category contains no password entries"
+  },
+  "addPassword": "Add Password",
+  "@addPassword": {
+    "description": "Title and action for creating a password entry"
+  },
+  "editPassword": "Edit Password",
+  "@editPassword": {
+    "description": "Action for editing a password entry"
+  },
+  "passwordDetails": "Password Details",
+  "@passwordDetails": {
+    "description": "Title shown when viewing and editing an existing password entry"
+  },
+  "deletePasswordConfirmation": "Delete password \"{title}\"? This action cannot be undone.",
+  "@deletePasswordConfirmation": {
+    "description": "Question shown before deleting a password entry",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "GitHub"
+      }
+    }
+  },
+  "passwordDeleted": "Password deleted.",
+  "@passwordDeleted": {
+    "description": "Success message after deleting a password entry"
+  },
+  "passwordDeleteFailed": "Could not delete the password. Please try again.",
+  "@passwordDeleteFailed": {
+    "description": "Generic error shown when deleting a password entry fails"
+  },
+  "usernameValue": "Username: {username}",
+  "@usernameValue": {
+    "description": "Username subtitle on a password card",
+    "placeholders": {
+      "username": {
+        "type": "String",
+        "example": "alex@example.com"
+      }
+    }
+  },
+  "titleRequiredLabel": "Title *",
+  "@titleRequiredLabel": {
+    "description": "Required password title field label"
+  },
+  "titleExample": "For example: Gmail, WeChat, or Bank",
+  "@titleExample": {
+    "description": "Example text for a password title"
+  },
+  "titleRequired": "Enter a title.",
+  "@titleRequired": {
+    "description": "Validation message when a password title is empty"
+  },
+  "username": "Username",
+  "@username": {
+    "description": "Username field and clipboard name"
+  },
+  "usernameRequiredLabel": "Username *",
+  "@usernameRequiredLabel": {
+    "description": "Required username field label"
+  },
+  "usernameRequired": "Enter a username.",
+  "@usernameRequired": {
+    "description": "Validation message when a username is empty"
+  },
+  "password": "Password",
+  "@password": {
+    "description": "Password field and clipboard name"
+  },
+  "passwordRequiredLabel": "Password *",
+  "@passwordRequiredLabel": {
+    "description": "Required password field label"
+  },
+  "passwordRequired": "Enter a password.",
+  "@passwordRequired": {
+    "description": "Validation message when a password is empty"
+  },
+  "website": "Website",
+  "@website": {
+    "description": "Website field and clipboard name"
+  },
+  "websiteExample": "For example: https://www.example.com",
+  "@websiteExample": {
+    "description": "Example text for a website URL"
+  },
+  "notes": "Notes",
+  "@notes": {
+    "description": "Notes field label"
+  },
+  "notesHelper": "Add any extra information.",
+  "@notesHelper": {
+    "description": "Helper text for password entry notes"
+  },
+  "category": "Category",
+  "@category": {
+    "description": "Category selector label"
+  },
+  "selectCategory": "Select Category",
+  "@selectCategory": {
+    "description": "Hint for the password category selector"
+  },
+  "newCategoryOption": "New category...",
+  "@newCategoryOption": {
+    "description": "Dropdown option that opens the new category page"
+  },
+  "showPassword": "Show password",
+  "@showPassword": {
+    "description": "Tooltip for revealing a password field"
+  },
+  "hidePassword": "Hide password",
+  "@hidePassword": {
+    "description": "Tooltip for obscuring a password field"
+  },
+  "copyPassword": "Copy password",
+  "@copyPassword": {
+    "description": "Tooltip for copying a password"
+  },
+  "copyField": "Copy {fieldName}",
+  "@copyField": {
+    "description": "Tooltip for copying a named password field",
+    "placeholders": {
+      "fieldName": {
+        "type": "String",
+        "example": "Username"
+      }
+    }
+  },
+  "fieldCopied": "{fieldName} copied to clipboard.",
+  "@fieldCopied": {
+    "description": "Confirmation after copying a password field",
+    "placeholders": {
+      "fieldName": {
+        "type": "String",
+        "example": "Username"
+      }
+    }
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Generic save action"
+  },
+  "savePassword": "Save Password",
+  "@savePassword": {
+    "description": "Action that saves a new password entry"
+  },
+  "updatePassword": "Update Password",
+  "@updatePassword": {
+    "description": "Action that saves changes to a password entry"
+  },
+  "passwordSaved": "Password saved.",
+  "@passwordSaved": {
+    "description": "Success message after creating a password entry"
+  },
+  "passwordUpdated": "Password updated.",
+  "@passwordUpdated": {
+    "description": "Success message after updating a password entry"
+  },
+  "passwordSaveFailed": "Could not save the password. Please try again.",
+  "@passwordSaveFailed": {
+    "description": "Generic error shown when saving a password entry fails"
+  },
+  "passwordDecryptFailed": "Could not read the password. Please try again.",
+  "@passwordDecryptFailed": {
+    "description": "Generic error shown when an existing password cannot be decrypted"
+  },
+  "createdAt": "Created: {date}",
+  "@createdAt": {
+    "description": "Localized creation date for a password entry",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Jan 2, 2026, 9:30 AM"
+      }
+    }
+  },
+  "updatedAt": "Updated: {date}",
+  "@updatedAt": {
+    "description": "Localized update date for a password entry",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Jan 2, 2026, 9:30 AM"
+      }
+    }
   }
 }

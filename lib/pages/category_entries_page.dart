@@ -5,6 +5,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import '../models/password_entry.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/auth_helper.dart';
+import '../l10n/l10n.dart';
 import 'password_detail_page.dart';
 import 'add_category_page.dart';
 
@@ -17,7 +18,12 @@ class CategoryEntriesPage extends StatefulWidget {
     super.key,
     required this.categoryId,
     required this.categoryName,
+    this.loadEntries,
+    this.deleteEntry,
   });
+
+  final Future<List<PasswordEntry>> Function()? loadEntries;
+  final Future<void> Function(PasswordEntry entry)? deleteEntry;
 
   @override
   State<CategoryEntriesPage> createState() => _CategoryEntriesPageState();
@@ -26,6 +32,7 @@ class CategoryEntriesPage extends StatefulWidget {
 class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
   List<PasswordEntry> _entries = [];
   bool _isLoading = true;
+  bool _hasLoadError = false;
   final _searchController = TextEditingController();
   List<PasswordEntry> _filteredEntries = [];
 
@@ -42,36 +49,37 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
   }
 
   Future<void> _loadEntries() async {
-    setState(() => _isLoading = true);
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _hasLoadError = false;
+      });
+    }
 
     try {
-      final userId = AuthHelper().getCurrentUserId();
-      if (userId != null) {
-        final dbHelper = DatabaseHelper();
-        final entries = await dbHelper.getPasswordEntriesByCategory(
-          userId,
-          widget.categoryId,
-        );
-        if (!mounted) return;
-        setState(() {
-          _entries = entries;
-          _filteredEntries = _getFilteredEntries(_searchController.text);
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('加载密码条目失败: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
+      final entries = await (widget.loadEntries ?? _loadCategoryEntries)();
+      if (!mounted) return;
+      setState(() {
+        _entries = entries;
+        _filteredEntries = _getFilteredEntries(_searchController.text);
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _hasLoadError = true);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<List<PasswordEntry>> _loadCategoryEntries() async {
+    final userId = AuthHelper().getCurrentUserId();
+    if (userId == null) return [];
+    return DatabaseHelper().getPasswordEntriesByCategory(
+      userId,
+      widget.categoryId,
+    );
   }
 
   void _filterEntries(String query) {
@@ -97,19 +105,19 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('确认删除'),
-        content: Text('确定要删除密码条目"${entry.title}"吗？此操作无法撤销。'),
+        title: Text(context.l10n.confirmDelete),
+        content: Text(context.l10n.deletePasswordConfirmation(entry.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('删除'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -117,23 +125,27 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
 
     if (confirmed == true) {
       try {
-        final dbHelper = DatabaseHelper();
-        await dbHelper.deletePasswordEntry(entry.id!);
+        if (widget.deleteEntry != null) {
+          await widget.deleteEntry!(entry);
+        } else {
+          await DatabaseHelper().deletePasswordEntry(entry.id!);
+        }
+        if (!mounted) return;
         await _loadEntries();
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('密码条目已删除'),
+              content: Text(context.l10n.passwordDeleted),
               backgroundColor: Theme.of(context).colorScheme.secondary,
             ),
           );
         }
-      } catch (e) {
+      } catch (_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('删除失败: $e'),
+              content: Text(context.l10n.passwordDeleteFailed),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
@@ -152,29 +164,35 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
       ),
     );
 
-    if (result == true) {
+    if (result == true && mounted) {
       await _loadEntries();
     }
   }
 
   /// 跳转到新建分类页面（在分类条目列表中也支持新建分类）
   Future<void> _navigateToAddCategory() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const AddCategoryPage()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const AddCategoryPage()));
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.categoryName),
+        title: Text(
+          widget.categoryId == null
+              ? l10n.defaultCategory
+              : widget.categoryName,
+        ),
         elevation: 0,
         actions: [
           // 在分类列表页也支持新建分类
           IconButton(
             icon: const Icon(Icons.create_new_folder),
-            tooltip: '新建分类',
+            tooltip: l10n.addCategory,
             onPressed: _navigateToAddCategory,
           ),
         ],
@@ -185,7 +203,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: '搜索密码条目...',
+                hintText: l10n.searchPasswordsHint,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
@@ -202,6 +220,16 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
                   ),
                 ),
                 prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: l10n.clearSearch,
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          _filterEntries('');
+                        },
+                      ),
               ),
               onChanged: _filterEntries,
             ),
@@ -210,6 +238,8 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
+          : _hasLoadError
+          ? _buildLoadError()
           : LayoutBuilder(
               builder: (context, constraints) {
                 return RefreshIndicator(
@@ -222,8 +252,9 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
                               minHeight: constraints.maxHeight,
                             ),
                             child: _buildEmptyState(
-                              isSearching:
-                                  _searchController.text.trim().isNotEmpty,
+                              isSearching: _searchController.text
+                                  .trim()
+                                  .isNotEmpty,
                             ),
                           ),
                         )
@@ -239,7 +270,26 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToDetail(),
+        tooltip: l10n.addPassword,
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildLoadError() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 64),
+          const SizedBox(height: 16),
+          Text(context.l10n.passwordEntriesLoadFailed),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _loadEntries,
+            child: Text(context.l10n.retry),
+          ),
+        ],
       ),
     );
   }
@@ -256,7 +306,9 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            isSearching ? '没有找到匹配的密码条目' : '该分类还没有密码条目',
+            isSearching
+                ? context.l10n.noResultsFor(_searchController.text)
+                : context.l10n.emptyCategory,
             style: TextStyle(
               fontSize: 20,
               color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -264,7 +316,9 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            isSearching ? '请尝试其他关键词' : '点击右下角的 + 按钮添加密码',
+            isSearching
+                ? context.l10n.tryAnotherSearch
+                : context.l10n.emptyCategoryDescription,
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -275,7 +329,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
             ElevatedButton.icon(
               onPressed: () => _navigateToDetail(),
               icon: const Icon(Icons.add),
-              label: const Text('添加密码'),
+              label: Text(context.l10n.addPassword),
             ),
           ],
         ],
@@ -293,7 +347,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
             backgroundColor: Theme.of(context).colorScheme.primary,
             foregroundColor: Theme.of(context).colorScheme.onPrimary,
             icon: Icons.edit,
-            label: '编辑',
+            label: context.l10n.edit,
             borderRadius: BorderRadius.circular(10),
           ),
           const SizedBox(width: 8),
@@ -302,7 +356,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
             backgroundColor: Theme.of(context).colorScheme.error,
             foregroundColor: Theme.of(context).colorScheme.onError,
             icon: Icons.delete,
-            label: '删除',
+            label: context.l10n.delete,
             borderRadius: BorderRadius.circular(10),
           ),
         ],
@@ -312,10 +366,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
         color: Theme.of(context).scaffoldBackgroundColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: BorderSide(
-            color: Colors.blue.shade300,
-            width: 1,
-          ),
+          side: BorderSide(color: Colors.blue.shade300, width: 1),
         ),
         elevation: 0.5,
         child: ListTile(
@@ -333,9 +384,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('用户名: ${entry.username}'),
-            ],
+            children: [Text(context.l10n.usernameValue(entry.username))],
           ),
           trailing: const Icon(Icons.arrow_forward_ios),
           onTap: () => _navigateToDetail(entry: entry),
