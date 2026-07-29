@@ -21,6 +21,7 @@ class SettingsPage extends StatefulWidget {
     this.loadBiometricEnabled,
     this.enableBiometric,
     this.disableBiometric,
+    this.aboutPageBuilder,
   });
 
   final Future<LocalVaultDeletionResult> Function(String)? deleteLocalVault;
@@ -28,6 +29,7 @@ class SettingsPage extends StatefulWidget {
   final Future<bool> Function()? loadBiometricEnabled;
   final Future<bool> Function()? enableBiometric;
   final Future<bool> Function()? disableBiometric;
+  final WidgetBuilder? aboutPageBuilder;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -363,7 +365,10 @@ class _SettingsPageState extends State<SettingsPage> {
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const AboutPage()),
+                MaterialPageRoute(
+                  builder:
+                      widget.aboutPageBuilder ?? (context) => const AboutPage(),
+                ),
               );
             },
           ),

@@ -34,16 +34,38 @@ class BackupFileSelection {
   final String name;
 }
 
-class BackupRestorePreview {
-  const BackupRestorePreview({
-    required this.passwordEntryCount,
-    required this.categoryCount,
-    required this.otpCount,
+class BackupRestorePlan {
+  const BackupRestorePlan({
+    required this.fileName,
+    required this.userId,
+    required this.backupKey,
+    required this.entries,
+    required this.categories,
+    required this.otpTokens,
   });
 
-  final int passwordEntryCount;
-  final int categoryCount;
-  final int otpCount;
+  final String fileName;
+  final int userId;
+  final String backupKey;
+  final List<Map<String, dynamic>> entries;
+  final List<Map<String, dynamic>> categories;
+  final List<Map<String, dynamic>> otpTokens;
+
+  int get passwordEntryCount => entries.length;
+  int get categoryCount => categories.length;
+  int get otpCount => otpTokens.length;
+}
+
+class BackupRestoreResult {
+  const BackupRestoreResult({
+    required this.restoredPasswordEntryCount,
+    required this.restoredCategoryCount,
+    required this.restoredOtpCount,
+  });
+
+  final int restoredPasswordEntryCount;
+  final int restoredCategoryCount;
+  final int restoredOtpCount;
 }
 
 class BackupCreationResult {
@@ -66,27 +88,29 @@ class BackupRestorePage extends StatefulWidget {
   final String? initialFilePath;
   final Future<BackupFileSelection?> Function(String dialogTitle)?
   pickBackupFile;
-  final Future<BackupRestorePreview> Function(
+  final Future<BackupRestorePlan> Function(
     String filePath,
     String fileName,
     String password,
   )?
   inspectBackup;
-  final Future<BackupRestorePreview> Function(BackupRestorePreview preview)?
-  applyInspectedBackup;
+  final Future<BackupRestoreResult> Function(BackupRestorePlan plan)?
+  applyBackupPlan;
   final Future<BackupCreationResult> Function(String password)?
   createBackupFile;
+  final WidgetBuilder? destinationBuilder;
 
   const BackupRestorePage({
     super.key,
     this.initialFilePath,
     this.pickBackupFile,
     this.inspectBackup,
-    this.applyInspectedBackup,
+    this.applyBackupPlan,
     this.createBackupFile,
+    this.destinationBuilder,
   }) : assert(
-         (inspectBackup == null) == (applyInspectedBackup == null),
-         'inspectBackup and applyInspectedBackup must be provided together.',
+         (inspectBackup == null) == (applyBackupPlan == null),
+         'inspectBackup and applyBackupPlan must be provided together.',
        );
 
   @override
@@ -428,7 +452,6 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
   }) async {
     final l10n = context.l10n;
     final fileName = displayFileName ?? path.basename(filePath);
-    // 弹出主密码输入对话框
     if (!mounted) return;
     setState(() => _statusMessage = '');
 
@@ -444,204 +467,35 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       _statusMessage = l10n.readingEncryptedBackup;
     });
 
-    if (widget.inspectBackup case final inspectBackup?) {
-      await _restoreWithInjectedServices(
-        filePath,
-        fileName,
-        masterPassword,
-        inspectBackup,
-        widget.applyInspectedBackup!,
-      );
-      return;
-    }
-
+    final inspectBackup = widget.inspectBackup ?? _inspectBackupFile;
+    final applyBackupPlan = widget.applyBackupPlan ?? _applyBackupPlan;
     try {
-      // 3. 校验密码库解锁状态
-      final userId = AuthHelper().getCurrentUserId();
-      if (userId == null) throw StateError('Vault is not unlocked');
-
-      // 4. 读取备份文件内容
-      final backupFile = File(filePath);
-      if (!await backupFile.exists()) {
-        throw const FileSystemException('Backup file is unavailable');
-      }
-
-      final encryptedBackup = await backupFile.readAsString();
-      if (encryptedBackup.trim().isEmpty) {
-        throw const FormatException('Backup file is empty');
-      }
-
-      // 5. 派生备份密钥
-      final backupKey = AuthHelper().getBackupKey(masterPassword);
-      if (backupKey == null) throw StateError('Backup key is unavailable');
-
-      // 6. 解密整体数据
-      String decryptedData;
-      try {
-        decryptedData = EncryptionHelper().decryptBackupData(
-          encryptedBackup.trim(),
-          backupKey,
-        );
-      } catch (_) {
-        throw const FormatException('Backup decryption failed');
-      }
-
-      // 7. 解析 JSON
-      final jsonData = jsonDecode(decryptedData) as Map<String, dynamic>;
-      final entries = jsonData['entries'] as List<dynamic>;
-
-      // 获取 OTP 令牌（兼容旧版本备份）
-      List<dynamic>? otpTokens;
-      if (jsonData.containsKey('otp_tokens')) {
-        otpTokens = jsonData['otp_tokens'] as List<dynamic>;
-      }
-
-      // 获取分类数据（兼容旧版本备份）
-      List<dynamic>? backupCategories;
-      if (jsonData.containsKey('categories')) {
-        backupCategories = jsonData['categories'] as List<dynamic>;
-      }
-
+      final plan = await inspectBackup(filePath, fileName, masterPassword);
       if (!mounted) return;
-
-      // 8. 确认恢复操作
       setState(() {
         _isLoading = false;
         _statusMessage = '';
       });
 
-      final confirmed = await _confirmRestore(
-        BackupRestorePreview(
-          passwordEntryCount: entries.length,
-          categoryCount: backupCategories?.length ?? 0,
-          otpCount: otpTokens?.length ?? 0,
-        ),
-        fileName,
-      );
-
-      if (confirmed != true) return;
+      if (await _confirmRestore(plan) != true || !mounted) return;
 
       setState(() {
         _isLoading = true;
         _statusMessage = l10n.restoringData;
       });
 
-      // 9. 清除当前数据
-      final dbHelper = DatabaseHelper();
-      await dbHelper.clearPasswordEntries(userId);
-      await dbHelper.clearCategories(userId);
-
-      // 9.5 恢复分类（如果有）并建立旧ID到新ID的映射
-      final Map<int, int> categoryIdMapping = {}; // oldId -> newId
-      if (backupCategories != null && backupCategories.isNotEmpty) {
-        for (final catData in backupCategories) {
-          try {
-            final oldId = catData['id'] as int;
-            final categoryMap = {
-              'user_id': userId,
-              'name': catData['name'],
-              'icon': catData['icon'],
-              'created_at': catData['created_at'],
-              'updated_at': DateTime.now().toIso8601String(),
-            };
-            final newId = await dbHelper.database.then(
-              (db) => db.insert('categories', categoryMap),
-            );
-            categoryIdMapping[oldId] = newId;
-          } catch (_) {
-            // 忽略单条分类恢复失败，继续恢复其他数据
-          }
-        }
-      }
-
-      // 10. 逐条恢复密码条目
-      int restoredCount = 0;
-      for (final entryData in entries) {
-        try {
-          // 用备份密钥解密  明文
-          final plainPassword = EncryptionHelper.decryptPasswordWithBackupKey(
-            entryData['password'],
-            backupKey,
-          );
-          // 用当前设备密钥重新加密
-          final deviceEncryptedPassword = EncryptionHelper().encryptString(
-            plainPassword,
-          );
-
-          // 映射分类ID
-          int? newCategoryId;
-          if (entryData['category_id'] != null) {
-            final oldCatId = entryData['category_id'] as int;
-            newCategoryId = categoryIdMapping[oldCatId];
-          }
-
-          final entry = {
-            'user_id': userId,
-            'category_id': newCategoryId,
-            'title': entryData['title'],
-            'username': entryData['username'],
-            'password': deviceEncryptedPassword,
-            'website': entryData['website'],
-            'note': entryData['note'],
-            'created_at': entryData['created_at'],
-            'updated_at': DateTime.now().toIso8601String(),
-          };
-
-          await dbHelper.database.then(
-            (db) => db.insert('password_entries', entry),
-          );
-          restoredCount++;
-        } catch (_) {
-          throw const FormatException('Invalid password entry in backup');
-        }
-      }
-
-      // 11. 恢复 OTP 令牌（如果有）
-      int restoredOtpCount = 0;
-      if (otpTokens != null && otpTokens.isNotEmpty) {
-        final tokensList = otpTokens
-            .map((item) => Map<String, dynamic>.from(item as Map))
-            .toList();
-        await OtpHelper.importTokens(tokensList);
-        restoredOtpCount = otpTokens.length;
-      }
-
+      final result = await applyBackupPlan(plan);
       if (!mounted) return;
-
-      // 12. 显示恢复成功提示并跳转到首页
-      final successSummary = _joinRestoreCounts([
-        l10n.backupPasswordEntryCount(restoredCount),
-        if (categoryIdMapping.isNotEmpty)
-          l10n.backupCategoryCount(categoryIdMapping.length),
-        if (restoredOtpCount > 0) l10n.backupOtpCount(restoredOtpCount),
-      ]);
-      final successMessage = l10n.restoreSucceeded(successSummary);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white),
-              const SizedBox(width: 8),
-              Expanded(child: Text(successMessage)),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-
+      _showRestoreSuccess(result);
+      final destinationBuilder =
+          widget.destinationBuilder ?? (_) => const HomePage();
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        MaterialPageRoute(builder: destinationBuilder),
         (route) => false,
       );
-      return; // 避免执行 finally 中的 setState
+      return;
     } catch (_) {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _statusMessage = '';
-        });
         _showErrorSnackBar(l10n.restoreFailed);
       }
     } finally {
@@ -654,58 +508,152 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
     }
   }
 
-  Future<void> _restoreWithInjectedServices(
+  Future<BackupRestorePlan> _inspectBackupFile(
     String filePath,
     String fileName,
-    String password,
-    Future<BackupRestorePreview> Function(String, String, String) inspectBackup,
-    Future<BackupRestorePreview> Function(BackupRestorePreview)
-    applyInspectedBackup,
+    String masterPassword,
   ) async {
-    final l10n = context.l10n;
-    try {
-      final preview = await inspectBackup(filePath, fileName, password);
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _statusMessage = '';
-      });
+    final userId = AuthHelper().getCurrentUserId();
+    if (userId == null) throw StateError('Vault is not unlocked');
 
-      if (await _confirmRestore(preview, fileName) != true || !mounted) return;
-
-      setState(() {
-        _isLoading = true;
-        _statusMessage = l10n.restoringData;
-      });
-      final restored = await applyInspectedBackup(preview);
-      if (!mounted) return;
-      _showSuccessSnackBar(_restoreSuccessMessage(restored));
-    } catch (_) {
-      if (mounted) {
-        _showErrorSnackBar(l10n.restoreFailed);
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _statusMessage = '';
-        });
-      }
+    final backupFile = File(filePath);
+    if (!await backupFile.exists()) {
+      throw const FileSystemException('Backup file is unavailable');
     }
+
+    final encryptedBackup = await backupFile.readAsString();
+    if (encryptedBackup.trim().isEmpty) {
+      throw const FormatException('Backup file is empty');
+    }
+
+    final backupKey = AuthHelper().getBackupKey(masterPassword);
+    if (backupKey == null) throw StateError('Backup key is unavailable');
+
+    String decryptedData;
+    try {
+      decryptedData = EncryptionHelper().decryptBackupData(
+        encryptedBackup.trim(),
+        backupKey,
+      );
+    } catch (_) {
+      throw const FormatException('Backup decryption failed');
+    }
+
+    final jsonData = jsonDecode(decryptedData) as Map<String, dynamic>;
+    final entries = _backupMaps(jsonData['entries']);
+    final categories = jsonData.containsKey('categories')
+        ? _backupMaps(jsonData['categories'])
+        : <Map<String, dynamic>>[];
+    final otpTokens = jsonData.containsKey('otp_tokens')
+        ? _backupMaps(jsonData['otp_tokens'])
+        : <Map<String, dynamic>>[];
+
+    return BackupRestorePlan(
+      fileName: fileName,
+      userId: userId,
+      backupKey: backupKey,
+      entries: entries,
+      categories: categories,
+      otpTokens: otpTokens,
+    );
   }
 
-  Future<bool?> _confirmRestore(BackupRestorePreview preview, String fileName) {
+  List<Map<String, dynamic>> _backupMaps(Object? value) {
+    if (value is! List) {
+      throw const FormatException('Invalid backup collection');
+    }
+    return value.map((item) {
+      if (item is! Map) {
+        throw const FormatException('Invalid backup record');
+      }
+      return Map<String, dynamic>.from(item);
+    }).toList();
+  }
+
+  Future<BackupRestoreResult> _applyBackupPlan(BackupRestorePlan plan) async {
+    final dbHelper = DatabaseHelper();
+    await dbHelper.clearPasswordEntries(plan.userId);
+    await dbHelper.clearCategories(plan.userId);
+
+    final categoryIdMapping = <int, int>{};
+    for (final categoryData in plan.categories) {
+      try {
+        final oldId = categoryData['id'] as int;
+        final categoryMap = {
+          'user_id': plan.userId,
+          'name': categoryData['name'],
+          'icon': categoryData['icon'],
+          'created_at': categoryData['created_at'],
+          'updated_at': DateTime.now().toIso8601String(),
+        };
+        final newId = await dbHelper.database.then(
+          (db) => db.insert('categories', categoryMap),
+        );
+        categoryIdMapping[oldId] = newId;
+      } catch (_) {
+        // A malformed category does not block valid password records.
+      }
+    }
+
+    var restoredPasswordEntryCount = 0;
+    for (final entryData in plan.entries) {
+      try {
+        final plainPassword = EncryptionHelper.decryptPasswordWithBackupKey(
+          entryData['password'],
+          plan.backupKey,
+        );
+        final deviceEncryptedPassword = EncryptionHelper().encryptString(
+          plainPassword,
+        );
+
+        int? newCategoryId;
+        if (entryData['category_id'] != null) {
+          final oldCategoryId = entryData['category_id'] as int;
+          newCategoryId = categoryIdMapping[oldCategoryId];
+        }
+
+        final entry = {
+          'user_id': plan.userId,
+          'category_id': newCategoryId,
+          'title': entryData['title'],
+          'username': entryData['username'],
+          'password': deviceEncryptedPassword,
+          'website': entryData['website'],
+          'note': entryData['note'],
+          'created_at': entryData['created_at'],
+          'updated_at': DateTime.now().toIso8601String(),
+        };
+        await dbHelper.database.then(
+          (db) => db.insert('password_entries', entry),
+        );
+        restoredPasswordEntryCount++;
+      } catch (_) {
+        throw const FormatException('Invalid password entry in backup');
+      }
+    }
+
+    if (plan.otpTokens.isNotEmpty) {
+      await OtpHelper.importTokens(plan.otpTokens);
+    }
+
+    return BackupRestoreResult(
+      restoredPasswordEntryCount: restoredPasswordEntryCount,
+      restoredCategoryCount: categoryIdMapping.length,
+      restoredOtpCount: plan.otpTokens.length,
+    );
+  }
+
+  Future<bool?> _confirmRestore(BackupRestorePlan plan) {
     final l10n = context.l10n;
     final counts = _joinRestoreCounts([
-      l10n.backupPasswordEntryCount(preview.passwordEntryCount),
-      if (preview.categoryCount > 0)
-        l10n.backupCategoryCount(preview.categoryCount),
-      if (preview.otpCount > 0) l10n.backupOtpCount(preview.otpCount),
+      l10n.backupPasswordEntryCount(plan.passwordEntryCount),
+      if (plan.categoryCount > 0) l10n.backupCategoryCount(plan.categoryCount),
+      if (plan.otpCount > 0) l10n.backupOtpCount(plan.otpCount),
     ]);
     final countSummary = l10n.restoreCountSummary(counts);
-    final restoreInfoText = preview.otpCount > 0
-        ? l10n.restoreSummaryWithOtp(fileName, countSummary)
-        : l10n.restoreSummary(fileName, countSummary);
+    final restoreInfoText = plan.otpCount > 0
+        ? l10n.restoreSummaryWithOtp(plan.fileName, countSummary)
+        : l10n.restoreSummary(plan.fileName, countSummary);
 
     return showDialog<bool>(
       context: context,
@@ -734,15 +682,32 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
     );
   }
 
-  String _restoreSuccessMessage(BackupRestorePreview restored) {
+  String _restoreSuccessMessage(BackupRestoreResult result) {
     final l10n = context.l10n;
     final summary = _joinRestoreCounts([
-      l10n.backupPasswordEntryCount(restored.passwordEntryCount),
-      if (restored.categoryCount > 0)
-        l10n.backupCategoryCount(restored.categoryCount),
-      if (restored.otpCount > 0) l10n.backupOtpCount(restored.otpCount),
+      l10n.backupPasswordEntryCount(result.restoredPasswordEntryCount),
+      if (result.restoredCategoryCount > 0)
+        l10n.backupCategoryCount(result.restoredCategoryCount),
+      if (result.restoredOtpCount > 0)
+        l10n.backupOtpCount(result.restoredOtpCount),
     ]);
     return l10n.restoreSucceeded(summary);
+  }
+
+  void _showRestoreSuccess(BackupRestoreResult result) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text(_restoreSuccessMessage(result))),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   String _joinRestoreCounts(List<String> counts) {
