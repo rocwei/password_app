@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:password_manager/l10n/app_localizations.dart';
 import 'package:password_manager/main.dart';
 import 'package:password_manager/pages/login_page.dart';
 import 'package:password_manager/pages/register_page.dart';
@@ -15,8 +16,12 @@ void main() {
     required Future<bool> Function() hasUsers,
     required Future<void> Function() cleanupSecureStorage,
     Key? key,
+    Locale locale = const Locale('zh'),
   }) {
     return MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: locale,
       home: SplashScreen(
         key: key,
         hasUsers: hasUsers,
@@ -70,6 +75,9 @@ void main() {
 
     await tester.pumpWidget(
       const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: Locale('zh'),
         home: SplashScreen(hasUsers: _noUsers, delay: Duration.zero),
       ),
     );
@@ -135,6 +143,28 @@ void main() {
     expect(find.byType(RegisterPage), findsNothing);
     expect(find.byType(SecureStorageCleanupPage), findsNothing);
     expect(cleanupCalls, 0);
+  });
+
+  testWidgets('English splash shows localized branding and retry state', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildSplash(
+        locale: const Locale('en'),
+        hasUsers: () async => throw Exception('database unavailable'),
+        cleanupSecureStorage: () async {},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Secure Vault'), findsOneWidget);
+    expect(find.text('Manage your passwords securely'), findsOneWidget);
+    expect(
+      find.text('Could not read the local vault. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('无法读取本地密码库，请重试'), findsNothing);
   });
 }
 

@@ -1,11 +1,12 @@
-import 'package:get/get.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:local_auth/local_auth.dart';
+
 import '../models/user.dart';
 import 'database_helper.dart';
 import 'encryption_helper.dart';
 import 'biometric_helper.dart';
 import 'local_vault_deletion_service.dart';
 import 'otp_helper.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthHelper {
   static final AuthHelper _instance = AuthHelper._internal();
@@ -121,9 +122,7 @@ class AuthHelper {
       }
 
       return false;
-    } catch (e) {
-      // print('设置失败: $e');
-      Get.snackbar("设置失败", e.toString());
+    } catch (_) {
       return false;
     }
   }
@@ -132,9 +131,7 @@ class AuthHelper {
   Future<bool> loginSingleUser(String masterPassword) async {
     try {
       return await _unlockSingleUser(masterPassword);
-    } catch (e) {
-      // print('解锁失败: $e');
-      Get.snackbar("解锁失败", e.toString());
+    } catch (_) {
       return false;
     }
   }
@@ -197,9 +194,7 @@ class AuthHelper {
       EncryptionHelper().setEncryptionKey(encryptionKey);
 
       return true;
-    } catch (e) {
-      // print('解锁失败: $e');
-      Get.snackbar("解锁失败", e.toString());
+    } catch (_) {
       return false;
     }
   }
@@ -234,9 +229,7 @@ class AuthHelper {
             entry.encryptedPassword,
           );
           decryptedPasswords[entry.id!] = decryptedPassword;
-        } catch (e) {
-          // print('解密密码失败: $e');
-          Get.snackbar("解密密码失败", e.toString());
+        } catch (_) {
           return false;
         }
       }
@@ -294,17 +287,9 @@ class AuthHelper {
               token.label,
               plainSecret,
             );
-          } catch (e) {
-            // 记录错误，但不中断流程
-            // print('重新加密OTP令牌失败：${token.id} - $e');
-            Get.snackbar("重新加密OTP令牌失败", "${token.id} - $e");
-          }
+          } catch (_) {}
         }
-      } catch (e) {
-        // 记录错误，但不中断流程
-        // print('处理OTP令牌失败: $e');
-        Get.snackbar("处理OTP令牌失败", e.toString());
-      }
+      } catch (_) {}
 
       // 更新当前用户和密钥
       _currentUser = updatedUser;
@@ -318,16 +303,10 @@ class AuthHelper {
             value: newEncryptionKey,
           );
         }
-      } catch (e) {
-        // 不中断主流程，仅记录
-        // print('更新生物识别密钥失败: $e');
-        Get.snackbar("更新生物识别密钥失败", e.toString());
-      }
+      } catch (_) {}
 
       return true;
-    } catch (e) {
-      // print('更改主密码失败: $e');
-      Get.snackbar("更改主密码失败", e.toString());
+    } catch (_) {
       return false;
     }
   }
@@ -373,7 +352,7 @@ class AuthHelper {
   }
 
   // 生物识别登录
-  Future<bool> loginWithBiometric() async {
+  Future<bool> loginWithBiometric({required String localizedReason}) async {
     try {
       final biometricHelper = BiometricHelper();
 
@@ -385,7 +364,7 @@ class AuthHelper {
 
       // 执行生物识别认证
       final bool authenticated = await biometricHelper.authenticate(
-        localizedReason: '请使用指纹或面部识别解锁密码库',
+        localizedReason: localizedReason,
       );
 
       if (!authenticated) {
@@ -405,8 +384,6 @@ class AuthHelper {
         key: 'encryption_key_${user.id}',
       );
       if (storedKey == null || storedKey.isEmpty) {
-        // print('未找到生物识别密钥，请先使用主密码解锁并在设置中开启生物识别。');
-        Get.snackbar("生物识别", "未找到生物识别密钥，请先使用主密码解锁并在设置中开启生物识别。");
         return false;
       }
 
@@ -416,9 +393,7 @@ class AuthHelper {
       EncryptionHelper().setEncryptionKey(storedKey);
 
       return true;
-    } catch (e) {
-      // print('生物识别解锁失败: $e');
-      Get.snackbar("生物识别解锁失败", e.toString());
+    } catch (_) {
       return false;
     }
   }
@@ -434,21 +409,19 @@ class AuthHelper {
         value: _encryptionKey,
       );
       return true;
-    } catch (e) {
-      // print('开启生物识别失败: $e');
-      Get.snackbar("开启生物识别失败", e.toString());
+    } catch (_) {
       return false;
     }
   }
 
   // 关闭当前用户的生物识别
-  Future<void> disableBiometricForCurrentUser() async {
-    if (_currentUser?.id == null) return;
+  Future<bool> disableBiometricForCurrentUser() async {
+    if (_currentUser?.id == null) return false;
     try {
       await _secureStorage.delete(key: 'encryption_key_${_currentUser!.id}');
-    } catch (e) {
-      // print('关闭生物识别失败: $e');
-      Get.snackbar("关闭生物识别失败", e.toString());
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -457,19 +430,17 @@ class AuthHelper {
     try {
       final biometricHelper = BiometricHelper();
       return await biometricHelper.hasBiometrics();
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
 
-  // 获取可用的生物识别类型显示名称
-  Future<String> getBiometricDisplayName() async {
+  // 获取可用的生物识别类型，显示名称由页面按当前语言决定。
+  Future<List<BiometricType>> getAvailableBiometrics() async {
     try {
-      final biometricHelper = BiometricHelper();
-      final types = await biometricHelper.getAvailableBiometrics();
-      return biometricHelper.getBiometricTypeDisplayName(types);
-    } catch (e) {
-      return '生物识别';
+      return await BiometricHelper().getAvailableBiometrics();
+    } catch (_) {
+      return const [];
     }
   }
 
@@ -489,7 +460,7 @@ class AuthHelper {
         key: 'encryption_key_${user.id}',
       );
       return storedKey != null && storedKey.isNotEmpty;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
@@ -502,7 +473,7 @@ class AuthHelper {
         key: 'encryption_key_${_currentUser!.id}',
       );
       return storedKey != null && storedKey.isNotEmpty;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }

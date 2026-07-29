@@ -181,6 +181,20 @@ void main() {
     expect(find.text('Language'), findsOneWidget);
     expect(storedMode, 'en');
 
+    final listScrollable = find.descendant(
+      of: find.byType(ListView),
+      matching: find.byType(Scrollable),
+    );
+    tester.state<ScrollableState>(listScrollable.first).position.jumpTo(0);
+    await tester.pumpAndSettle();
+    expect(find.text('Biometric Unlock'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Delete Local Vault'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Delete Local Vault'), findsOneWidget);
+
     final restoredModel = LanguageModel(readMode: () async => storedMode);
     await restoredModel.load();
     await tester.pumpWidget(buildSettingsPage(restoredModel));

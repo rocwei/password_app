@@ -4,6 +4,272 @@
   "@appName": {
     "description": "Application display title inside Flutter"
   },
+  "appTagline": "安全管理您的密码",
+  "@appTagline": {
+    "description": "Tagline shown on the startup screen"
+  },
+  "splashReadVaultFailed": "无法读取本地密码库，请重试",
+  "@splashReadVaultFailed": {
+    "description": "Error shown when startup cannot determine whether a local vault exists"
+  },
+  "retry": "重试",
+  "@retry": {
+    "description": "Generic retry action"
+  },
+  "setMasterPassword": "设置主密码",
+  "@setMasterPassword": {
+    "description": "Title for the initial local vault setup page"
+  },
+  "localVaultSetupDescription": "创建受主密码保护的本地密码库",
+  "@localVaultSetupDescription": {
+    "description": "Explanation shown on the initial local vault setup page"
+  },
+  "masterPassword": "主密码",
+  "@masterPassword": {
+    "description": "Label for a master password field"
+  },
+  "confirmMasterPassword": "确认主密码",
+  "@confirmMasterPassword": {
+    "description": "Label for the master password confirmation field"
+  },
+  "masterPasswordRequired": "请输入主密码",
+  "@masterPasswordRequired": {
+    "description": "Validation message when the master password is empty"
+  },
+  "masterPasswordMinLength": "主密码至少需要 {minLength} 个字符",
+  "@masterPasswordMinLength": {
+    "description": "Validation message when the master password is too short",
+    "placeholders": {
+      "minLength": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "masterPasswordRequirement": "请使用至少 {minLength} 个字符",
+  "@masterPasswordRequirement": {
+    "description": "Master password length requirement shown during local vault setup",
+    "placeholders": {
+      "minLength": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "confirmMasterPasswordRequired": "请确认主密码",
+  "@confirmMasterPasswordRequired": {
+    "description": "Validation message when master password confirmation is empty"
+  },
+  "masterPasswordsDoNotMatch": "两次输入的密码不一致",
+  "@masterPasswordsDoNotMatch": {
+    "description": "Validation message when master password confirmation differs"
+  },
+  "rememberMasterPasswordWarning": "请牢记您的主密码！如果忘记，将无法恢复您的数据。",
+  "@rememberMasterPasswordWarning": {
+    "description": "Warning explaining that a forgotten master password cannot be recovered"
+  },
+  "createLocalVault": "创建本地密码库",
+  "@createLocalVault": {
+    "description": "Action that creates the initial local vault"
+  },
+  "localVaultAlreadyExists": "设置失败，本机已存在密码库",
+  "@localVaultAlreadyExists": {
+    "description": "Message shown when local vault setup is attempted on a device that already has one"
+  },
+  "localVaultCreationFailed": "设置本地密码库失败，请重试",
+  "@localVaultCreationFailed": {
+    "description": "Generic local vault setup failure message"
+  },
+  "unlock": "解锁",
+  "@unlock": {
+    "description": "Title and action for unlocking the local vault"
+  },
+  "unlockDescription": "输入您的主密码以访问密码库",
+  "@unlockDescription": {
+    "description": "Explanation shown on the local vault unlock page"
+  },
+  "unlockFailed": "解锁失败，请检查主密码后重试",
+  "@unlockFailed": {
+    "description": "Generic message shown when master password unlock fails"
+  },
+  "or": "或",
+  "@or": {
+    "description": "Divider text between master password and biometric unlock"
+  },
+  "biometricFingerprint": "指纹",
+  "@biometricFingerprint": {
+    "description": "Display name for fingerprint authentication"
+  },
+  "biometricFaceId": "Face ID",
+  "@biometricFaceId": {
+    "description": "Apple Face ID brand name"
+  },
+  "biometricTouchId": "Touch ID",
+  "@biometricTouchId": {
+    "description": "Apple Touch ID brand name"
+  },
+  "biometricIris": "虹膜识别",
+  "@biometricIris": {
+    "description": "Display name for iris authentication"
+  },
+  "biometrics": "生物识别",
+  "@biometrics": {
+    "description": "Generic display name for biometric authentication"
+  },
+  "unlockWithBiometric": "使用{biometricName}解锁",
+  "@unlockWithBiometric": {
+    "description": "Biometric unlock button label",
+    "placeholders": {
+      "biometricName": {
+        "type": "String",
+        "example": "Face ID"
+      }
+    }
+  },
+  "biometricUnlockReason": "请使用{biometricName}解锁本地密码库",
+  "@biometricUnlockReason": {
+    "description": "Reason displayed by the operating system biometric prompt",
+    "placeholders": {
+      "biometricName": {
+        "type": "String",
+        "example": "Face ID"
+      }
+    }
+  },
+  "biometricVerificationFailed": "{biometricName}验证失败，请重试",
+  "@biometricVerificationFailed": {
+    "description": "Generic biometric authentication failure message",
+    "placeholders": {
+      "biometricName": {
+        "type": "String",
+        "example": "Face ID"
+      }
+    }
+  },
+  "finishSecureCleanup": "完成安全清理",
+  "@finishSecureCleanup": {
+    "description": "Title for the mandatory secure storage cleanup recovery page"
+  },
+  "secureCleanupIncomplete": "本地密码库已删除，但系统安全存储尚未清理完成",
+  "@secureCleanupIncomplete": {
+    "description": "Explanation that local vault deletion completed but secure storage cleanup did not"
+  },
+  "secureCleanupRequired": "清理完成前不能创建新密码库",
+  "@secureCleanupRequired": {
+    "description": "Explanation that secure cleanup cannot be bypassed"
+  },
+  "secureCleanupRestart": "请先重启设备，然后重试清理。",
+  "@secureCleanupRestart": {
+    "description": "Instruction to restart before retrying secure cleanup"
+  },
+  "secureCleanupFailed": "系统安全存储清理失败，请重启设备后重试",
+  "@secureCleanupFailed": {
+    "description": "Generic secure storage cleanup failure message"
+  },
+  "cleaningSecureStorage": "正在清理",
+  "@cleaningSecureStorage": {
+    "description": "Progress label while secure storage cleanup is running"
+  },
+  "retryCleanup": "重试清理",
+  "@retryCleanup": {
+    "description": "Action to retry secure storage cleanup"
+  },
+  "securitySettings": "安全设置",
+  "@securitySettings": {
+    "description": "Settings section title for security controls"
+  },
+  "biometricUnlock": "生物识别解锁",
+  "@biometricUnlock": {
+    "description": "Settings title for biometric unlock"
+  },
+  "biometricUnlockDescription": "使用指纹/面部识别快速解锁",
+  "@biometricUnlockDescription": {
+    "description": "Settings description for biometric unlock"
+  },
+  "biometricSettingsUpdateFailed": "更新生物识别设置失败，请重试",
+  "@biometricSettingsUpdateFailed": {
+    "description": "Message shown when biometric settings cannot be changed"
+  },
+  "deleteLocalVault": "删除本地密码库",
+  "@deleteLocalVault": {
+    "description": "Settings action that starts permanent local vault deletion"
+  },
+  "deleteLocalVaultDescription": "永久删除本机保存的密码、分类、OTP 和主密码设置",
+  "@deleteLocalVaultDescription": {
+    "description": "Settings description for permanent local vault deletion"
+  },
+  "lockLocalVault": "锁定密码库",
+  "@lockLocalVault": {
+    "description": "Settings action that locks the local vault"
+  },
+  "lockLocalVaultTitle": "确认锁定密码库",
+  "@lockLocalVaultTitle": {
+    "description": "Title for the local vault lock confirmation dialog"
+  },
+  "lockLocalVaultConfirmation": "确定要锁定密码库吗？您将需要重新输入主密码才能访问密码库。",
+  "@lockLocalVaultConfirmation": {
+    "description": "Explanation shown before locking the local vault"
+  },
+  "cancel": "取消",
+  "@cancel": {
+    "description": "Generic cancel action"
+  },
+  "lock": "锁定",
+  "@lock": {
+    "description": "Action that confirms locking the local vault"
+  },
+  "verifyMasterPassword": "验证主密码",
+  "@verifyMasterPassword": {
+    "description": "Title for the password verification step before local vault deletion"
+  },
+  "currentMasterPassword": "当前主密码",
+  "@currentMasterPassword": {
+    "description": "Label for the current master password field"
+  },
+  "continueAction": "继续",
+  "@continueAction": {
+    "description": "Action that advances to permanent local vault deletion confirmation"
+  },
+  "permanentlyDeleteLocalVaultQuestion": "永久删除本地密码库？",
+  "@permanentlyDeleteLocalVaultQuestion": {
+    "description": "Title for the final permanent local vault deletion confirmation"
+  },
+  "permanentDeleteWarning": "此操作会永久删除本机保存的密码、分类、OTP、主密码设置、生物识别密钥和主题偏好，且无法恢复。",
+  "@permanentDeleteWarning": {
+    "description": "Warning describing local data removed by permanent local vault deletion"
+  },
+  "cachedBackupDeleteWarning": "App 内临时生成或导入缓存的 .passbackup 副本会一并删除。",
+  "@cachedBackupDeleteWarning": {
+    "description": "Warning that cached backup copies inside the app are deleted"
+  },
+  "externalBackupsPreserved": "已保存到文件 App、网盘、邮件或聊天工具等外部位置的备份不会自动删除。",
+  "@externalBackupsPreserved": {
+    "description": "Explanation that backups stored outside the app are preserved"
+  },
+  "back": "返回",
+  "@back": {
+    "description": "Action that returns to the previous deletion confirmation step"
+  },
+  "permanentlyDelete": "永久删除",
+  "@permanentlyDelete": {
+    "description": "Action that permanently deletes the local vault"
+  },
+  "currentMasterPasswordRequired": "请输入当前主密码",
+  "@currentMasterPasswordRequired": {
+    "description": "Validation message when current master password is empty"
+  },
+  "masterPasswordIncorrect": "主密码不正确",
+  "@masterPasswordIncorrect": {
+    "description": "Message shown when local vault deletion password verification fails"
+  },
+  "localVaultDeletionFailed": "删除失败，请重试",
+  "@localVaultDeletionFailed": {
+    "description": "Generic permanent local vault deletion failure message"
+  },
+  "deletingLocalVault": "正在删除本地密码库",
+  "@deletingLocalVault": {
+    "description": "Accessibility progress label while permanent local vault deletion is running"
+  },
   "settings": "设置",
   "@settings": {
     "description": "Settings page title"

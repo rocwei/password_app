@@ -1,12 +1,26 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:local_auth/local_auth.dart';
+
 import '../helpers/auth_helper.dart';
 import '../helpers/file_intent_helper.dart';
+import '../l10n/l10n.dart';
 import 'home_page.dart';
 import 'backup_restore_page.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({
+    super.key,
+    this.canLoginWithBiometric,
+    this.getAvailableBiometrics,
+    this.loginWithBiometric,
+    this.loginWithPassword,
+  });
+
+  final Future<bool> Function()? canLoginWithBiometric;
+  final Future<List<BiometricType>> Function()? getAvailableBiometrics;
+  final Future<bool> Function(String localizedReason)? loginWithBiometric;
+  final Future<bool> Function(String masterPassword)? loginWithPassword;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -19,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
   bool _isLoading = false;
   bool _isBiometricAvailable = false;
-  String _biometricDisplayName = '生物识别';
+  List<BiometricType> _availableBiometrics = const [];
 
   @override
   void initState() {
@@ -29,13 +43,25 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _checkBiometricAvailability() async {
     final authHelper = AuthHelper();
-    final isAvailable = await authHelper.canLoginWithBiometric();
-    final displayName = await authHelper.getBiometricDisplayName();
+    bool isAvailable;
+    List<BiometricType> availableBiometrics;
+    try {
+      isAvailable =
+          await (widget.canLoginWithBiometric ??
+              authHelper.canLoginWithBiometric)();
+      availableBiometrics = isAvailable
+          ? await (widget.getAvailableBiometrics ??
+                authHelper.getAvailableBiometrics)()
+          : const [];
+    } catch (_) {
+      isAvailable = false;
+      availableBiometrics = const [];
+    }
 
     if (mounted) {
       setState(() {
         _isBiometricAvailable = isAvailable;
-        _biometricDisplayName = displayName;
+        _availableBiometrics = availableBiometrics;
       });
 
       // 如果生物识别可用，自动弹出生物识别
@@ -52,32 +78,36 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _loginWithBiometric() async {
+    if (_isLoading) {
+      return;
+    }
+
+    final biometricName = _biometricDisplayName(context);
+    final localizedReason = context.l10n.biometricUnlockReason(biometricName);
+    final failureMessage = context.l10n.biometricVerificationFailed(
+      biometricName,
+    );
+
     setState(() {
       _isLoading = true;
     });
 
     try {
       final authHelper = AuthHelper();
-      final success = await authHelper.loginWithBiometric();
+      final success = await (widget.loginWithBiometric != null
+          ? widget.loginWithBiometric!(localizedReason)
+          : authHelper.loginWithBiometric(localizedReason: localizedReason));
 
       if (success) {
         if (mounted) {
           _navigateAfterLogin();
         }
-      } else {
-        if (mounted) {
-          Get.snackbar("验证失败", '$_biometricDisplayName验证失败');
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   SnackBar(
-          //     content: Text('${_biometricDisplayName}验证失败'),
-          //     backgroundColor: Colors.red,
-          //   ),
-          // );
-        }
+      } else if (mounted) {
+        _showFailure(failureMessage);
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
-        Get.snackbar("解锁失败", '$_biometricDisplayName解锁失败: $e');
+        _showFailure(failureMessage);
       }
     } finally {
       if (mounted) {
@@ -93,35 +123,28 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    final failureMessage = context.l10n.unlockFailed;
+
     setState(() {
       _isLoading = true;
     });
 
     try {
       final authHelper = AuthHelper();
-      final success = await authHelper.loginSingleUser(
-        _passwordController.text,
-      );
+      final success = await (widget.loginWithPassword != null
+          ? widget.loginWithPassword!(_passwordController.text)
+          : authHelper.loginSingleUser(_passwordController.text));
 
       if (success) {
         if (mounted) {
           _navigateAfterLogin();
         }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('解锁失败，请检查主密码'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      } else if (mounted) {
+        _showFailure(failureMessage);
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('解锁失败: $e'), backgroundColor: Colors.red),
-        );
+        _showFailure(failureMessage);
       }
     } finally {
       if (mounted) {
@@ -130,6 +153,31 @@ class _LoginPageState extends State<LoginPage> {
         });
       }
     }
+  }
+
+  void _showFailure(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  String _biometricDisplayName(BuildContext context) {
+    final l10n = context.l10n;
+    if (_availableBiometrics.contains(BiometricType.face)) {
+      return l10n.biometricFaceId;
+    }
+    if (_availableBiometrics.contains(BiometricType.fingerprint)) {
+      final isApplePlatform =
+          defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS;
+      return isApplePlatform
+          ? l10n.biometricTouchId
+          : l10n.biometricFingerprint;
+    }
+    if (_availableBiometrics.contains(BiometricType.iris)) {
+      return l10n.biometricIris;
+    }
+    return l10n.biometrics;
   }
 
   /// 解锁成功后的导航：如果有待恢复的备份文件，直接进入备份恢复页
@@ -158,8 +206,11 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final biometricName = _biometricDisplayName(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('解锁')),
+      appBar: AppBar(title: Text(l10n.unlock)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -187,19 +238,26 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    '密盾安存',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.appName,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  const Text('输入您的主密码以访问密码库', style: TextStyle(fontSize: 16)),
+                  Text(
+                    l10n.unlockDescription,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 16),
+                  ),
                   const SizedBox(height: 32),
                   TextFormField(
                     controller: _passwordController,
                     obscureText: !_isPasswordVisible,
                     style: const TextStyle(),
                     decoration: InputDecoration(
-                      labelText: '主密码',
+                      labelText: l10n.masterPassword,
                       border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
@@ -217,7 +275,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return '请输入主密码';
+                        return l10n.masterPasswordRequired;
                       }
                       return null;
                     },
@@ -231,7 +289,10 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: _isLoading ? null : _login,
                       child: _isLoading
                           ? const CircularProgressIndicator()
-                          : const Text('解锁', style: TextStyle(fontSize: 16)),
+                          : Text(
+                              l10n.unlock,
+                              style: const TextStyle(fontSize: 16),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -241,7 +302,7 @@ class _LoginPageState extends State<LoginPage> {
                         const Expanded(child: Divider()),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: const Text('或'),
+                          child: Text(l10n.or),
                         ),
                         const Expanded(child: Divider()),
                       ],
@@ -253,13 +314,15 @@ class _LoginPageState extends State<LoginPage> {
                       child: OutlinedButton.icon(
                         onPressed: _isLoading ? null : _loginWithBiometric,
                         icon: Icon(
-                          _biometricDisplayName == '指纹'
+                          _availableBiometrics.contains(
+                                BiometricType.fingerprint,
+                              )
                               ? Icons.fingerprint
                               : Icons.face,
                           size: 24,
                         ),
                         label: Text(
-                          '使用$_biometricDisplayName解锁',
+                          l10n.unlockWithBiometric(biometricName),
                           style: const TextStyle(fontSize: 16),
                         ),
                         style: OutlinedButton.styleFrom(),

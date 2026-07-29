@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../helpers/auth_helper.dart';
+import '../l10n/l10n.dart';
 import 'home_page.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -12,6 +14,8 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  static const int _minimumPasswordLength = 8;
+
   final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -32,6 +36,9 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
+    final alreadyExistsMessage = context.l10n.localVaultAlreadyExists;
+    final creationFailedMessage = context.l10n.localVaultCreationFailed;
+
     setState(() {
       _isLoading = true;
     });
@@ -50,8 +57,8 @@ class _RegisterPageState extends State<RegisterPage> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('设置失败，本机已存在密码库'),
+            SnackBar(
+              content: Text(alreadyExistsMessage),
               backgroundColor: Colors.red,
             ),
           );
@@ -60,8 +67,8 @@ class _RegisterPageState extends State<RegisterPage> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('设置本地密码库失败，请重试'),
+          SnackBar(
+            content: Text(creationFailedMessage),
             backgroundColor: Colors.red,
           ),
         );
@@ -77,8 +84,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('设置主密码')),
+      appBar: AppBar(title: Text(l10n.setMasterPassword)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -88,18 +97,28 @@ class _RegisterPageState extends State<RegisterPage> {
             children: [
               const Icon(Icons.security, size: 80),
               const SizedBox(height: 24),
-              const Text(
-                '密盾安存',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              Text(
+                l10n.appName,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
-              const Text('设置您的主密码来开始使用', style: TextStyle(fontSize: 16)),
+              Text(
+                l10n.localVaultSetupDescription,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16),
+              ),
               const SizedBox(height: 32),
               TextFormField(
                 controller: _passwordController,
                 obscureText: !_isPasswordVisible,
                 decoration: InputDecoration(
-                  labelText: '主密码',
+                  labelText: l10n.masterPassword,
+                  helperText: l10n.masterPasswordRequirement(
+                    _minimumPasswordLength,
+                  ),
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
@@ -117,10 +136,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return '请输入主密码';
+                    return l10n.masterPasswordRequired;
                   }
-                  if (value.length < 8) {
-                    return '主密码至少需要8个字符';
+                  if (value.length < _minimumPasswordLength) {
+                    return l10n.masterPasswordMinLength(_minimumPasswordLength);
                   }
                   return null;
                 },
@@ -130,7 +149,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 controller: _confirmPasswordController,
                 obscureText: !_isConfirmPasswordVisible,
                 decoration: InputDecoration(
-                  labelText: '确认主密码',
+                  labelText: l10n.confirmMasterPassword,
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
@@ -148,10 +167,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return '请确认主密码';
+                    return l10n.confirmMasterPasswordRequired;
                   }
                   if (value != _passwordController.text) {
-                    return '两次输入的密码不一致';
+                    return l10n.masterPasswordsDoNotMatch;
                   }
                   return null;
                 },
@@ -159,13 +178,13 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 24),
               Card(
                 color: Theme.of(context).cardColor,
-                child: const Padding(
-                  padding: EdgeInsets.all(12.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
                   child: Row(
                     children: [
-                      Icon(Icons.warning),
-                      SizedBox(width: 8),
-                      Expanded(child: Text('请牢记您的主密码！如果忘记，将无法恢复您的数据。')),
+                      const Icon(Icons.warning),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(l10n.rememberMasterPasswordWarning)),
                     ],
                   ),
                 ),
@@ -178,7 +197,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   onPressed: _isLoading ? null : _register,
                   child: _isLoading
                       ? const CircularProgressIndicator()
-                      : const Text('创建本地密码库', style: TextStyle(fontSize: 16)),
+                      : Text(
+                          l10n.createLocalVault,
+                          style: const TextStyle(fontSize: 16),
+                        ),
                 ),
               ),
             ],

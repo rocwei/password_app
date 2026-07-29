@@ -33,22 +33,22 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _loadingBio = true;
 
   Future<void> _lockVault() async {
+    final l10n = context.l10n;
+    final errorColor = Theme.of(context).colorScheme.error;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('确认锁定密码库'),
-        content: const Text('确定要锁定密码库吗？您将需要重新输入主密码才能访问密码库。'),
+        title: Text(l10n.lockLocalVaultTitle),
+        content: Text(l10n.lockLocalVaultConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('锁定'),
+            style: TextButton.styleFrom(foregroundColor: errorColor),
+            child: Text(l10n.lock),
           ),
         ],
       ),
@@ -114,8 +114,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (value) {
       ok = await _authHelper.enableBiometricForCurrentUser();
     } else {
-      await _authHelper.disableBiometricForCurrentUser();
-      ok = true;
+      ok = await _authHelper.disableBiometricForCurrentUser();
     }
     if (mounted) {
       setState(() {
@@ -124,9 +123,9 @@ class _SettingsPageState extends State<SettingsPage> {
       });
     }
     if (!ok && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('更新生物识别设置失败')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.biometricSettingsUpdateFailed)),
+      );
     }
   }
 
@@ -219,11 +218,11 @@ class _SettingsPageState extends State<SettingsPage> {
           // ),
 
           // 安全设置
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              '安全设置',
-              style: TextStyle(
+              context.l10n.securitySettings,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 // color provided by theme
@@ -232,8 +231,8 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           ListTile(
             leading: const Icon(Icons.fingerprint),
-            title: const Text('生物识别解锁'),
-            subtitle: const Text('使用指纹/面部识别快速解锁'),
+            title: Text(context.l10n.biometricUnlock),
+            subtitle: Text(context.l10n.biometricUnlockDescription),
             trailing: _loadingBio
                 ? const SizedBox(
                     width: 24,
@@ -285,8 +284,11 @@ class _SettingsPageState extends State<SettingsPage> {
           const Divider(height: 1),
           ListTile(
             leading: Icon(Icons.delete_forever, color: errorColor),
-            title: Text('删除本地密码库', style: TextStyle(color: errorColor)),
-            subtitle: const Text('永久删除本机保存的密码、分类、OTP 和主密码设置'),
+            title: Text(
+              context.l10n.deleteLocalVault,
+              style: TextStyle(color: errorColor),
+            ),
+            subtitle: Text(context.l10n.deleteLocalVaultDescription),
             onTap: _deleteLocalVault,
           ),
           const Divider(height: 1),
@@ -392,7 +394,7 @@ class _SettingsPageState extends State<SettingsPage> {
               child: ElevatedButton.icon(
                 onPressed: _lockVault,
                 icon: const Icon(Icons.lock),
-                label: const Text('锁定密码库'),
+                label: Text(context.l10n.lockLocalVault),
                 style: ElevatedButton.styleFrom(),
               ),
             ),

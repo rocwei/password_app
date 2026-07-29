@@ -1,6 +1,5 @@
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 
 class BiometricHelper {
   static final BiometricHelper _instance = BiometricHelper._internal();
@@ -51,7 +50,7 @@ class BiometricHelper {
   }
 
   // 执行生物识别认证
-  Future<bool> authenticate({String localizedReason = '请使用指纹或面部识别进行验证'}) async {
+  Future<bool> authenticate({required String localizedReason}) async {
     try {
       final bool isAvailable = await hasBiometrics();
       if (!isAvailable) return false;
@@ -65,23 +64,8 @@ class BiometricHelper {
       );
 
       return didAuthenticate;
-    } on PlatformException catch (e) {
-      // print('生物识别认证错误: $e');
-      Get.snackbar("生物识别认证错误", e.toString());
+    } on PlatformException {
       return false;
-    }
-  }
-
-  // 获取生物识别类型的显示名称
-  String getBiometricTypeDisplayName(List<BiometricType> types) {
-    if (types.contains(BiometricType.fingerprint)) {
-      return '指纹';
-    } else if (types.contains(BiometricType.face)) {
-      return '面部识别';
-    } else if (types.contains(BiometricType.iris)) {
-      return '虹膜识别';
-    } else {
-      return '生物识别';
     }
   }
 

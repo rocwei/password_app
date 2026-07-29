@@ -4,6 +4,272 @@
   "@appName": {
     "description": "Application display title inside Flutter"
   },
+  "appTagline": "Manage your passwords securely",
+  "@appTagline": {
+    "description": "Tagline shown on the startup screen"
+  },
+  "splashReadVaultFailed": "Could not read the local vault. Please try again.",
+  "@splashReadVaultFailed": {
+    "description": "Error shown when startup cannot determine whether a local vault exists"
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Generic retry action"
+  },
+  "setMasterPassword": "Set Master Password",
+  "@setMasterPassword": {
+    "description": "Title for the initial local vault setup page"
+  },
+  "localVaultSetupDescription": "Create a local vault protected by your master password.",
+  "@localVaultSetupDescription": {
+    "description": "Explanation shown on the initial local vault setup page"
+  },
+  "masterPassword": "Master Password",
+  "@masterPassword": {
+    "description": "Label for a master password field"
+  },
+  "confirmMasterPassword": "Confirm Master Password",
+  "@confirmMasterPassword": {
+    "description": "Label for the master password confirmation field"
+  },
+  "masterPasswordRequired": "Enter your master password.",
+  "@masterPasswordRequired": {
+    "description": "Validation message when the master password is empty"
+  },
+  "masterPasswordMinLength": "Master password must be at least {minLength} characters.",
+  "@masterPasswordMinLength": {
+    "description": "Validation message when the master password is too short",
+    "placeholders": {
+      "minLength": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "masterPasswordRequirement": "Use at least {minLength} characters.",
+  "@masterPasswordRequirement": {
+    "description": "Master password length requirement shown during local vault setup",
+    "placeholders": {
+      "minLength": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "confirmMasterPasswordRequired": "Confirm your master password.",
+  "@confirmMasterPasswordRequired": {
+    "description": "Validation message when master password confirmation is empty"
+  },
+  "masterPasswordsDoNotMatch": "Master passwords do not match.",
+  "@masterPasswordsDoNotMatch": {
+    "description": "Validation message when master password confirmation differs"
+  },
+  "rememberMasterPasswordWarning": "Remember your master password. Your data cannot be recovered if you forget it.",
+  "@rememberMasterPasswordWarning": {
+    "description": "Warning explaining that a forgotten master password cannot be recovered"
+  },
+  "createLocalVault": "Create Local Vault",
+  "@createLocalVault": {
+    "description": "Action that creates the initial local vault"
+  },
+  "localVaultAlreadyExists": "Setup failed because a local vault already exists on this device.",
+  "@localVaultAlreadyExists": {
+    "description": "Message shown when local vault setup is attempted on a device that already has one"
+  },
+  "localVaultCreationFailed": "Could not create the local vault. Please try again.",
+  "@localVaultCreationFailed": {
+    "description": "Generic local vault setup failure message"
+  },
+  "unlock": "Unlock",
+  "@unlock": {
+    "description": "Title and action for unlocking the local vault"
+  },
+  "unlockDescription": "Enter your master password to access your local vault.",
+  "@unlockDescription": {
+    "description": "Explanation shown on the local vault unlock page"
+  },
+  "unlockFailed": "Unable to unlock. Check your master password and try again.",
+  "@unlockFailed": {
+    "description": "Generic message shown when master password unlock fails"
+  },
+  "or": "or",
+  "@or": {
+    "description": "Divider text between master password and biometric unlock"
+  },
+  "biometricFingerprint": "Fingerprint",
+  "@biometricFingerprint": {
+    "description": "Display name for fingerprint authentication"
+  },
+  "biometricFaceId": "Face ID",
+  "@biometricFaceId": {
+    "description": "Apple Face ID brand name"
+  },
+  "biometricTouchId": "Touch ID",
+  "@biometricTouchId": {
+    "description": "Apple Touch ID brand name"
+  },
+  "biometricIris": "Iris",
+  "@biometricIris": {
+    "description": "Display name for iris authentication"
+  },
+  "biometrics": "Biometrics",
+  "@biometrics": {
+    "description": "Generic display name for biometric authentication"
+  },
+  "unlockWithBiometric": "Unlock with {biometricName}",
+  "@unlockWithBiometric": {
+    "description": "Biometric unlock button label",
+    "placeholders": {
+      "biometricName": {
+        "type": "String",
+        "example": "Face ID"
+      }
+    }
+  },
+  "biometricUnlockReason": "Use {biometricName} to unlock your local vault.",
+  "@biometricUnlockReason": {
+    "description": "Reason displayed by the operating system biometric prompt",
+    "placeholders": {
+      "biometricName": {
+        "type": "String",
+        "example": "Face ID"
+      }
+    }
+  },
+  "biometricVerificationFailed": "{biometricName} verification failed. Please try again.",
+  "@biometricVerificationFailed": {
+    "description": "Generic biometric authentication failure message",
+    "placeholders": {
+      "biometricName": {
+        "type": "String",
+        "example": "Face ID"
+      }
+    }
+  },
+  "finishSecureCleanup": "Finish Secure Cleanup",
+  "@finishSecureCleanup": {
+    "description": "Title for the mandatory secure storage cleanup recovery page"
+  },
+  "secureCleanupIncomplete": "The local vault was deleted, but secure storage cleanup is not complete.",
+  "@secureCleanupIncomplete": {
+    "description": "Explanation that local vault deletion completed but secure storage cleanup did not"
+  },
+  "secureCleanupRequired": "You cannot create a new local vault until cleanup finishes.",
+  "@secureCleanupRequired": {
+    "description": "Explanation that secure cleanup cannot be bypassed"
+  },
+  "secureCleanupRestart": "Restart your device, then retry cleanup.",
+  "@secureCleanupRestart": {
+    "description": "Instruction to restart before retrying secure cleanup"
+  },
+  "secureCleanupFailed": "Secure storage cleanup failed. Restart your device and try again.",
+  "@secureCleanupFailed": {
+    "description": "Generic secure storage cleanup failure message"
+  },
+  "cleaningSecureStorage": "Cleaning",
+  "@cleaningSecureStorage": {
+    "description": "Progress label while secure storage cleanup is running"
+  },
+  "retryCleanup": "Retry Cleanup",
+  "@retryCleanup": {
+    "description": "Action to retry secure storage cleanup"
+  },
+  "securitySettings": "Security",
+  "@securitySettings": {
+    "description": "Settings section title for security controls"
+  },
+  "biometricUnlock": "Biometric Unlock",
+  "@biometricUnlock": {
+    "description": "Settings title for biometric unlock"
+  },
+  "biometricUnlockDescription": "Unlock quickly with biometrics",
+  "@biometricUnlockDescription": {
+    "description": "Settings description for biometric unlock"
+  },
+  "biometricSettingsUpdateFailed": "Could not update biometric settings. Please try again.",
+  "@biometricSettingsUpdateFailed": {
+    "description": "Message shown when biometric settings cannot be changed"
+  },
+  "deleteLocalVault": "Delete Local Vault",
+  "@deleteLocalVault": {
+    "description": "Settings action that starts permanent local vault deletion"
+  },
+  "deleteLocalVaultDescription": "Permanently delete passwords, categories, OTP, and master password settings stored on this device",
+  "@deleteLocalVaultDescription": {
+    "description": "Settings description for permanent local vault deletion"
+  },
+  "lockLocalVault": "Lock Local Vault",
+  "@lockLocalVault": {
+    "description": "Settings action that locks the local vault"
+  },
+  "lockLocalVaultTitle": "Lock Local Vault?",
+  "@lockLocalVaultTitle": {
+    "description": "Title for the local vault lock confirmation dialog"
+  },
+  "lockLocalVaultConfirmation": "You will need to enter your master password again to access the local vault.",
+  "@lockLocalVaultConfirmation": {
+    "description": "Explanation shown before locking the local vault"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Generic cancel action"
+  },
+  "lock": "Lock",
+  "@lock": {
+    "description": "Action that confirms locking the local vault"
+  },
+  "verifyMasterPassword": "Verify Master Password",
+  "@verifyMasterPassword": {
+    "description": "Title for the password verification step before local vault deletion"
+  },
+  "currentMasterPassword": "Current Master Password",
+  "@currentMasterPassword": {
+    "description": "Label for the current master password field"
+  },
+  "continueAction": "Continue",
+  "@continueAction": {
+    "description": "Action that advances to permanent local vault deletion confirmation"
+  },
+  "permanentlyDeleteLocalVaultQuestion": "Permanently Delete Local Vault?",
+  "@permanentlyDeleteLocalVaultQuestion": {
+    "description": "Title for the final permanent local vault deletion confirmation"
+  },
+  "permanentDeleteWarning": "This permanently deletes passwords, categories, OTP, master password settings, biometric keys, and theme preferences stored on this device. This cannot be undone.",
+  "@permanentDeleteWarning": {
+    "description": "Warning describing local data removed by permanent local vault deletion"
+  },
+  "cachedBackupDeleteWarning": "Temporary generated or imported .passbackup copies cached inside the app will also be deleted.",
+  "@cachedBackupDeleteWarning": {
+    "description": "Warning that cached backup copies inside the app are deleted"
+  },
+  "externalBackupsPreserved": "Backups saved outside the app, such as in Files, cloud drives, email, or chats, will not be deleted automatically.",
+  "@externalBackupsPreserved": {
+    "description": "Explanation that backups stored outside the app are preserved"
+  },
+  "back": "Back",
+  "@back": {
+    "description": "Action that returns to the previous deletion confirmation step"
+  },
+  "permanentlyDelete": "Permanently Delete",
+  "@permanentlyDelete": {
+    "description": "Action that permanently deletes the local vault"
+  },
+  "currentMasterPasswordRequired": "Enter your current master password.",
+  "@currentMasterPasswordRequired": {
+    "description": "Validation message when current master password is empty"
+  },
+  "masterPasswordIncorrect": "The master password is incorrect.",
+  "@masterPasswordIncorrect": {
+    "description": "Message shown when local vault deletion password verification fails"
+  },
+  "localVaultDeletionFailed": "Deletion failed. Please try again.",
+  "@localVaultDeletionFailed": {
+    "description": "Generic permanent local vault deletion failure message"
+  },
+  "deletingLocalVault": "Deleting local vault",
+  "@deletingLocalVault": {
+    "description": "Accessibility progress label while permanent local vault deletion is running"
+  },
   "settings": "Settings",
   "@settings": {
     "description": "Settings page title"

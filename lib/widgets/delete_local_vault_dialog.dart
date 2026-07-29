@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../helpers/local_vault_deletion_service.dart';
+import '../l10n/l10n.dart';
+
+enum _DeleteDialogError { passwordRequired, incorrectPassword, deletionFailed }
 
 class DeleteLocalVaultDialog extends StatefulWidget {
   const DeleteLocalVaultDialog({super.key, required this.onDelete});
@@ -16,7 +19,7 @@ class _DeleteLocalVaultDialogState extends State<DeleteLocalVaultDialog> {
 
   bool _isConfirmationStep = false;
   bool _isLoading = false;
-  String? _errorText;
+  _DeleteDialogError? _error;
 
   @override
   void dispose() {
@@ -26,20 +29,20 @@ class _DeleteLocalVaultDialogState extends State<DeleteLocalVaultDialog> {
 
   void _continue() {
     if (_passwordController.text.isEmpty) {
-      setState(() => _errorText = '请输入当前主密码');
+      setState(() => _error = _DeleteDialogError.passwordRequired);
       return;
     }
 
     setState(() {
       _isConfirmationStep = true;
-      _errorText = null;
+      _error = null;
     });
   }
 
   void _goBack() {
     setState(() {
       _isConfirmationStep = false;
-      _errorText = null;
+      _error = null;
     });
   }
 
@@ -50,7 +53,7 @@ class _DeleteLocalVaultDialogState extends State<DeleteLocalVaultDialog> {
 
     setState(() {
       _isLoading = true;
-      _errorText = null;
+      _error = null;
     });
 
     LocalVaultDeletionResult result;
@@ -72,38 +75,56 @@ class _DeleteLocalVaultDialogState extends State<DeleteLocalVaultDialog> {
         setState(() {
           _isConfirmationStep = false;
           _isLoading = false;
-          _errorText = '主密码不正确';
+          _error = _DeleteDialogError.incorrectPassword;
         });
       case LocalVaultDeletionResult.unavailable:
       case LocalVaultDeletionResult.failed:
         setState(() {
           _isLoading = false;
-          _errorText = '删除失败，请重试';
+          _error = _DeleteDialogError.deletionFailed;
         });
     }
   }
 
+  String? _localizedError(BuildContext context) {
+    return switch (_error) {
+      _DeleteDialogError.passwordRequired =>
+        context.l10n.currentMasterPasswordRequired,
+      _DeleteDialogError.incorrectPassword =>
+        context.l10n.masterPasswordIncorrect,
+      _DeleteDialogError.deletionFailed =>
+        context.l10n.localVaultDeletionFailed,
+      null => null,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return PopScope<LocalVaultDeletionResult>(
       canPop: !_isLoading,
       child: AlertDialog(
-        title: Text(_isConfirmationStep ? '永久删除本地密码库？' : '验证主密码'),
+        title: Text(
+          _isConfirmationStep
+              ? l10n.permanentlyDeleteLocalVaultQuestion
+              : l10n.verifyMasterPassword,
+        ),
         content: _isConfirmationStep
             ? _buildConfirmationContent(context)
-            : _buildPasswordContent(),
+            : _buildPasswordContent(context),
         actions: _isConfirmationStep
             ? [
                 TextButton(
                   onPressed: _isLoading ? null : _goBack,
-                  child: const Text('返回'),
+                  child: Text(l10n.back),
                 ),
                 TextButton(
                   onPressed: _isLoading ? null : _delete,
                   style: TextButton.styleFrom(
                     foregroundColor: Theme.of(context).colorScheme.error,
                   ),
-                  child: const Text('永久删除'),
+                  child: Text(l10n.permanentlyDelete),
                 ),
               ]
             : [
@@ -111,45 +132,50 @@ class _DeleteLocalVaultDialogState extends State<DeleteLocalVaultDialog> {
                   onPressed: _isLoading
                       ? null
                       : () => Navigator.of(context).pop(),
-                  child: const Text('取消'),
+                  child: Text(l10n.cancel),
                 ),
                 TextButton(
                   onPressed: _isLoading ? null : _continue,
-                  child: const Text('继续'),
+                  child: Text(l10n.continueAction),
                 ),
               ],
       ),
     );
   }
 
-  Widget _buildPasswordContent() {
+  Widget _buildPasswordContent(BuildContext context) {
     return TextField(
       controller: _passwordController,
       autofocus: true,
       obscureText: true,
       textInputAction: TextInputAction.continueAction,
       onSubmitted: (_) => _continue(),
-      decoration: InputDecoration(labelText: '当前主密码', errorText: _errorText),
+      decoration: InputDecoration(
+        labelText: context.l10n.currentMasterPassword,
+        errorText: _localizedError(context),
+      ),
     );
   }
 
   Widget _buildConfirmationContent(BuildContext context) {
+    final l10n = context.l10n;
     final errorColor = Theme.of(context).colorScheme.error;
+    final errorText = _localizedError(context);
 
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('此操作会永久删除本机保存的密码、分类、OTP、主密码设置、生物识别密钥和主题偏好，且无法恢复。'),
+          Text(l10n.permanentDeleteWarning),
           const SizedBox(height: 12),
-          const Text('App 内临时生成或导入缓存的 .passbackup 副本会一并删除。'),
+          Text(l10n.cachedBackupDeleteWarning),
           const SizedBox(height: 12),
-          const Text('已保存到文件 App、网盘、邮件或聊天工具等外部位置的备份不会自动删除。'),
+          Text(l10n.externalBackupsPreserved),
           if (_isLoading) ...[
             const SizedBox(height: 20),
             Semantics(
-              label: '正在删除本地密码库',
+              label: l10n.deletingLocalVault,
               liveRegion: true,
               child: const ExcludeSemantics(
                 child: Center(
@@ -162,13 +188,13 @@ class _DeleteLocalVaultDialogState extends State<DeleteLocalVaultDialog> {
               ),
             ),
           ],
-          if (_errorText != null) ...[
+          if (errorText != null) ...[
             const SizedBox(height: 12),
             Semantics(
-              label: _errorText,
+              label: errorText,
               liveRegion: true,
               child: ExcludeSemantics(
-                child: Text(_errorText!, style: TextStyle(color: errorColor)),
+                child: Text(errorText, style: TextStyle(color: errorColor)),
               ),
             ),
           ],

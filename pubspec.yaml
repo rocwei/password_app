@@ -69,7 +69,6 @@ dependencies:
 
   # 应用图标
   flutter_launcher_icons: ^0.14.4
-  get: ^4.7.2
   dynamic_color: ^1.1.2
   
   # 分享功能

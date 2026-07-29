@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:password_manager/helpers/local_vault_deletion_service.dart';
+import 'package:password_manager/l10n/app_localizations.dart';
 import 'package:password_manager/widgets/delete_local_vault_dialog.dart';
 
 void main() {
@@ -286,15 +287,75 @@ void main() {
     expect(find.text('永久删除本地密码库？'), findsOneWidget);
     expect(find.text('永久删除'), findsOneWidget);
   });
+
+  testWidgets('English dialog completes both permanent deletion steps', (
+    tester,
+  ) async {
+    await _pumpDialog(
+      tester,
+      locale: const Locale('en'),
+      onDelete: (_) async => LocalVaultDeletionResult.success,
+    );
+
+    expect(find.text('Verify Master Password'), findsOneWidget);
+    expect(find.text('Current Master Password'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'StrongPass123');
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+
+    expect(find.text('Permanently Delete Local Vault?'), findsOneWidget);
+    expect(
+      find.text(
+        'This permanently deletes passwords, categories, OTP, master password settings, biometric keys, and theme preferences stored on this device. This cannot be undone.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Temporary generated or imported .passbackup copies cached inside the app will also be deleted.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Backups saved outside the app, such as in Files, cloud drives, email, or chats, will not be deleted automatically.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Permanently Delete'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DeleteLocalVaultDialog), findsNothing);
+    expect(find.text('result:success'), findsOneWidget);
+  });
+
+  testWidgets('English dialog hides thrown deletion details', (tester) async {
+    await _pumpDialog(
+      tester,
+      locale: const Locale('en'),
+      onDelete: (_) => throw StateError('sensitive deletion internals'),
+    );
+
+    await tester.enterText(find.byType(TextField), 'StrongPass123');
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    await tester.tap(find.text('Permanently Delete'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Deletion failed. Please try again.'), findsOneWidget);
+    expect(find.textContaining('sensitive deletion internals'), findsNothing);
+  });
 }
 
 Future<void> _pumpDialog(
   WidgetTester tester, {
   required Future<LocalVaultDeletionResult> Function(String) onDelete,
   TextScaler textScaler = TextScaler.noScaling,
+  Locale locale = const Locale('zh'),
 }) async {
   await tester.pumpWidget(
-    _DialogHost(onDelete: onDelete, textScaler: textScaler),
+    _DialogHost(onDelete: onDelete, textScaler: textScaler, locale: locale),
   );
   await tester.tap(find.text('open'));
   await tester.pumpAndSettle();
@@ -307,10 +368,15 @@ Future<void> _continueToConfirmation(WidgetTester tester) async {
 }
 
 class _DialogHost extends StatefulWidget {
-  const _DialogHost({required this.onDelete, required this.textScaler});
+  const _DialogHost({
+    required this.onDelete,
+    required this.textScaler,
+    required this.locale,
+  });
 
   final Future<LocalVaultDeletionResult> Function(String) onDelete;
   final TextScaler textScaler;
+  final Locale locale;
 
   @override
   State<_DialogHost> createState() => _DialogHostState();
@@ -334,6 +400,9 @@ class _DialogHostState extends State<_DialogHost> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: widget.locale,
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(textScaler: widget.textScaler),
         child: child!,

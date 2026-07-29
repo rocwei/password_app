@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:password_manager/helpers/language_model.dart';
 import 'package:password_manager/helpers/local_vault_deletion_service.dart';
 import 'package:password_manager/helpers/theme_settings.dart';
@@ -23,6 +24,7 @@ void main() {
   Widget buildSettingsPage({
     Future<LocalVaultDeletionResult> Function(String)? deleteLocalVault,
     Future<void> Function()? cleanupSecureStorage,
+    Locale locale = const Locale('zh'),
   }) {
     return MultiProvider(
       providers: [
@@ -34,6 +36,7 @@ void main() {
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        locale: locale,
         theme: ThemeData(
           colorScheme: const ColorScheme.light(error: dangerColor),
         ),
@@ -42,6 +45,15 @@ void main() {
           cleanupSecureStorage: cleanupSecureStorage,
         ),
       ),
+    );
+  }
+
+  Widget buildLocalizedPage(Widget home, {Locale locale = const Locale('zh')}) {
+    return MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: locale,
+      home: home,
     );
   }
 
@@ -54,7 +66,7 @@ void main() {
   }
 
   testWidgets('设置主密码页只使用本地密码库文案', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: RegisterPage()));
+    await tester.pumpWidget(buildLocalizedPage(const RegisterPage()));
 
     expect(find.text('设置主密码'), findsOneWidget);
     expect(find.text('创建本地密码库'), findsOneWidget);
@@ -64,7 +76,7 @@ void main() {
   });
 
   testWidgets('解锁页不提供注册页面切换入口', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: LoginPage()));
+    await tester.pumpWidget(buildLocalizedPage(const LoginPage()));
     await tester.pump();
 
     expect(find.text('解锁'), findsNWidgets(2));
@@ -74,7 +86,7 @@ void main() {
 
   testWidgets('已有本地密码库时显示明确提示', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: RegisterPage(createLocalVault: (_) async => false)),
+      buildLocalizedPage(RegisterPage(createLocalVault: (_) async => false)),
     );
 
     await submitValidMasterPassword(tester);
@@ -86,8 +98,8 @@ void main() {
 
   testWidgets('创建本地密码库异常时显示通用提示且不泄露内部错误', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: RegisterPage(
+      buildLocalizedPage(
+        RegisterPage(
           createLocalVault: (_) async =>
               throw StateError('database insert failed'),
         ),
@@ -248,8 +260,8 @@ void main() {
 
   testWidgets('安全存储重试失败时留在恢复页并允许再次重试', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: SecureStorageCleanupPage(
+      buildLocalizedPage(
+        SecureStorageCleanupPage(
           cleanup: () async => throw Exception('cleanup failed'),
         ),
       ),
@@ -270,8 +282,8 @@ void main() {
   testWidgets('安全存储清理执行中禁用重试并显示进度', (tester) async {
     final cleanup = Completer<void>();
     await tester.pumpWidget(
-      MaterialApp(
-        home: SecureStorageCleanupPage(cleanup: () => cleanup.future),
+      buildLocalizedPage(
+        SecureStorageCleanupPage(cleanup: () => cleanup.future),
       ),
     );
 
@@ -296,7 +308,7 @@ void main() {
     const storage = FlutterSecureStorage();
 
     await tester.pumpWidget(
-      const MaterialApp(home: SecureStorageCleanupPage()),
+      buildLocalizedPage(const SecureStorageCleanupPage()),
     );
     await tester.tap(find.text('重试清理'));
     await tester.pumpAndSettle();
@@ -305,4 +317,216 @@ void main() {
     expect(find.byType(RegisterPage), findsOneWidget);
     expect(find.byType(SecureStorageCleanupPage), findsNothing);
   });
+
+  testWidgets('English setup and unlock use local vault terminology', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildLocalizedPage(const RegisterPage(), locale: const Locale('en')),
+    );
+
+    expect(find.text('Set Master Password'), findsOneWidget);
+    expect(find.text('Create Local Vault'), findsOneWidget);
+    expect(find.textContaining('account', findRichText: true), findsNothing);
+    expect(find.textContaining('register', findRichText: true), findsNothing);
+
+    await tester.pumpWidget(
+      buildLocalizedPage(const LoginPage(), locale: const Locale('en')),
+    );
+    await tester.pump();
+
+    expect(find.text('Unlock'), findsNWidgets(2));
+    expect(find.text('解锁'), findsNothing);
+  });
+
+  testWidgets('English setup failures are localized and hide internal errors', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildLocalizedPage(
+        RegisterPage(
+          createLocalVault: (_) async =>
+              throw StateError('sensitive database failure'),
+        ),
+        locale: const Locale('en'),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'short');
+    await tester.tap(find.text('Create Local Vault'));
+    await tester.pump();
+    expect(
+      find.text('Master password must be at least 8 characters.'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'strong-password');
+    await tester.enterText(find.byType(TextFormField).at(1), 'strong-password');
+    await tester.ensureVisible(find.text('Create Local Vault'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create Local Vault'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Could not create the local vault. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('sensitive database failure'), findsNothing);
+  });
+
+  testWidgets(
+    'English biometric unlock maps Face ID and passes a localized reason',
+    (tester) async {
+      String? receivedReason;
+      await tester.pumpWidget(
+        buildLocalizedPage(
+          LoginPage(
+            canLoginWithBiometric: () async => true,
+            getAvailableBiometrics: () async => const [BiometricType.face],
+            loginWithBiometric: (localizedReason) async {
+              receivedReason = localizedReason;
+              return false;
+            },
+          ),
+          locale: const Locale('en'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Unlock with Face ID'), findsOneWidget);
+      expect(receivedReason, 'Use Face ID to unlock your local vault.');
+      expect(
+        find.text('Face ID verification failed. Please try again.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('English unlock failures never expose injected exceptions', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildLocalizedPage(
+        LoginPage(
+          canLoginWithBiometric: () async => false,
+          loginWithPassword: (_) async =>
+              throw StateError('secret database path leaked'),
+        ),
+        locale: const Locale('en'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField), 'master-password');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Unlock'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to unlock. Check your master password and try again.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('secret database path leaked'), findsNothing);
+  });
+
+  testWidgets('English secure cleanup page is fully localized', (tester) async {
+    await tester.pumpWidget(
+      buildLocalizedPage(
+        SecureStorageCleanupPage(
+          cleanup: () async => throw Exception('internal cleanup failure'),
+        ),
+        locale: const Locale('en'),
+      ),
+    );
+
+    expect(find.text('Finish Secure Cleanup'), findsOneWidget);
+    expect(
+      find.text(
+        'The local vault was deleted, but secure storage cleanup is not complete.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('You cannot create a new local vault until cleanup finishes.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Restart your device, then retry cleanup.'),
+      findsOneWidget,
+    );
+    expect(find.text('Retry Cleanup'), findsOneWidget);
+
+    await tester.tap(find.text('Retry Cleanup'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Secure storage cleanup failed. Restart your device and try again.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('internal cleanup failure'), findsNothing);
+  });
+
+  testWidgets('English settings exposes localized delete and lock flows', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildSettingsPage(
+        locale: const Locale('en'),
+        deleteLocalVault: (_) async => LocalVaultDeletionResult.failed,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Delete Local Vault'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Delete Local Vault'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Verify Master Password'), findsOneWidget);
+  });
+
+  testWidgets(
+    'English settings localizes biometric failure and lock confirmation',
+    (tester) async {
+      await tester.pumpWidget(buildSettingsPage(locale: const Locale('en')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Biometric Unlock'), findsOneWidget);
+      expect(find.text('Unlock quickly with biometrics'), findsOneWidget);
+
+      final biometricSwitch = find.descendant(
+        of: find.widgetWithText(ListTile, 'Biometric Unlock'),
+        matching: find.byType(Switch),
+      );
+      await tester.tap(biometricSwitch);
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Could not update biometric settings. Please try again.'),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Lock Local Vault'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Lock Local Vault'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Lock Local Vault?'), findsOneWidget);
+      expect(
+        find.text(
+          'You will need to enter your master password again to access the local vault.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Lock'), findsOneWidget);
+    },
+  );
 }

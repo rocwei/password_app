@@ -242,7 +242,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   bool _isChecking = true;
-  String? _errorText;
+  bool _hasReadError = false;
 
   @override
   void initState() {
@@ -260,7 +260,7 @@ class _SplashScreenState extends State<SplashScreen> {
       if (mounted) {
         setState(() {
           _isChecking = false;
-          _errorText = '无法读取本地密码库，请重试';
+          _hasReadError = true;
         });
       }
       return;
@@ -310,7 +310,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     setState(() {
       _isChecking = true;
-      _errorText = null;
+      _hasReadError = false;
     });
     _checkUserStatus();
   }
@@ -329,32 +329,35 @@ class _SplashScreenState extends State<SplashScreen> {
               color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 24),
-            const Text(
-              '密盾安存',
-              style: TextStyle(
+            Text(
+              context.l10n.appName,
+              style: const TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              '安全管理您的密码',
-              style: TextStyle(fontSize: 16, color: Colors.white70),
+            Text(
+              context.l10n.appTagline,
+              style: const TextStyle(fontSize: 16, color: Colors.white70),
             ),
             const SizedBox(height: 48),
             if (_isChecking)
               CircularProgressIndicator(
                 color: Theme.of(context).colorScheme.primary,
               )
-            else ...[
+            else if (_hasReadError) ...[
               Text(
-                _errorText!,
+                context.l10n.splashReadVaultFailed,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _retry, child: const Text('重试')),
+              ElevatedButton(
+                onPressed: _retry,
+                child: Text(context.l10n.retry),
+              ),
             ],
           ],
         ),

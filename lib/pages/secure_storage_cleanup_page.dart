@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../l10n/l10n.dart';
 import 'register_page.dart';
 
 class SecureStorageCleanupPage extends StatefulWidget {
@@ -15,7 +16,7 @@ class SecureStorageCleanupPage extends StatefulWidget {
 
 class _SecureStorageCleanupPageState extends State<SecureStorageCleanupPage> {
   bool _isLoading = false;
-  String? _errorText;
+  bool _cleanupFailed = false;
 
   Future<void> _retryCleanup() async {
     if (_isLoading) {
@@ -24,7 +25,7 @@ class _SecureStorageCleanupPageState extends State<SecureStorageCleanupPage> {
 
     setState(() {
       _isLoading = true;
-      _errorText = null;
+      _cleanupFailed = false;
     });
 
     try {
@@ -40,7 +41,7 @@ class _SecureStorageCleanupPageState extends State<SecureStorageCleanupPage> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorText = '系统安全存储清理失败，请重启设备后重试';
+          _cleanupFailed = true;
         });
       }
     }
@@ -52,6 +53,7 @@ class _SecureStorageCleanupPageState extends State<SecureStorageCleanupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final errorColor = Theme.of(context).colorScheme.error;
 
     return PopScope(
@@ -59,7 +61,7 @@ class _SecureStorageCleanupPageState extends State<SecureStorageCleanupPage> {
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          title: const Text('完成安全清理'),
+          title: Text(l10n.finishSecureCleanup),
         ),
         body: SafeArea(
           child: Center(
@@ -74,20 +76,26 @@ class _SecureStorageCleanupPageState extends State<SecureStorageCleanupPage> {
                     Icon(Icons.security, size: 64, color: errorColor),
                     const SizedBox(height: 24),
                     Text(
-                      '本地密码库已删除，但系统安全存储尚未清理完成',
+                      l10n.secureCleanupIncomplete,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 16),
-                    const Text('清理完成前不能创建新密码库', textAlign: TextAlign.center),
+                    Text(
+                      l10n.secureCleanupRequired,
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 8),
-                    const Text('请先重启设备，然后重试清理。', textAlign: TextAlign.center),
-                    if (_errorText != null) ...[
+                    Text(
+                      l10n.secureCleanupRestart,
+                      textAlign: TextAlign.center,
+                    ),
+                    if (_cleanupFailed) ...[
                       const SizedBox(height: 20),
                       Semantics(
                         liveRegion: true,
                         child: Text(
-                          _errorText!,
+                          l10n.secureCleanupFailed,
                           textAlign: TextAlign.center,
                           style: TextStyle(color: errorColor),
                         ),
@@ -103,7 +111,11 @@ class _SecureStorageCleanupPageState extends State<SecureStorageCleanupPage> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.refresh),
-                      label: Text(_isLoading ? '正在清理' : '重试清理'),
+                      label: Text(
+                        _isLoading
+                            ? l10n.cleaningSecureStorage
+                            : l10n.retryCleanup,
+                      ),
                     ),
                   ],
                 ),
