@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/user.dart';
@@ -10,10 +12,31 @@ class DatabaseHelper {
   DatabaseHelper._internal();
 
   static Database? _database;
+  Future<void> _databaseOperation = Future<void>.value();
 
-  Future<Database> get database async {
-    _database ??= await _initDatabase();
-    return _database!;
+  Future<T> _synchronized<T>(Future<T> Function() operation) {
+    final completer = Completer<T>();
+    _databaseOperation = _databaseOperation.then((_) async {
+      try {
+        completer.complete(await operation());
+      } catch (error, stackTrace) {
+        completer.completeError(error, stackTrace);
+      }
+    });
+    return completer.future;
+  }
+
+  Future<Database> get database {
+    return _synchronized(() async {
+      final db = _database;
+      if (db != null && db.isOpen) {
+        return db;
+      }
+
+      final openedDatabase = await _initDatabase();
+      _database = openedDatabase;
+      return openedDatabase;
+    });
   }
 
   Future<Database> _initDatabase() async {
@@ -361,24 +384,28 @@ class DatabaseHelper {
     );
   }
 
-  Future<void> deleteAllLocalData() async {
-    final path = join(await getDatabasesPath(), 'password_manager.db');
-    final db = _database;
-    _database = null;
+  Future<void> deleteAllLocalData() {
+    return _synchronized(() async {
+      final path = join(await getDatabasesPath(), 'password_manager.db');
+      final db = _database;
+      _database = null;
 
-    if (db != null && db.isOpen) {
-      await db.close();
-    }
+      if (db != null && db.isOpen) {
+        await db.close();
+      }
 
-    await deleteDatabase(path);
+      await deleteDatabase(path);
+    });
   }
 
-  Future<void> close() async {
-    final db = _database;
-    _database = null;
+  Future<void> close() {
+    return _synchronized(() async {
+      final db = _database;
+      _database = null;
 
-    if (db != null && db.isOpen) {
-      await db.close();
-    }
+      if (db != null && db.isOpen) {
+        await db.close();
+      }
+    });
   }
 }

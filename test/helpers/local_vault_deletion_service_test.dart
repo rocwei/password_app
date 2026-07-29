@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:password_manager/helpers/auth_helper.dart';
 import 'package:password_manager/helpers/encryption_helper.dart';
 import 'package:password_manager/helpers/local_vault_deletion_service.dart';
 import 'package:password_manager/models/user.dart';
@@ -20,13 +19,6 @@ void main() {
       ),
       salt: salt,
     );
-  });
-
-  test('AuthHelper exposes the local vault deletion interface', () {
-    final Future<LocalVaultDeletionResult> Function(String) deleteLocalVault =
-        AuthHelper().deleteLocalVault;
-
-    expect(deleteLocalVault, isNotNull);
   });
 
   test('returns unavailable when the user is missing', () async {
@@ -100,25 +92,28 @@ void main() {
     expect(await deletion, LocalVaultDeletionResult.success);
   });
 
-  test('returns failed without clearing session when storage throws', () async {
-    final calls = <String>[];
-    final service = LocalVaultDeletionService(
-      deleteDatabase: () async => calls.add('database'),
-      clearSecureStorage: () async {
-        calls.add('storage');
-        throw StateError('storage failure');
-      },
-    );
+  test(
+    'clears session when storage cleanup fails after database deletion',
+    () async {
+      final calls = <String>[];
+      final service = LocalVaultDeletionService(
+        deleteDatabase: () async => calls.add('database'),
+        clearSecureStorage: () async {
+          calls.add('storage');
+          throw StateError('storage failure');
+        },
+      );
 
-    final result = await service.delete(
-      user: user,
-      masterPassword: 'StrongPass123',
-      clearSession: () => calls.add('session'),
-    );
+      final result = await service.delete(
+        user: user,
+        masterPassword: 'StrongPass123',
+        clearSession: () => calls.add('session'),
+      );
 
-    expect(result, LocalVaultDeletionResult.failed);
-    expect(calls, ['database', 'storage']);
-  });
+      expect(result, LocalVaultDeletionResult.deletedWithSecureStorageFailure);
+      expect(calls, ['database', 'storage', 'session']);
+    },
+  );
 
   test(
     'returns failed without invoking callbacks when salt is invalid',

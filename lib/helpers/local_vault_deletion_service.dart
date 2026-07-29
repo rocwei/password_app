@@ -8,6 +8,7 @@ enum LocalVaultDeletionResult {
   success,
   incorrectPassword,
   unavailable,
+  deletedWithSecureStorageFailure,
   failed,
 }
 
@@ -43,11 +44,18 @@ class LocalVaultDeletionService {
       }
 
       await deleteDatabase();
-      await clearSecureStorage();
-      clearSession();
-      return LocalVaultDeletionResult.success;
     } catch (_) {
       return LocalVaultDeletionResult.failed;
     }
+
+    var result = LocalVaultDeletionResult.success;
+    try {
+      await clearSecureStorage();
+    } catch (_) {
+      result = LocalVaultDeletionResult.deletedWithSecureStorageFailure;
+    }
+
+    clearSession();
+    return result;
   }
 }
