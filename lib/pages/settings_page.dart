@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../helpers/auth_helper.dart';
+import '../helpers/local_vault_deletion_service.dart';
 import '../helpers/theme_settings.dart';
+import '../widgets/delete_local_vault_dialog.dart';
 import 'change_master_password_page.dart';
 import 'backup_restore_page.dart';
 import 'about_page.dart';
 import 'login_page.dart';
+import 'register_page.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, this.deleteLocalVault});
+
+  final Future<LocalVaultDeletionResult> Function(String)? deleteLocalVault;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -19,12 +24,12 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _biometricEnabled = false;
   bool _loadingBio = true;
 
-  void _logout() async {
+  Future<void> _lockVault() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('确认登出'),
-        content: const Text('确定要登出吗？您将需要重新输入主密码才能访问密码库。'),
+        title: const Text('确认锁定密码库'),
+        content: const Text('确定要锁定密码库吗？您将需要重新输入主密码才能访问密码库。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -33,7 +38,7 @@ class _SettingsPageState extends State<SettingsPage> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('登出'),
+            child: const Text('锁定'),
           ),
         ],
       ),
@@ -47,6 +52,37 @@ class _SettingsPageState extends State<SettingsPage> {
           (route) => false,
         );
       }
+    }
+  }
+
+  Future<void> _deleteLocalVault() async {
+    final result = await showDialog<LocalVaultDeletionResult>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => DeleteLocalVaultDialog(
+        onDelete: widget.deleteLocalVault ?? _authHelper.deleteLocalVault,
+      ),
+    );
+
+    if (!mounted ||
+        (result != LocalVaultDeletionResult.success &&
+            result !=
+                LocalVaultDeletionResult.deletedWithSecureStorageFailure)) {
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const RegisterPage()),
+      (route) => false,
+    );
+
+    if (result == LocalVaultDeletionResult.deletedWithSecureStorageFailure) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('本地密码库已删除，但系统安全存储清理未完全完成，请重启设备后重试')),
+        );
+      });
     }
   }
 
@@ -90,7 +126,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final user = _authHelper.currentUser;
     final themeModel = Provider.of<ThemeModel>(context);
 
     return Scaffold(
@@ -228,6 +263,13 @@ class _SettingsPageState extends State<SettingsPage> {
             },
           ),
           const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.delete_forever, color: Colors.red),
+            title: const Text('删除本地密码库', style: TextStyle(color: Colors.red)),
+            subtitle: const Text('永久删除本机保存的密码、分类、OTP 和主密码设置'),
+            onTap: _deleteLocalVault,
+          ),
+          const Divider(height: 1),
 
           // 关于
           // 主题设置
@@ -288,15 +330,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
           const SizedBox(height: 32),
 
-          // 登出按钮
+          // 锁定密码库按钮
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SizedBox(
               height: 48,
               child: ElevatedButton.icon(
-                onPressed: _logout,
-                icon: const Icon(Icons.logout),
-                label: const Text('登出'),
+                onPressed: _lockVault,
+                icon: const Icon(Icons.lock),
+                label: const Text('锁定密码库'),
                 style: ElevatedButton.styleFrom(),
               ),
             ),
@@ -306,10 +348,6 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
     );
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
   }
 
   Widget _buildThemeOption(
