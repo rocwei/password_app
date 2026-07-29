@@ -67,7 +67,7 @@ class _DeleteLocalVaultDialogState extends State<DeleteLocalVaultDialog> {
     switch (result) {
       case LocalVaultDeletionResult.success:
       case LocalVaultDeletionResult.deletedWithSecureStorageFailure:
-        Navigator.of(context).pop(true);
+        Navigator.of(context).pop(result);
       case LocalVaultDeletionResult.incorrectPassword:
         setState(() {
           _isConfirmationStep = false;
@@ -85,37 +85,40 @@ class _DeleteLocalVaultDialogState extends State<DeleteLocalVaultDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(_isConfirmationStep ? '永久删除本地密码库？' : '验证主密码'),
-      content: _isConfirmationStep
-          ? _buildConfirmationContent(context)
-          : _buildPasswordContent(),
-      actions: _isConfirmationStep
-          ? [
-              TextButton(
-                onPressed: _isLoading ? null : _goBack,
-                child: const Text('返回'),
-              ),
-              TextButton(
-                onPressed: _isLoading ? null : _delete,
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
+    return PopScope<LocalVaultDeletionResult>(
+      canPop: !_isLoading,
+      child: AlertDialog(
+        title: Text(_isConfirmationStep ? '永久删除本地密码库？' : '验证主密码'),
+        content: _isConfirmationStep
+            ? _buildConfirmationContent(context)
+            : _buildPasswordContent(),
+        actions: _isConfirmationStep
+            ? [
+                TextButton(
+                  onPressed: _isLoading ? null : _goBack,
+                  child: const Text('返回'),
                 ),
-                child: const Text('永久删除'),
-              ),
-            ]
-          : [
-              TextButton(
-                onPressed: _isLoading
-                    ? null
-                    : () => Navigator.of(context).pop(false),
-                child: const Text('取消'),
-              ),
-              TextButton(
-                onPressed: _isLoading ? null : _continue,
-                child: const Text('继续'),
-              ),
-            ],
+                TextButton(
+                  onPressed: _isLoading ? null : _delete,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  child: const Text('永久删除'),
+                ),
+              ]
+            : [
+                TextButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  child: const Text('取消'),
+                ),
+                TextButton(
+                  onPressed: _isLoading ? null : _continue,
+                  child: const Text('继续'),
+                ),
+              ],
+      ),
     );
   }
 
@@ -143,17 +146,29 @@ class _DeleteLocalVaultDialogState extends State<DeleteLocalVaultDialog> {
           const Text('已经导出的 .passbackup 备份文件不会被删除。'),
           if (_isLoading) ...[
             const SizedBox(height: 20),
-            const Center(
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
+            Semantics(
+              label: '正在删除本地密码库',
+              liveRegion: true,
+              child: const ExcludeSemantics(
+                child: Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
               ),
             ),
           ],
           if (_errorText != null) ...[
             const SizedBox(height: 12),
-            Text(_errorText!, style: TextStyle(color: errorColor)),
+            Semantics(
+              label: _errorText,
+              liveRegion: true,
+              child: ExcludeSemantics(
+                child: Text(_errorText!, style: TextStyle(color: errorColor)),
+              ),
+            ),
           ],
         ],
       ),
