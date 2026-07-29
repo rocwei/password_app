@@ -23,8 +23,12 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(0), 'old-password');
     await tester.enterText(find.byType(TextFormField).at(1), 'new-password');
     await tester.enterText(find.byType(TextFormField).at(2), 'new-password');
-    await tester.ensureVisible(find.text('更改主密码'));
-    await tester.tap(find.text('更改主密码'));
+    final submitButton = find.widgetWithText(
+      ElevatedButton,
+      'Change Master Password',
+    );
+    await tester.ensureVisible(submitButton);
+    await tester.tap(submitButton);
     await tester.pumpAndSettle();
   }
 

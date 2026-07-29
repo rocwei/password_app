@@ -925,5 +925,521 @@
   "cameraUnavailable": "相机不可用，请重试",
   "@cameraUnavailable": {
     "description": "Generic QR scanner camera error"
+  },
+  "changeMasterPassword": "修改主密码",
+  "@changeMasterPassword": {
+    "description": "Title and action for changing the master password"
+  },
+  "changeMasterPasswordDescription": "更改主密码后，您的所有密码数据将使用新密码重新加密。",
+  "@changeMasterPasswordDescription": {
+    "description": "Security explanation on the change master password page"
+  },
+  "currentMasterPasswordRequiredLabel": "当前主密码 *",
+  "@currentMasterPasswordRequiredLabel": {
+    "description": "Required current master password field label"
+  },
+  "newMasterPasswordRequiredLabel": "新主密码 *",
+  "@newMasterPasswordRequiredLabel": {
+    "description": "Required new master password field label"
+  },
+  "confirmNewMasterPasswordRequiredLabel": "确认新主密码 *",
+  "@confirmNewMasterPasswordRequiredLabel": {
+    "description": "Required new master password confirmation field label"
+  },
+  "newMasterPasswordRequired": "请输入新主密码",
+  "@newMasterPasswordRequired": {
+    "description": "Validation message for an empty new master password"
+  },
+  "newMasterPasswordMinLength": "新主密码至少需要 {minLength} 个字符",
+  "@newMasterPasswordMinLength": {
+    "description": "Validation message for a short new master password",
+    "placeholders": {
+      "minLength": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "newMasterPasswordMustDiffer": "新密码不能与当前密码相同",
+  "@newMasterPasswordMustDiffer": {
+    "description": "Validation message when old and new master passwords match"
+  },
+  "confirmNewMasterPasswordRequired": "请确认新主密码",
+  "@confirmNewMasterPasswordRequired": {
+    "description": "Validation message for an empty new password confirmation"
+  },
+  "newMasterPasswordsDoNotMatch": "两次输入的新密码不一致",
+  "@newMasterPasswordsDoNotMatch": {
+    "description": "Validation message when new master password confirmation differs"
+  },
+  "masterPasswordChanged": "主密码已成功更改",
+  "@masterPasswordChanged": {
+    "description": "Success message after changing the master password"
+  },
+  "masterPasswordChangeIncorrect": "更改失败，请检查当前主密码是否正确",
+  "@masterPasswordChangeIncorrect": {
+    "description": "Message shown when the current password is incorrect during change"
+  },
+  "masterPasswordChangeFailed": "无法修改主密码，请重试",
+  "@masterPasswordChangeFailed": {
+    "description": "Generic safe master password change failure"
+  },
+  "dataManagement": "数据管理",
+  "@dataManagement": {
+    "description": "Settings section title for data management"
+  },
+  "backupAndRestore": "备份与恢复",
+  "@backupAndRestore": {
+    "description": "Title for backup and restore"
+  },
+  "backupAndRestoreDescription": "备份或恢复您的密码数据",
+  "@backupAndRestoreDescription": {
+    "description": "Settings description for backup and restore"
+  },
+  "themeSettings": "主题设置",
+  "@themeSettings": {
+    "description": "Settings section title for theme controls"
+  },
+  "useSystemMaterialYouColors": "使用系统 Material You 颜色",
+  "@useSystemMaterialYouColors": {
+    "description": "Setting to use Material You system colors"
+  },
+  "themePresets": "主题方案预设",
+  "@themePresets": {
+    "description": "Heading for predefined app themes"
+  },
+  "themeYellowDark": "黄黑经典",
+  "@themeYellowDark": {
+    "description": "Name of the yellow and black theme"
+  },
+  "themeBlueLight": "蓝白简约",
+  "@themeBlueLight": {
+    "description": "Name of the blue and white theme"
+  },
+  "darkBackground": "深色背景",
+  "@darkBackground": {
+    "description": "Description of a dark theme preview"
+  },
+  "lightBackground": "浅色背景",
+  "@lightBackground": {
+    "description": "Description of a light theme preview"
+  },
+  "about": "关于",
+  "@about": {
+    "description": "About section and page title"
+  },
+  "aboutApp": "关于应用",
+  "@aboutApp": {
+    "description": "Settings action that opens the about page"
+  },
+  "appInformationAndVersion": "应用信息和版本",
+  "@appInformationAndVersion": {
+    "description": "Settings description for the about page"
+  },
+  "backupSecurityNotice": "备份文件已使用 AES-256 加密，可安全存储或分享。\n恢复时需要输入备份时使用的主密码。",
+  "@backupSecurityNotice": {
+    "description": "Encryption notice at the top of the backup page"
+  },
+  "creatingEncryptedBackup": "正在加密数据并生成备份文件",
+  "@creatingEncryptedBackup": {
+    "description": "Progress while creating a backup file"
+  },
+  "backupFailed": "无法创建备份，请重试",
+  "@backupFailed": {
+    "description": "Generic safe backup creation failure"
+  },
+  "backupFileCreated": "备份文件已生成",
+  "@backupFileCreated": {
+    "description": "Title of the backup success dialog"
+  },
+  "passwordEntries": "密码条目",
+  "@passwordEntries": {
+    "description": "Label for password entries in backup summaries"
+  },
+  "otpTokens": "OTP 令牌",
+  "@otpTokens": {
+    "description": "Label for OTP tokens in backup summaries"
+  },
+  "fileName": "文件名",
+  "@fileName": {
+    "description": "Label for a backup file name"
+  },
+  "backupPasswordEntryCount": "{count, plural, =0{0 个密码条目} other{{count} 个密码条目}}",
+  "@backupPasswordEntryCount": {
+    "description": "Localized password entry count in backup flows",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "backupCategoryCount": "{count, plural, =0{0 个分类} other{{count} 个分类}}",
+  "@backupCategoryCount": {
+    "description": "Localized category count in backup flows",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "backupOtpCount": "{count, plural, =0{0 个 OTP 令牌} other{{count} 个 OTP 令牌}}",
+  "@backupOtpCount": {
+    "description": "Localized OTP token count in backup flows",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "exportBackupPrompt": "请点击下方按钮，将备份文件保存到文件 App、网盘、邮件或可信聊天工具等安全位置。",
+  "@exportBackupPrompt": {
+    "description": "Prompt to export a generated backup"
+  },
+  "shareOrExportFile": "分享 / 导出文件",
+  "@shareOrExportFile": {
+    "description": "Action that opens the system share panel for a backup"
+  },
+  "later": "稍后处理",
+  "@later": {
+    "description": "Action that postpones exporting a generated backup"
+  },
+  "backupShareSubject": "密盾安存 - 密码备份文件",
+  "@backupShareSubject": {
+    "description": "Subject used when sharing a backup file"
+  },
+  "backupShareText": "这是「密盾安存」生成的加密备份文件，请妥善保管。恢复时需要输入备份密码。",
+  "@backupShareText": {
+    "description": "Text used when sharing a backup file"
+  },
+  "backupShared": "备份文件已成功分享",
+  "@backupShared": {
+    "description": "Success message after sharing a backup"
+  },
+  "backupShareFailed": "无法分享备份文件，请重试",
+  "@backupShareFailed": {
+    "description": "Generic safe backup share failure"
+  },
+  "openingFilePicker": "正在打开文件选择器",
+  "@openingFilePicker": {
+    "description": "Progress while opening the backup file picker"
+  },
+  "selectBackupFileTitle": "选择 .passbackup 备份文件",
+  "@selectBackupFileTitle": {
+    "description": "System file picker title for selecting a backup"
+  },
+  "filePickerFailed": "无法打开文件选择器，请重试",
+  "@filePickerFailed": {
+    "description": "Generic safe file picker failure"
+  },
+  "selectedFileUnavailable": "无法访问所选文件",
+  "@selectedFileUnavailable": {
+    "description": "Message when a selected backup has no accessible path"
+  },
+  "invalidBackupFileTitle": "文件格式不正确",
+  "@invalidBackupFileTitle": {
+    "description": "Title for an invalid backup file extension"
+  },
+  "invalidBackupFileMessage": "请选择后缀为 .passbackup 的备份文件。\n\n当前选择的文件：{fileName}",
+  "@invalidBackupFileMessage": {
+    "description": "Invalid backup extension message preserving the original file name",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "archive.txt"
+      }
+    }
+  },
+  "readingEncryptedBackup": "正在读取并解密备份文件",
+  "@readingEncryptedBackup": {
+    "description": "Progress while reading a backup"
+  },
+  "confirmRestore": "确认恢复",
+  "@confirmRestore": {
+    "description": "Title and action for confirming a backup restore"
+  },
+  "restoreSummary": "文件：{fileName}\n{summary}\n\n此操作将删除当前所有密码数据，并替换为备份中的数据。此操作无法撤销，确定要继续吗？",
+  "@restoreSummary": {
+    "description": "Destructive restore confirmation for a backup without OTP tokens",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "password_backup.passbackup"
+      },
+      "summary": {
+        "type": "String",
+        "example": "将恢复 2 个密码条目、1 个分类和 1 个 OTP 令牌。"
+      }
+    }
+  },
+  "restoreSummaryWithOtp": "文件：{fileName}\n{summary}\n\n此操作将删除当前所有密码数据和 OTP 令牌，并替换为备份中的数据。此操作无法撤销，确定要继续吗？",
+  "@restoreSummaryWithOtp": {
+    "description": "Destructive restore confirmation for a backup containing OTP tokens",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "password_backup.passbackup"
+      },
+      "summary": {
+        "type": "String",
+        "example": "将恢复 2 个密码条目、1 个分类和 1 个 OTP 令牌。"
+      }
+    }
+  },
+  "restoreCountSummary": "将恢复 {counts}。",
+  "@restoreCountSummary": {
+    "description": "Summary of localized counts before restoring",
+    "placeholders": {
+      "counts": {
+        "type": "String",
+        "example": "2 个密码条目、1 个分类和 1 个 OTP 令牌"
+      }
+    }
+  },
+  "restoreCountJoinTwo": "{first}和{second}",
+  "@restoreCountJoinTwo": {
+    "description": "Joins two localized restore count fragments",
+    "placeholders": {
+      "first": {
+        "type": "String",
+        "example": "2 个密码条目"
+      },
+      "second": {
+        "type": "String",
+        "example": "1 个 OTP 令牌"
+      }
+    }
+  },
+  "restoreCountJoinThree": "{first}、{second}和{third}",
+  "@restoreCountJoinThree": {
+    "description": "Joins three localized restore count fragments",
+    "placeholders": {
+      "first": {
+        "type": "String",
+        "example": "2 个密码条目"
+      },
+      "second": {
+        "type": "String",
+        "example": "1 个分类"
+      },
+      "third": {
+        "type": "String",
+        "example": "1 个 OTP 令牌"
+      }
+    }
+  },
+  "restoringData": "正在恢复数据",
+  "@restoringData": {
+    "description": "Progress while applying a backup restore"
+  },
+  "restoreSucceeded": "成功恢复 {summary}",
+  "@restoreSucceeded": {
+    "description": "Restore success message with localized count summary",
+    "placeholders": {
+      "summary": {
+        "type": "String",
+        "example": "2 个密码条目、1 个分类和 1 个 OTP 令牌"
+      }
+    }
+  },
+  "restoreFailed": "无法恢复备份，请检查文件和密码后重试",
+  "@restoreFailed": {
+    "description": "Generic safe backup restore failure"
+  },
+  "understood": "知道了",
+  "@understood": {
+    "description": "Action that dismisses an informational warning"
+  },
+  "createBackup": "创建备份",
+  "@createBackup": {
+    "description": "Heading for creating a backup"
+  },
+  "createBackupSubtitle": "生成加密 .passbackup 文件",
+  "@createBackupSubtitle": {
+    "description": "Subtitle for creating a backup"
+  },
+  "createBackupDescription": "将所有密码和 OTP 令牌导出为加密备份文件，可安全保存或分享。",
+  "@createBackupDescription": {
+    "description": "Description of backup creation"
+  },
+  "createBackupFile": "创建备份文件",
+  "@createBackupFile": {
+    "description": "Action that starts backup creation"
+  },
+  "restoreBackup": "恢复备份",
+  "@restoreBackup": {
+    "description": "Heading for restoring a backup"
+  },
+  "restoreBackupSubtitle": "从 .passbackup 文件恢复",
+  "@restoreBackupSubtitle": {
+    "description": "Subtitle for restoring a backup"
+  },
+  "restoreBackupDescription": "选择之前导出的 .passbackup 备份文件进行恢复。\n注意：恢复操作将覆盖当前所有密码数据。",
+  "@restoreBackupDescription": {
+    "description": "Description and destructive warning for restoring a backup"
+  },
+  "selectBackupFileToRestore": "选择备份文件恢复",
+  "@selectBackupFileToRestore": {
+    "description": "Action that starts selecting a backup file"
+  },
+  "usageHelp": "使用帮助",
+  "@usageHelp": {
+    "description": "Heading for backup and restore instructions"
+  },
+  "backupHelpTitle": "备份",
+  "@backupHelpTitle": {
+    "description": "Title of the backup help step"
+  },
+  "backupHelpDescription": "点击「创建备份文件」，输入主密码，再将文件保存到安全位置。",
+  "@backupHelpDescription": {
+    "description": "Instructions for creating and exporting a backup"
+  },
+  "restoreHelpTitle": "恢复",
+  "@restoreHelpTitle": {
+    "description": "Title of the restore help step"
+  },
+  "restoreHelpDescription": "点击「选择备份文件恢复」，选择 .passbackup 文件，再输入备份密码。",
+  "@restoreHelpDescription": {
+    "description": "Instructions for restoring a backup"
+  },
+  "migrationHelpTitle": "跨设备迁移",
+  "@migrationHelpTitle": {
+    "description": "Title of the cross-device migration help step"
+  },
+  "migrationHelpDescription": "在旧设备创建备份并安全传输，在新设备下载文件后恢复。",
+  "@migrationHelpDescription": {
+    "description": "Instructions for moving data between devices"
+  },
+  "rememberBackupPassword": "请牢记备份密码，忘记密码将无法恢复数据。",
+  "@rememberBackupPassword": {
+    "description": "Warning that backup passwords cannot be recovered"
+  },
+  "restorePasswordDialogTitle": "输入备份密码以恢复",
+  "@restorePasswordDialogTitle": {
+    "description": "Title of the restore password dialog"
+  },
+  "createBackupPasswordDialogTitle": "输入主密码以创建备份",
+  "@createBackupPasswordDialogTitle": {
+    "description": "Title of the backup creation password dialog"
+  },
+  "restorePasswordPrompt": "请输入创建备份时使用的主密码：",
+  "@restorePasswordPrompt": {
+    "description": "Prompt for the password used by a backup"
+  },
+  "createBackupPasswordPrompt": "请输入您的主密码以生成备份密钥：",
+  "@createBackupPasswordPrompt": {
+    "description": "Prompt for a master password when creating a backup"
+  },
+  "restorePasswordHint": "请输入备份时设置的密码，密码错误将无法恢复数据。",
+  "@restorePasswordHint": {
+    "description": "Hint in the restore password dialog"
+  },
+  "createBackupPasswordHint": "备份使用固定的加密密钥，可在不同设备间互通。",
+  "@createBackupPasswordHint": {
+    "description": "Hint in the create backup password dialog"
+  },
+  "confirm": "确认",
+  "@confirm": {
+    "description": "Generic confirm action"
+  },
+  "aboutDescription": "安全、简单、可靠的本地密码管理工具，所有数据均不会上传。",
+  "@aboutDescription": {
+    "description": "Short app description on the about page"
+  },
+  "versionLabel": "版本 {version} ({buildNumber})",
+  "@versionLabel": {
+    "description": "Application version and build number",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "1.0.1"
+      },
+      "buildNumber": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "versionUnavailable": "版本信息不可用",
+  "@versionUnavailable": {
+    "description": "Safe fallback when application version information cannot be read"
+  },
+  "features": "功能特性",
+  "@features": {
+    "description": "About page feature section title"
+  },
+  "featureEncryption": "安全加密",
+  "@featureEncryption": {
+    "description": "About page encryption feature title"
+  },
+  "featureEncryptionDescription": "使用 AES-256 加密保护您的密码数据。",
+  "@featureEncryptionDescription": {
+    "description": "About page encryption feature description"
+  },
+  "featureLocalStorage": "本地存储",
+  "@featureLocalStorage": {
+    "description": "About page local storage feature title"
+  },
+  "featureLocalStorageDescription": "所有数据仅存储在本机，不会上传到服务器。",
+  "@featureLocalStorageDescription": {
+    "description": "About page local storage feature description"
+  },
+  "featurePasswordGeneration": "密码生成",
+  "@featurePasswordGeneration": {
+    "description": "About page password generation feature title"
+  },
+  "featurePasswordGenerationDescription": "使用内置生成器创建安全的随机密码。",
+  "@featurePasswordGenerationDescription": {
+    "description": "About page password generation feature description"
+  },
+  "featureBackupRestore": "备份恢复",
+  "@featureBackupRestore": {
+    "description": "About page backup feature title"
+  },
+  "featureBackupRestoreDescription": "支持创建加密备份并按需恢复。",
+  "@featureBackupRestoreDescription": {
+    "description": "About page backup feature description"
+  },
+  "featureFastSearch": "快速搜索",
+  "@featureFastSearch": {
+    "description": "About page search feature title"
+  },
+  "featureFastSearchDescription": "快速查找和管理密码条目。",
+  "@featureFastSearchDescription": {
+    "description": "About page search feature description"
+  },
+  "securityNotes": "安全说明",
+  "@securityNotes": {
+    "description": "About page security section title"
+  },
+  "securityNotesBody": "• 主密码是解锁所有数据的唯一钥匙，请务必牢记\n• 所有敏感数据均使用 AES 加密保护\n• 应用不会收集或传输任何个人数据\n• 建议定期创建备份以防数据丢失\n• 应用进入后台时会自动锁定密码库",
+  "@securityNotesBody": {
+    "description": "Security guidance shown on the about page"
+  },
+  "developerInformation": "开发信息",
+  "@developerInformation": {
+    "description": "About page developer section title"
+  },
+  "contactEmail": "联系邮箱：{email}",
+  "@contactEmail": {
+    "description": "Developer contact email",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "support@example.com"
+      }
+    }
+  },
+  "copyrightNotice": "© {year} 密盾安存。保留所有权利。",
+  "@copyrightNotice": {
+    "description": "About page copyright notice",
+    "placeholders": {
+      "year": {
+        "type": "int",
+        "example": "2026"
+      }
+    }
   }
 }

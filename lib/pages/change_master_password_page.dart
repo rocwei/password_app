@@ -65,8 +65,8 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
       switch (result) {
         case MasterPasswordChangeResult.success:
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('主密码已成功更改'),
+            SnackBar(
+              content: Text(context.l10n.masterPasswordChanged),
               backgroundColor: Colors.green,
             ),
           );
@@ -81,15 +81,15 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
           );
         case MasterPasswordChangeResult.incorrectPassword:
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('更改失败，请检查旧密码是否正确'),
+            SnackBar(
+              content: Text(context.l10n.masterPasswordChangeIncorrect),
               backgroundColor: Colors.red,
             ),
           );
         case MasterPasswordChangeResult.failed:
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('更改失败，请重试'),
+            SnackBar(
+              content: Text(context.l10n.masterPasswordChangeFailed),
               backgroundColor: Colors.red,
             ),
           );
@@ -105,8 +105,8 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('更改失败，请重试'),
+          SnackBar(
+            content: Text(context.l10n.masterPasswordChangeFailed),
             backgroundColor: Colors.red,
           ),
         );
@@ -124,7 +124,7 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('修改主密码'),
+        title: Text(context.l10n.changeMasterPassword),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
@@ -134,18 +134,18 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Card(
+              Card(
                 color: Colors.blue,
                 child: Padding(
-                  padding: EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(12.0),
                   child: Row(
                     children: [
-                      Icon(Icons.info, color: Colors.white),
-                      SizedBox(width: 8),
+                      const Icon(Icons.info, color: Colors.white),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '更改主密码后，您的所有密码数据将使用新密码重新加密。',
-                          style: TextStyle(color: Colors.white),
+                          context.l10n.changeMasterPasswordDescription,
+                          style: const TextStyle(color: Colors.white),
                         ),
                       ),
                     ],
@@ -158,7 +158,7 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                 controller: _oldPasswordController,
                 obscureText: !_isOldPasswordVisible,
                 decoration: InputDecoration(
-                  labelText: '当前主密码 *',
+                  labelText: context.l10n.currentMasterPasswordRequiredLabel,
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
@@ -176,7 +176,7 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return '请输入当前主密码';
+                    return context.l10n.currentMasterPasswordRequired;
                   }
                   return null;
                 },
@@ -187,7 +187,7 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                 controller: _newPasswordController,
                 obscureText: !_isNewPasswordVisible,
                 decoration: InputDecoration(
-                  labelText: '新主密码 *',
+                  labelText: context.l10n.newMasterPasswordRequiredLabel,
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
@@ -205,13 +205,13 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return '请输入新主密码';
+                    return context.l10n.newMasterPasswordRequired;
                   }
                   if (value.length < 8) {
-                    return '新主密码至少需要8个字符';
+                    return context.l10n.newMasterPasswordMinLength(8);
                   }
                   if (value == _oldPasswordController.text) {
-                    return '新密码不能与当前密码相同';
+                    return context.l10n.newMasterPasswordMustDiffer;
                   }
                   return null;
                 },
@@ -222,7 +222,7 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                 controller: _confirmPasswordController,
                 obscureText: !_isConfirmPasswordVisible,
                 decoration: InputDecoration(
-                  labelText: '确认新主密码 *',
+                  labelText: context.l10n.confirmNewMasterPasswordRequiredLabel,
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
@@ -240,34 +240,16 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return '请确认新主密码';
+                    return context.l10n.confirmNewMasterPasswordRequired;
                   }
                   if (value != _newPasswordController.text) {
-                    return '两次输入的新密码不一致';
+                    return context.l10n.newMasterPasswordsDoNotMatch;
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 24),
 
-              // const Card(
-              //   color: Colors.orange,
-              //   child: Padding(
-              //     padding: EdgeInsets.all(12.0),
-              //     child: Row(
-              //       children: [
-              //         Icon(Icons.warning, color: Colors.white),
-              //         SizedBox(width: 8),
-              //         Expanded(
-              //           child: Text(
-              //             '请确保牢记新的主密码！如果忘记，将无法恢复您的数据。',
-              //             style: TextStyle(color: Colors.white),
-              //           ),
-              //         ),
-              //       ],
-              //     ),
-              //   ),
-              // ),
               const SizedBox(height: 24),
 
               SizedBox(
@@ -281,7 +263,10 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('更改主密码', style: TextStyle(fontSize: 16)),
+                      : Text(
+                          context.l10n.changeMasterPassword,
+                          style: const TextStyle(fontSize: 16),
+                        ),
                 ),
               ),
             ],

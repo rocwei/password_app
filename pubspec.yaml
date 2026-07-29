@@ -80,6 +80,9 @@ dependencies:
   # 路径提供（用于获取临时目录等）
   path_provider: ^2.1.0
 
+  # 应用版本信息
+  package_info_plus: ^8.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

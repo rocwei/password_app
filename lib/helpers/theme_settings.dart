@@ -14,7 +14,6 @@ enum ThemeType {
 
 // 定义主题方案
 class ThemeScheme {
-  final String name;
   final Color seedColor; // 主色
   final Color backgroundColor; // 背景色
   final Color textColor; // 文字颜色
@@ -22,7 +21,6 @@ class ThemeScheme {
   final ThemeType type; // 主题类型
 
   const ThemeScheme({
-    required this.name,
     required this.seedColor,
     required this.backgroundColor,
     required this.textColor,
@@ -53,7 +51,6 @@ class ThemeModel extends ChangeNotifier {
   // 预定义5套主题方案
   static final Map<ThemeType, ThemeScheme> themeSchemes = {
     ThemeType.yellowDark: const ThemeScheme(
-      name: '黄黑经典',
       seedColor: Color(0xFFEBAD00), // 黄色按钮
       backgroundColor: Color(0xFF121212), // 黑色背景
       textColor: Colors.white, // 白色文字
@@ -61,37 +58,12 @@ class ThemeModel extends ChangeNotifier {
       type: ThemeType.yellowDark,
     ),
     ThemeType.blueLight: const ThemeScheme(
-      name: '蓝白简约',
       seedColor: Colors.blue, // 蓝色按钮
       backgroundColor: Colors.white, // 白色背景
       textColor: Colors.black, // 黑色文字
       brightness: Brightness.light,
       type: ThemeType.blueLight,
     ),
-    // ThemeType.greenDark: const ThemeScheme(
-    //   name: '绿灰自然',
-    //   seedColor: Colors.green, // 绿色按钮
-    //   backgroundColor: Color(0xFF303030), // 深灰背景
-    //   textColor: Color(0xFFE0E0E0), // 浅色文字
-    //   brightness: Brightness.dark,
-    //   type: ThemeType.greenDark,
-    // ),
-    // ThemeType.purpleLight: const ThemeScheme(
-    //   name: '紫色优雅',
-    //   seedColor: Colors.purple, // 紫色按钮
-    //   backgroundColor: Color(0xFFF3E5F5), // 淡紫背景
-    //   textColor: Color(0xFF3E2723), // 深色文字
-    //   brightness: Brightness.light,
-    //   type: ThemeType.purpleLight,
-    // ),
-    // ThemeType.tealDark: const ThemeScheme(
-    //   name: '青蓝海洋',
-    //   seedColor: Colors.teal, // 青色按钮
-    //   backgroundColor: Color.fromARGB(255, 90, 145, 226), // 深蓝背景
-    //   textColor: Colors.white, // 白色文字
-    //   brightness: Brightness.dark,
-    //   type: ThemeType.tealDark,
-    // ),
   };
 
   // 获取所有预定义主题方案列表
@@ -135,7 +107,7 @@ class ThemeModel extends ChangeNotifier {
 
   Future<void> setSeedColor(Color color) async {
     seedColor = color;
-    // 当用户手动选择主色时，关闭"使用系统 Material You"选项
+    // 手动选择主色后不再跟随系统 Material You 颜色。
     useSystem = false;
     await _storage.write(
       key: _keySeed,

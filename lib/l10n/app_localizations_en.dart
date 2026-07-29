@@ -709,4 +709,389 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cameraUnavailable =>
       'The camera is unavailable. Please try again.';
+
+  @override
+  String get changeMasterPassword => 'Change Master Password';
+
+  @override
+  String get changeMasterPasswordDescription =>
+      'After changing your master password, all password data will be re-encrypted with the new password.';
+
+  @override
+  String get currentMasterPasswordRequiredLabel => 'Current Master Password *';
+
+  @override
+  String get newMasterPasswordRequiredLabel => 'New Master Password *';
+
+  @override
+  String get confirmNewMasterPasswordRequiredLabel =>
+      'Confirm New Master Password *';
+
+  @override
+  String get newMasterPasswordRequired => 'Enter a new master password.';
+
+  @override
+  String newMasterPasswordMinLength(int minLength) {
+    return 'New master password must be at least $minLength characters.';
+  }
+
+  @override
+  String get newMasterPasswordMustDiffer =>
+      'The new password must be different from the current password.';
+
+  @override
+  String get confirmNewMasterPasswordRequired =>
+      'Confirm your new master password.';
+
+  @override
+  String get newMasterPasswordsDoNotMatch =>
+      'The new master passwords do not match.';
+
+  @override
+  String get masterPasswordChanged => 'Master password changed successfully.';
+
+  @override
+  String get masterPasswordChangeIncorrect =>
+      'Could not change the master password. Check your current password.';
+
+  @override
+  String get masterPasswordChangeFailed =>
+      'Could not change the master password. Please try again.';
+
+  @override
+  String get dataManagement => 'Data Management';
+
+  @override
+  String get backupAndRestore => 'Backup & Restore';
+
+  @override
+  String get backupAndRestoreDescription =>
+      'Back up or restore your password data';
+
+  @override
+  String get themeSettings => 'Theme';
+
+  @override
+  String get useSystemMaterialYouColors => 'Use system Material You colors';
+
+  @override
+  String get themePresets => 'Theme presets';
+
+  @override
+  String get themeYellowDark => 'Yellow & Black';
+
+  @override
+  String get themeBlueLight => 'Blue & White';
+
+  @override
+  String get darkBackground => 'Dark background';
+
+  @override
+  String get lightBackground => 'Light background';
+
+  @override
+  String get about => 'About';
+
+  @override
+  String get aboutApp => 'About App';
+
+  @override
+  String get appInformationAndVersion => 'App information and version';
+
+  @override
+  String get backupSecurityNotice =>
+      'Backup files are encrypted with AES-256 and can be stored or shared safely.\nEnter the master password used to create the backup when restoring.';
+
+  @override
+  String get creatingEncryptedBackup =>
+      'Encrypting data and creating the backup file';
+
+  @override
+  String get backupFailed => 'Could not create the backup. Please try again.';
+
+  @override
+  String get backupFileCreated => 'Backup File Created';
+
+  @override
+  String get passwordEntries => 'Password entries';
+
+  @override
+  String get otpTokens => 'OTP tokens';
+
+  @override
+  String get fileName => 'File name';
+
+  @override
+  String backupPasswordEntryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count password entries',
+      one: '1 password entry',
+      zero: 'No password entries',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count categories',
+      one: '1 category',
+      zero: 'No categories',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupOtpCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count OTP tokens',
+      one: '1 OTP token',
+      zero: 'No OTP tokens',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get exportBackupPrompt =>
+      'Use the button below to save the backup file in a secure location, such as Files, a cloud drive, email, or a trusted chat.';
+
+  @override
+  String get shareOrExportFile => 'Share / Export File';
+
+  @override
+  String get later => 'Later';
+
+  @override
+  String get backupShareSubject => 'Secure Vault - Password Backup';
+
+  @override
+  String get backupShareText =>
+      'This encrypted backup was created by Secure Vault. Keep it safe. Restoring it requires the backup password.';
+
+  @override
+  String get backupShared => 'Backup file shared successfully.';
+
+  @override
+  String get backupShareFailed =>
+      'Could not share the backup file. Please try again.';
+
+  @override
+  String get openingFilePicker => 'Opening the file picker';
+
+  @override
+  String get selectBackupFileTitle => 'Select a .passbackup File';
+
+  @override
+  String get filePickerFailed =>
+      'Could not open the file picker. Please try again.';
+
+  @override
+  String get selectedFileUnavailable => 'The selected file cannot be accessed.';
+
+  @override
+  String get invalidBackupFileTitle => 'Invalid File Format';
+
+  @override
+  String invalidBackupFileMessage(String fileName) {
+    return 'Select a file ending in .passbackup.\n\nSelected file: $fileName';
+  }
+
+  @override
+  String get readingEncryptedBackup => 'Reading and decrypting the backup file';
+
+  @override
+  String get confirmRestore => 'Confirm Restore';
+
+  @override
+  String restoreSummary(String fileName, String summary) {
+    return 'File: $fileName\n$summary\n\nThis will delete all current password data and replace it with the backup. This cannot be undone. Continue?';
+  }
+
+  @override
+  String restoreSummaryWithOtp(String fileName, String summary) {
+    return 'File: $fileName\n$summary\n\nThis will delete all current password data and OTP tokens and replace them with the backup. This cannot be undone. Continue?';
+  }
+
+  @override
+  String restoreCountSummary(String counts) {
+    return 'Restore $counts.';
+  }
+
+  @override
+  String restoreCountJoinTwo(String first, String second) {
+    return '$first and $second';
+  }
+
+  @override
+  String restoreCountJoinThree(String first, String second, String third) {
+    return '$first, $second, and $third';
+  }
+
+  @override
+  String get restoringData => 'Restoring data';
+
+  @override
+  String restoreSucceeded(String summary) {
+    return 'Restored $summary successfully.';
+  }
+
+  @override
+  String get restoreFailed =>
+      'Could not restore the backup. Check the file and password, then try again.';
+
+  @override
+  String get understood => 'OK';
+
+  @override
+  String get createBackup => 'Create Backup';
+
+  @override
+  String get createBackupSubtitle => 'Create an encrypted .passbackup file';
+
+  @override
+  String get createBackupDescription =>
+      'Export all passwords and OTP tokens to an encrypted backup file that you can save or share securely.';
+
+  @override
+  String get createBackupFile => 'Create Backup File';
+
+  @override
+  String get restoreBackup => 'Restore Backup';
+
+  @override
+  String get restoreBackupSubtitle => 'Restore from a .passbackup file';
+
+  @override
+  String get restoreBackupDescription =>
+      'Select an exported .passbackup file.\nRestoring replaces all current password data.';
+
+  @override
+  String get selectBackupFileToRestore => 'Select Backup File to Restore';
+
+  @override
+  String get usageHelp => 'Help';
+
+  @override
+  String get backupHelpTitle => 'Back Up';
+
+  @override
+  String get backupHelpDescription =>
+      'Tap Create Backup File, enter the master password, then save the file in a secure location.';
+
+  @override
+  String get restoreHelpTitle => 'Restore';
+
+  @override
+  String get restoreHelpDescription =>
+      'Tap Select Backup File to Restore, choose a .passbackup file, then enter its backup password.';
+
+  @override
+  String get migrationHelpTitle => 'Move to Another Device';
+
+  @override
+  String get migrationHelpDescription =>
+      'Create a backup on the old device, transfer it securely, download it on the new device, then restore it.';
+
+  @override
+  String get rememberBackupPassword =>
+      'Remember the backup password. Data cannot be restored without it.';
+
+  @override
+  String get restorePasswordDialogTitle => 'Enter Backup Password to Restore';
+
+  @override
+  String get createBackupPasswordDialogTitle =>
+      'Enter Master Password to Create Backup';
+
+  @override
+  String get restorePasswordPrompt =>
+      'Enter the master password used to create this backup:';
+
+  @override
+  String get createBackupPasswordPrompt =>
+      'Enter your master password to generate the backup key:';
+
+  @override
+  String get restorePasswordHint =>
+      'Use the password entered when this backup was created. An incorrect password cannot decrypt the data.';
+
+  @override
+  String get createBackupPasswordHint =>
+      'The backup uses a consistent encryption key so it can be restored on another device.';
+
+  @override
+  String get aboutDescription =>
+      'A secure, simple, and reliable local password manager. Your data is never uploaded.';
+
+  @override
+  String versionLabel(String version, String buildNumber) {
+    return 'Version $version ($buildNumber)';
+  }
+
+  @override
+  String get versionUnavailable => 'Version unavailable';
+
+  @override
+  String get features => 'Features';
+
+  @override
+  String get featureEncryption => 'Secure Encryption';
+
+  @override
+  String get featureEncryptionDescription =>
+      'AES-256 encryption protects your password data.';
+
+  @override
+  String get featureLocalStorage => 'Local Storage';
+
+  @override
+  String get featureLocalStorageDescription =>
+      'All data stays on this device and is never uploaded to a server.';
+
+  @override
+  String get featurePasswordGeneration => 'Password Generation';
+
+  @override
+  String get featurePasswordGenerationDescription =>
+      'Create strong random passwords with the built-in generator.';
+
+  @override
+  String get featureBackupRestore => 'Backup & Restore';
+
+  @override
+  String get featureBackupRestoreDescription =>
+      'Create encrypted backups and restore them when needed.';
+
+  @override
+  String get featureFastSearch => 'Fast Search';
+
+  @override
+  String get featureFastSearchDescription =>
+      'Find and manage password entries quickly.';
+
+  @override
+  String get securityNotes => 'Security Notes';
+
+  @override
+  String get securityNotesBody =>
+      '• Your master password is the only key to your data. Remember it.\n• Sensitive data is protected with AES encryption.\n• The app does not collect or transmit personal data.\n• Create backups regularly to prevent data loss.\n• The vault locks automatically when the app enters the background.';
+
+  @override
+  String get developerInformation => 'Developer Information';
+
+  @override
+  String contactEmail(String email) {
+    return 'Contact: $email';
+  }
+
+  @override
+  String copyrightNotice(int year) {
+    return '© $year Secure Vault. All rights reserved.';
+  }
 }

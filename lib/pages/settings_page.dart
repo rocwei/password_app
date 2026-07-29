@@ -196,72 +196,6 @@ class _SettingsPageState extends State<SettingsPage> {
       appBar: AppBar(title: Text(context.l10n.settings)),
       body: ListView(
         children: [
-          // 用户信息
-          // Card(
-          //   color: Theme.of(context).scaffoldBackgroundColor,
-          //   margin: const EdgeInsets.all(16),
-          //   child: Padding(
-          //     padding: const EdgeInsets.all(16),
-          //     child: Column(
-          //       crossAxisAlignment: CrossAxisAlignment.start,
-          //       children: [
-          //         Text(
-          //           '用户信息',
-          //           style: TextStyle(
-          //             fontSize: 18,
-          //             fontWeight: FontWeight.bold,
-          //             color: Theme.of(context).textTheme.titleLarge?.color,
-          //           ),
-          //         ),
-          //         const SizedBox(height: 16),
-          //         Row(
-          //           children: [
-          //             CircleAvatar(
-          //               backgroundColor: Theme.of(context).colorScheme.primary,
-          //               foregroundColor: Colors.white,
-          //               radius: 24,
-          //               child: Text(
-          //                 user?.username.isNotEmpty == true
-          //                     ? user!.username[0].toUpperCase()
-          //                     : '?',
-          //                 style: const TextStyle(
-          //                   fontSize: 20,
-          //                   fontWeight: FontWeight.bold,
-          //                 ),
-          //               ),
-          //             ),
-          //             const SizedBox(width: 16),
-          //             Expanded(
-          //               child: Column(
-          //                 crossAxisAlignment: CrossAxisAlignment.start,
-          //                 children: [
-          //                   Text(
-          //                     user?.username ?? '未知用户',
-          //                     style: const TextStyle(
-          //                       fontSize: 16,
-          //                       fontWeight: FontWeight.bold,
-          //                     ),
-          //                   ),
-          //                   if (user?.createdAt != null)
-          //                     Text(
-          //                       '注册时间: ${_formatDateTime(user!.createdAt!)}',
-          //                       style: TextStyle(
-          //                         color: Theme.of(
-          //                           context,
-          //                         ).textTheme.bodySmall?.color,
-          //                         fontSize: 12,
-          //                       ),
-          //                     ),
-          //                 ],
-          //               ),
-          //             ),
-          //           ],
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ),
-
           // 安全设置
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -292,8 +226,8 @@ class _SettingsPageState extends State<SettingsPage> {
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.lock_reset),
-            title: const Text('修改主密码'),
-            subtitle: const Text('更改您的主密码'),
+            title: Text(context.l10n.changeMasterPassword),
+            subtitle: Text(context.l10n.changeMasterPasswordDescription),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () async {
               await Navigator.of(context).push(
@@ -310,17 +244,17 @@ class _SettingsPageState extends State<SettingsPage> {
           const Divider(height: 1),
 
           // 数据管理
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              '数据管理',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              context.l10n.dataManagement,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
           ListTile(
             leading: const Icon(Icons.backup),
-            title: const Text('备份与恢复'),
-            subtitle: const Text('备份或恢复您的密码数据'),
+            title: Text(context.l10n.backupAndRestore),
+            subtitle: Text(context.l10n.backupAndRestoreDescription),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () {
               Navigator.of(context).push(
@@ -379,11 +313,11 @@ class _SettingsPageState extends State<SettingsPage> {
           const Divider(height: 1),
 
           // 主题设置
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              '主题设置',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              context.l10n.themeSettings,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
           Card(
@@ -396,7 +330,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Row(
                     children: [
-                      const Expanded(child: Text('使用系统 Material You 颜色')),
+                      Expanded(
+                        child: Text(context.l10n.useSystemMaterialYouColors),
+                      ),
                       Switch(
                         value: themeModel.useSystem,
                         onChanged: (v) async =>
@@ -405,7 +341,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text('主题方案预设'),
+                  Text(context.l10n.themePresets),
                   const SizedBox(height: 12),
                   for (ThemeType type in ThemeType.values)
                     _buildThemeOption(context, themeModel, type),
@@ -413,17 +349,17 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              '关于',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              context.l10n.about,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
           ListTile(
             leading: const Icon(Icons.info),
-            title: const Text('关于应用'),
-            subtitle: const Text('应用信息和版本'),
+            title: Text(context.l10n.aboutApp),
+            subtitle: Text(context.l10n.appInformationAndVersion),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () {
               Navigator.of(context).push(
@@ -499,11 +435,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      theme.name,
+                      _themeName(context, type),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      theme.brightness == Brightness.dark ? '深色背景' : '浅色背景',
+                      theme.brightness == Brightness.dark
+                          ? context.l10n.darkBackground
+                          : context.l10n.lightBackground,
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).textTheme.bodySmall?.color,
@@ -519,5 +457,12 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
+  }
+
+  String _themeName(BuildContext context, ThemeType type) {
+    return switch (type) {
+      ThemeType.yellowDark => context.l10n.themeYellowDark,
+      ThemeType.blueLight => context.l10n.themeBlueLight,
+    };
   }
 }

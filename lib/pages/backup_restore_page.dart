@@ -3,11 +3,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'package:file_picker/file_picker.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/auth_helper.dart';
 import '../helpers/encryption_helper.dart';
 import '../helpers/otp_helper.dart';
+import '../l10n/l10n.dart';
 import 'home_page.dart';
 
 /// ============================================================
@@ -25,12 +27,67 @@ import 'home_page.dart';
 ///     不知道主密码的人无法解密。
 /// ============================================================
 
+class BackupFileSelection {
+  const BackupFileSelection({required this.path, required this.name});
+
+  final String? path;
+  final String name;
+}
+
+class BackupRestorePreview {
+  const BackupRestorePreview({
+    required this.passwordEntryCount,
+    required this.categoryCount,
+    required this.otpCount,
+  });
+
+  final int passwordEntryCount;
+  final int categoryCount;
+  final int otpCount;
+}
+
+class BackupCreationResult {
+  const BackupCreationResult({
+    required this.path,
+    required this.fileName,
+    required this.passwordEntryCount,
+    required this.otpCount,
+  });
+
+  final String path;
+  final String fileName;
+  final int passwordEntryCount;
+  final int otpCount;
+}
+
 class BackupRestorePage extends StatefulWidget {
   /// 可选：从外部 Intent 传入的 .passbackup 文件路径
   /// 当用户从微信/文件管理器打开文件时自动传入
   final String? initialFilePath;
+  final Future<BackupFileSelection?> Function(String dialogTitle)?
+  pickBackupFile;
+  final Future<BackupRestorePreview> Function(
+    String filePath,
+    String fileName,
+    String password,
+  )?
+  inspectBackup;
+  final Future<BackupRestorePreview> Function(BackupRestorePreview preview)?
+  applyInspectedBackup;
+  final Future<BackupCreationResult> Function(String password)?
+  createBackupFile;
 
-  const BackupRestorePage({super.key, this.initialFilePath});
+  const BackupRestorePage({
+    super.key,
+    this.initialFilePath,
+    this.pickBackupFile,
+    this.inspectBackup,
+    this.applyInspectedBackup,
+    this.createBackupFile,
+  }) : assert(
+         (inspectBackup == null) == (applyInspectedBackup == null),
+         'inspectBackup and applyInspectedBackup must be provided together.',
+       );
 
   @override
   State<BackupRestorePage> createState() => _BackupRestorePageState();
@@ -59,27 +116,54 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
   // ==========================================================
 
   Future<void> _createBackup() async {
+    final l10n = context.l10n;
     // 1. 弹出主密码输入对话框
     final masterPassword = await showDialog<String>(
       context: context,
       barrierDismissible: false,
       builder: (context) => const _MasterPasswordDialog(),
     );
-    if (masterPassword == null || masterPassword.trim().isEmpty) return;
+    if (masterPassword == null || masterPassword.isEmpty) return;
 
     setState(() {
       _isLoading = true;
-      _statusMessage = '正在加密数据并生成备份文件';
+      _statusMessage = l10n.creatingEncryptedBackup;
     });
+
+    if (widget.createBackupFile case final createBackupFile?) {
+      try {
+        final result = await createBackupFile(masterPassword);
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _statusMessage = '';
+        });
+        _showBackupSuccessDialog(
+          backupFile: File(result.path),
+          fileName: result.fileName,
+          entryCount: result.passwordEntryCount,
+          otpCount: result.otpCount,
+        );
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _statusMessage = '';
+          });
+          _showErrorSnackBar(l10n.backupFailed);
+        }
+      }
+      return;
+    }
 
     try {
       // 2. 校验密码库解锁状态
       final userId = AuthHelper().getCurrentUserId();
-      if (userId == null) throw Exception('密码库尚未解锁');
+      if (userId == null) throw StateError('Vault is not unlocked');
 
       // 3. 使用主密码派生备份密钥
       final backupKey = AuthHelper().getBackupKey(masterPassword);
-      if (backupKey == null) throw Exception('无法生成备份密钥');
+      if (backupKey == null) throw StateError('Backup key is unavailable');
 
       // 4. 导出密码条目 & OTP 令牌 & 分类
       final dbHelper = DatabaseHelper();
@@ -146,13 +230,13 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         entryCount: entries.length,
         otpCount: otpTokens.length,
       );
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoading = false;
           _statusMessage = '';
         });
-        _showErrorSnackBar('备份失败: $e');
+        _showErrorSnackBar(l10n.backupFailed);
       }
     }
   }
@@ -164,42 +248,62 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
     required int entryCount,
     required int otpCount,
   }) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
         icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-        title: const Text('备份文件已生成'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildInfoRow(Icons.lock, '密码条目', '$entryCount 条'),
-            if (otpCount > 0)
-              _buildInfoRow(Icons.access_time, 'OTP 令牌', '$otpCount 个'),
-            _buildInfoRow(Icons.insert_drive_file, '文件名', fileName),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        title: Text(l10n.backupFileCreated),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoRow(
+                Icons.lock,
+                l10n.passwordEntries,
+                l10n.backupPasswordEntryCount(entryCount),
               ),
-              child: const Row(
-                children: [
-                  Icon(Icons.info_outline, color: Colors.orange, size: 20),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '请点击下方按钮，将备份文件分享到安全的位置（微信文件传输助手、网盘、邮件等）。',
-                      style: TextStyle(fontSize: 13, color: Colors.orange),
-                    ),
+              if (otpCount > 0)
+                _buildInfoRow(
+                  Icons.access_time,
+                  l10n.otpTokens,
+                  l10n.backupOtpCount(otpCount),
+                ),
+              _buildInfoRow(Icons.insert_drive_file, l10n.fileName, fileName),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.3),
                   ),
-                ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l10n.exportBackupPrompt,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.orange,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           // 分享按钮  调用系统分享面板
@@ -209,11 +313,11 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
               await _shareBackupFile(backupFile, fileName);
             },
             icon: const Icon(Icons.share),
-            label: const Text('分享 / 导出文件'),
+            label: Text(l10n.shareOrExportFile),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('稍后处理'),
+            child: Text(l10n.later),
           ),
         ],
       ),
@@ -222,6 +326,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
 
   /// 通过系统分享面板分享备份文件
   Future<void> _shareBackupFile(File backupFile, String fileName) async {
+    final l10n = context.l10n;
     try {
       // 获取分享按钮的位置，iOS（尤其 iPad）需要 sharePositionOrigin 作为弹出锚点
       final box = context.findRenderObject() as RenderBox?;
@@ -231,17 +336,17 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
 
       final result = await Share.shareXFiles(
         [XFile(backupFile.path, name: fileName)],
-        subject: '密盾安存 - 密码备份文件',
-        text: '这是「密盾安存」生成的加密备份文件，请妥善保管。恢复时需要输入备份密码。',
+        subject: l10n.backupShareSubject,
+        text: l10n.backupShareText,
         sharePositionOrigin: sharePositionOrigin,
       );
 
       if (!mounted) return;
       if (result.status == ShareResultStatus.success) {
-        _showSuccessSnackBar('备份文件已成功分享');
+        _showSuccessSnackBar(l10n.backupShared);
       }
-    } catch (e) {
-      if (mounted) _showErrorSnackBar('分享失败: $e');
+    } catch (_) {
+      if (mounted) _showErrorSnackBar(l10n.backupShareFailed);
     }
   }
 
@@ -250,41 +355,51 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
   // ==========================================================
 
   Future<void> _restoreBackup() async {
+    final l10n = context.l10n;
     // 1. 使用系统文件选择器选取 .passbackup 文件
     setState(() {
-      _statusMessage = '正在打开文件选择器';
+      _statusMessage = l10n.openingFilePicker;
     });
 
-    FilePickerResult? pickerResult;
+    BackupFileSelection? selection;
     try {
-      pickerResult = await FilePicker.platform.pickFiles(
-        type: FileType.any,
-        // 备注: 部分 Android 设备不识别自定义扩展名过滤,
-        // 因此使用 FileType.any 让用户手动选择 .passbackup 文件
-        dialogTitle: '选择 .passbackup 备份文件',
-      );
-    } catch (e) {
+      if (widget.pickBackupFile case final picker?) {
+        selection = await picker(l10n.selectBackupFileTitle);
+      } else {
+        final pickerResult = await FilePicker.platform.pickFiles(
+          type: FileType.any,
+          // 部分 Android 设备不识别自定义扩展名过滤，因此允许选择任意文件后再校验。
+          dialogTitle: l10n.selectBackupFileTitle,
+        );
+        if (pickerResult != null && pickerResult.files.isNotEmpty) {
+          final pickedFile = pickerResult.files.first;
+          selection = BackupFileSelection(
+            path: pickedFile.path,
+            name: pickedFile.name,
+          );
+        }
+      }
+    } catch (_) {
       if (mounted) {
         setState(() => _statusMessage = '');
-        _showErrorSnackBar('无法打开文件选择器: $e');
+        _showErrorSnackBar(l10n.filePickerFailed);
       }
       return;
     }
 
-    if (pickerResult == null || pickerResult.files.isEmpty) {
+    if (selection == null) {
       // 用户取消了选择
       if (mounted) setState(() => _statusMessage = '');
       return;
     }
 
-    final pickedFile = pickerResult.files.first;
-    final filePath = pickedFile.path;
+    final filePath = selection.path;
 
     // 校验文件路径
     if (filePath == null) {
       if (mounted) {
         setState(() => _statusMessage = '');
-        _showErrorSnackBar('无法访问所选文件');
+        _showErrorSnackBar(l10n.selectedFileUnavailable);
       }
       return;
     }
@@ -294,21 +409,25 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       if (mounted) {
         setState(() => _statusMessage = '');
         _showWarnDialog(
-          '文件格式不正确',
-          '请选择后缀为 .passbackup 的备份文件。\n\n'
-              '当前选择的文件: ${pickedFile.name}',
+          l10n.invalidBackupFileTitle,
+          l10n.invalidBackupFileMessage(selection.name),
         );
       }
       return;
     }
 
     // 使用通用的文件恢复方法
-    await _restoreFromFile(filePath);
+    await _restoreFromFile(filePath, displayFileName: selection.name);
   }
 
   /// 从指定文件路径恢复备份数据
   /// 同时被「手动选择文件」和「外部 Intent 传入文件」两个入口调用
-  Future<void> _restoreFromFile(String filePath) async {
+  Future<void> _restoreFromFile(
+    String filePath, {
+    String? displayFileName,
+  }) async {
+    final l10n = context.l10n;
+    final fileName = displayFileName ?? path.basename(filePath);
     // 弹出主密码输入对话框
     if (!mounted) return;
     setState(() => _statusMessage = '');
@@ -318,28 +437,43 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       barrierDismissible: false,
       builder: (context) => const _MasterPasswordDialog(isForRestore: true),
     );
-    if (masterPassword == null || masterPassword.trim().isEmpty) return;
+    if (masterPassword == null || masterPassword.isEmpty) return;
 
     setState(() {
       _isLoading = true;
-      _statusMessage = '正在读取并解密备份文件';
+      _statusMessage = l10n.readingEncryptedBackup;
     });
+
+    if (widget.inspectBackup case final inspectBackup?) {
+      await _restoreWithInjectedServices(
+        filePath,
+        fileName,
+        masterPassword,
+        inspectBackup,
+        widget.applyInspectedBackup!,
+      );
+      return;
+    }
 
     try {
       // 3. 校验密码库解锁状态
       final userId = AuthHelper().getCurrentUserId();
-      if (userId == null) throw Exception('密码库尚未解锁');
+      if (userId == null) throw StateError('Vault is not unlocked');
 
       // 4. 读取备份文件内容
       final backupFile = File(filePath);
-      if (!await backupFile.exists()) throw Exception('文件不存在或已被移除');
+      if (!await backupFile.exists()) {
+        throw const FileSystemException('Backup file is unavailable');
+      }
 
       final encryptedBackup = await backupFile.readAsString();
-      if (encryptedBackup.trim().isEmpty) throw Exception('备份文件内容为空');
+      if (encryptedBackup.trim().isEmpty) {
+        throw const FormatException('Backup file is empty');
+      }
 
       // 5. 派生备份密钥
       final backupKey = AuthHelper().getBackupKey(masterPassword);
-      if (backupKey == null) throw Exception('无法生成备份密钥');
+      if (backupKey == null) throw StateError('Backup key is unavailable');
 
       // 6. 解密整体数据
       String decryptedData;
@@ -349,7 +483,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
           backupKey,
         );
       } catch (_) {
-        throw Exception('解密失败，请确认密码是否与备份时一致');
+        throw const FormatException('Backup decryption failed');
       }
 
       // 7. 解析 JSON
@@ -371,55 +505,25 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       if (!mounted) return;
 
       // 8. 确认恢复操作
-      String restoreInfoText = '将恢复 ${entries.length} 个密码条目';
-      if (backupCategories != null && backupCategories.isNotEmpty) {
-        restoreInfoText += '、${backupCategories.length} 个分类';
-      }
-      if (otpTokens != null && otpTokens.isNotEmpty) {
-        restoreInfoText += ' 和 ${otpTokens.length} 个 OTP 令牌';
-      }
-      restoreInfoText += '。\n\n';
-      restoreInfoText += ' 注意：此操作将删除当前所有密码数据';
-      if (otpTokens != null && otpTokens.isNotEmpty) {
-        restoreInfoText += '和 OTP 令牌';
-      }
-      restoreInfoText += '并替换为备份中的数据。\n\n此操作无法撤销，确定要继续吗？';
-
       setState(() {
         _isLoading = false;
         _statusMessage = '';
       });
 
-      final confirmed = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          icon: const Icon(
-            Icons.warning_amber_rounded,
-            color: Colors.red,
-            size: 48,
-          ),
-          title: const Text('确认恢复'),
-          content: Text(restoreInfoText),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('确认恢复'),
-            ),
-          ],
+      final confirmed = await _confirmRestore(
+        BackupRestorePreview(
+          passwordEntryCount: entries.length,
+          categoryCount: backupCategories?.length ?? 0,
+          otpCount: otpTokens?.length ?? 0,
         ),
+        fileName,
       );
 
       if (confirmed != true) return;
 
       setState(() {
         _isLoading = true;
-        _statusMessage = '正在恢复数据';
+        _statusMessage = l10n.restoringData;
       });
 
       // 9. 清除当前数据
@@ -444,7 +548,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
               (db) => db.insert('categories', categoryMap),
             );
             categoryIdMapping[oldId] = newId;
-          } catch (e) {
+          } catch (_) {
             // 忽略单条分类恢复失败，继续恢复其他数据
           }
         }
@@ -487,8 +591,8 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
             (db) => db.insert('password_entries', entry),
           );
           restoredCount++;
-        } catch (e) {
-          throw Exception('恢复密码条目失败: $e');
+        } catch (_) {
+          throw const FormatException('Invalid password entry in backup');
         }
       }
 
@@ -505,13 +609,13 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       if (!mounted) return;
 
       // 12. 显示恢复成功提示并跳转到首页
-      String successMessage = '成功恢复 $restoredCount 个密码条目';
-      if (categoryIdMapping.isNotEmpty) {
-        successMessage += '、${categoryIdMapping.length} 个分类';
-      }
-      if (restoredOtpCount > 0) {
-        successMessage += ' 和 $restoredOtpCount 个 OTP 令牌';
-      }
+      final successSummary = _joinRestoreCounts([
+        l10n.backupPasswordEntryCount(restoredCount),
+        if (categoryIdMapping.isNotEmpty)
+          l10n.backupCategoryCount(categoryIdMapping.length),
+        if (restoredOtpCount > 0) l10n.backupOtpCount(restoredOtpCount),
+      ]);
+      final successMessage = l10n.restoreSucceeded(successSummary);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -532,13 +636,13 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         (route) => false,
       );
       return; // 避免执行 finally 中的 setState
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoading = false;
           _statusMessage = '';
         });
-        _showErrorSnackBar('恢复失败: $e');
+        _showErrorSnackBar(l10n.restoreFailed);
       }
     } finally {
       if (mounted) {
@@ -548,6 +652,111 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         });
       }
     }
+  }
+
+  Future<void> _restoreWithInjectedServices(
+    String filePath,
+    String fileName,
+    String password,
+    Future<BackupRestorePreview> Function(String, String, String) inspectBackup,
+    Future<BackupRestorePreview> Function(BackupRestorePreview)
+    applyInspectedBackup,
+  ) async {
+    final l10n = context.l10n;
+    try {
+      final preview = await inspectBackup(filePath, fileName, password);
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _statusMessage = '';
+      });
+
+      if (await _confirmRestore(preview, fileName) != true || !mounted) return;
+
+      setState(() {
+        _isLoading = true;
+        _statusMessage = l10n.restoringData;
+      });
+      final restored = await applyInspectedBackup(preview);
+      if (!mounted) return;
+      _showSuccessSnackBar(_restoreSuccessMessage(restored));
+    } catch (_) {
+      if (mounted) {
+        _showErrorSnackBar(l10n.restoreFailed);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _statusMessage = '';
+        });
+      }
+    }
+  }
+
+  Future<bool?> _confirmRestore(BackupRestorePreview preview, String fileName) {
+    final l10n = context.l10n;
+    final counts = _joinRestoreCounts([
+      l10n.backupPasswordEntryCount(preview.passwordEntryCount),
+      if (preview.categoryCount > 0)
+        l10n.backupCategoryCount(preview.categoryCount),
+      if (preview.otpCount > 0) l10n.backupOtpCount(preview.otpCount),
+    ]);
+    final countSummary = l10n.restoreCountSummary(counts);
+    final restoreInfoText = preview.otpCount > 0
+        ? l10n.restoreSummaryWithOtp(fileName, countSummary)
+        : l10n.restoreSummary(fileName, countSummary);
+
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        scrollable: true,
+        icon: const Icon(
+          Icons.warning_amber_rounded,
+          color: Colors.red,
+          size: 48,
+        ),
+        title: Text(l10n.confirmRestore),
+        content: Text(restoreInfoText),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(l10n.confirmRestore),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _restoreSuccessMessage(BackupRestorePreview restored) {
+    final l10n = context.l10n;
+    final summary = _joinRestoreCounts([
+      l10n.backupPasswordEntryCount(restored.passwordEntryCount),
+      if (restored.categoryCount > 0)
+        l10n.backupCategoryCount(restored.categoryCount),
+      if (restored.otpCount > 0) l10n.backupOtpCount(restored.otpCount),
+    ]);
+    return l10n.restoreSucceeded(summary);
+  }
+
+  String _joinRestoreCounts(List<String> counts) {
+    final l10n = context.l10n;
+    return switch (counts) {
+      [final only] => only,
+      [final first, final second] => l10n.restoreCountJoinTwo(first, second),
+      [final first, final second, final third] => l10n.restoreCountJoinThree(
+        first,
+        second,
+        third,
+      ),
+      _ => throw StateError('Unexpected restore count length'),
+    };
   }
 
   // ==========================================================
@@ -622,7 +831,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('知道了'),
+            child: Text(context.l10n.understood),
           ),
         ],
       ),
@@ -636,10 +845,11 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('备份与恢复'),
+        title: Text(l10n.backupAndRestore),
         backgroundColor: colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
@@ -659,8 +869,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        '备份文件已使用 AES-256 加密，可安全存储或分享。\n'
-                        '恢复时需要输入备份时使用的主密码。',
+                        l10n.backupSecurityNotice,
                         style: TextStyle(color: colorScheme.onPrimaryContainer),
                       ),
                     ),
@@ -692,21 +901,21 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '创建备份',
-                                style: TextStyle(
+                                l10n.createBackup,
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 2),
+                              const SizedBox(height: 2),
                               Text(
-                                '生成加密 .passbackup 文件',
-                                style: TextStyle(
+                                l10n.createBackupSubtitle,
+                                style: const TextStyle(
                                   color: Colors.grey,
                                   fontSize: 13,
                                 ),
@@ -717,9 +926,9 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      '将所有密码和 OTP 令牌导出为加密备份文件，可通过微信、QQ、邮件、网盘等方式安全转发或保存。',
-                      style: TextStyle(color: Colors.grey, height: 1.5),
+                    Text(
+                      l10n.createBackupDescription,
+                      style: const TextStyle(color: Colors.grey, height: 1.5),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
@@ -727,7 +936,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                       child: FilledButton.icon(
                         onPressed: _isLoading ? null : _createBackup,
                         icon: const Icon(Icons.add_circle_outline),
-                        label: const Text('创建备份文件'),
+                        label: Text(l10n.createBackupFile),
                         style: FilledButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
@@ -763,21 +972,21 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '恢复备份',
-                                style: TextStyle(
+                                l10n.restoreBackup,
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 2),
+                              const SizedBox(height: 2),
                               Text(
-                                '从 .passbackup 文件恢复',
-                                style: TextStyle(
+                                l10n.restoreBackupSubtitle,
+                                style: const TextStyle(
                                   color: Colors.grey,
                                   fontSize: 13,
                                 ),
@@ -788,10 +997,9 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      '选择之前导出的 .passbackup 备份文件进行恢复。\n'
-                      '注意：恢复操作将覆盖当前所有密码数据。',
-                      style: TextStyle(color: Colors.grey, height: 1.5),
+                    Text(
+                      l10n.restoreBackupDescription,
+                      style: const TextStyle(color: Colors.grey, height: 1.5),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
@@ -799,7 +1007,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                       child: FilledButton.icon(
                         onPressed: _isLoading ? null : _restoreBackup,
                         icon: const Icon(Icons.folder_open),
-                        label: const Text('选择备份文件恢复'),
+                        label: Text(l10n.selectBackupFileToRestore),
                         style: FilledButton.styleFrom(
                           backgroundColor: Colors.orange,
                           foregroundColor: Colors.white,
@@ -835,9 +1043,9 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Text(
-                          '使用帮助',
-                          style: TextStyle(
+                        Text(
+                          l10n.usageHelp,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -845,16 +1053,20 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildHelpItem('1', '备份', '点击「创建备份文件」 输入主密码  通过分享发送到安全位置'),
+                    _buildHelpItem(
+                      '1',
+                      l10n.backupHelpTitle,
+                      l10n.backupHelpDescription,
+                    ),
                     _buildHelpItem(
                       '2',
-                      '恢复',
-                      '点击「选择备份文件恢复」 找到 .passbackup 文件  输入备份密码',
+                      l10n.restoreHelpTitle,
+                      l10n.restoreHelpDescription,
                     ),
                     _buildHelpItem(
                       '3',
-                      '跨设备迁移',
-                      '旧设备创建备份  分享到微信/邮件  新设备下载文件  恢复',
+                      l10n.migrationHelpTitle,
+                      l10n.migrationHelpDescription,
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -863,19 +1075,19 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                         color: Colors.red.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Row(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.warning_amber_rounded,
                             color: Colors.red,
                             size: 18,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '请牢记备份密码！忘记密码将无法恢复数据。',
-                              style: TextStyle(
+                              l10n.rememberBackupPassword,
+                              style: const TextStyle(
                                 color: Colors.red,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -991,52 +1203,64 @@ class _MasterPasswordDialogState extends State<_MasterPasswordDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return AlertDialog(
-      title: Text(widget.isForRestore ? '输入备份密码以恢复' : '输入主密码以创建备份'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(widget.isForRestore ? '请输入创建备份时使用的主密码：' : '请输入您的主密码以生成备份密钥：'),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _controller,
-            obscureText: _obscureText,
-            autofocus: true,
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(),
-              labelText: '主密码',
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureText ? Icons.visibility : Icons.visibility_off,
-                ),
-                onPressed: () => setState(() => _obscureText = !_obscureText),
-              ),
+      scrollable: true,
+      title: Text(
+        widget.isForRestore
+            ? l10n.restorePasswordDialogTitle
+            : l10n.createBackupPasswordDialogTitle,
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.isForRestore
+                  ? l10n.restorePasswordPrompt
+                  : l10n.createBackupPasswordPrompt,
             ),
-            onSubmitted: (_) => _submit(),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            widget.isForRestore
-                ? '提示：请输入备份时设置的密码，密码错误将无法恢复数据。'
-                : '提示：备份使用固定的加密密钥，可在不同设备间互通。',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-        ],
+            const SizedBox(height: 16),
+            TextField(
+              controller: _controller,
+              obscureText: _obscureText,
+              autofocus: true,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                labelText: l10n.masterPassword,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureText ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: () => setState(() => _obscureText = !_obscureText),
+                ),
+              ),
+              onSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.isForRestore
+                  ? l10n.restorePasswordHint
+                  : l10n.createBackupPasswordHint,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: Text(l10n.cancel),
         ),
-        FilledButton(onPressed: _submit, child: const Text('确认')),
+        FilledButton(onPressed: _submit, child: Text(l10n.confirm)),
       ],
     );
   }
 
   void _submit() {
-    if (_controller.text.trim().isNotEmpty) {
-      Navigator.of(context).pop(_controller.text.trim());
+    if (_controller.text.isNotEmpty) {
+      Navigator.of(context).pop(_controller.text);
     }
   }
 }

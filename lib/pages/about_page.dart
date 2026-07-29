@@ -1,231 +1,241 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
-class AboutPage extends StatelessWidget {
-  const AboutPage({super.key});
+import '../l10n/l10n.dart';
+
+class AppVersionInfo {
+  const AppVersionInfo({required this.version, required this.buildNumber});
+
+  final String version;
+  final String buildNumber;
+}
+
+class AboutPage extends StatefulWidget {
+  const AboutPage({super.key, this.loadVersion});
+
+  final Future<AppVersionInfo> Function()? loadVersion;
+
+  @override
+  State<AboutPage> createState() => _AboutPageState();
+}
+
+class _AboutPageState extends State<AboutPage> {
+  AppVersionInfo? _version;
+  bool _versionLoadFailed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    try {
+      final info = await (widget.loadVersion ?? _loadPackageVersion)();
+      if (!mounted) return;
+      setState(() => _version = info);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _versionLoadFailed = true);
+    }
+  }
+
+  Future<AppVersionInfo> _loadPackageVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    return AppVersionInfo(version: info.version, buildNumber: info.buildNumber);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final versionText = switch ((_version, _versionLoadFailed)) {
+      (final AppVersionInfo version, _) => l10n.versionLabel(
+        version.version,
+        version.buildNumber,
+      ),
+      (_, true) => l10n.versionUnavailable,
+      _ => null,
+    };
+
     return Scaffold(
-      appBar: AppBar(title: const Text('关于')),
+      appBar: AppBar(title: Text(l10n.about)),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // 应用图标和名称
-              Card(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        width: 80,
-                        height: 80,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.asset(
-                            'assets/icon/my_app_icon.png',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _sectionCard(
+              context,
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: 80,
+                    height: 80,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/icon/my_app_icon.png',
+                        fit: BoxFit.cover,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '密盾安存',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.titleLarge?.color,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '版本 1.0.1',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.color?.withOpacity(0.7),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '安全、简单、可靠的本地密码管理解决方案。PS：都不上传网络，放心用！',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.color?.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // 功能特性
-              Card(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '功能特性',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.titleLarge?.color,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildFeatureItem(
-                        context,
-                        Icons.lock,
-                        '安全加密',
-                        '使用AES-256加密算法保护您的密码数据',
-                      ),
-                      _buildFeatureItem(
-                        context,
-                        Icons.storage,
-                        '本地存储',
-                        '所有数据存储在本地，不会上传到任何服务器',
-                      ),
-                      _buildFeatureItem(
-                        context,
-                        Icons.generating_tokens,
-                        '密码生成',
-                        '强大的密码生成器，创建安全的随机密码',
-                      ),
-                      _buildFeatureItem(
-                        context,
-                        Icons.backup,
-                        '备份恢复',
-                        '支持加密备份和恢复功能，保护您的数据安全',
-                      ),
-                      _buildFeatureItem(
-                        context,
-                        Icons.search,
-                        '快速搜索',
-                        '快速搜索和管理您的密码条目',
-                      ),
-                    ],
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.appName,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.titleLarge?.color,
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // 安全说明
-              Card(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '安全说明',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.titleLarge?.color,
-                        ),
+                  const SizedBox(height: 8),
+                  if (versionText == null)
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    Text(
+                      versionText,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '• 您的主密码是解锁所有数据的唯一钥匙，请务必牢记\n'
-                        '• 所有敏感数据均使用 AES 加密保护\n'
-                        '• 应用不会收集或传输任何个人数据\n'
-                        '• 建议定期创建备份以防数据丢失\n'
-                        '• 当应用进入后台时会自动锁定以保护安全',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(context).textTheme.bodyMedium?.color,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
+                    ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.aboutDescription,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                    ),
                   ),
-                ),
+                ],
               ),
-
-              const SizedBox(height: 12),
-
-              // 版权信息 / 联系方式
-              Card(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '开发信息',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.titleLarge?.color,
-                        ),
-                      ),
-                      // const SizedBox(height: 8),
-                      // Text(
-                      //   '基于 Flutter 框架开发',
-                      //   style: TextStyle(
-                      //     color: Theme.of(context).textTheme.bodySmall?.color,
-                      //     fontSize: 12,
-                      //   ),
-                      // ),
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        // onTap: () {
-                        //   Clipboard.setData(
-                        //     const ClipboardData(text: '283187631@qq.com'),
-                        //   );
-                        //   ScaffoldMessenger.of(context).showSnackBar(
-                        //     const SnackBar(content: Text('邮箱地址已复制到剪贴板')),
-                        //   );
-                        // },
-                        child: Text(
-                          '联系邮箱: 283187631@qq.com',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '© ${DateTime.now().year} 密盾安存. 保留所有权利. ',
-                        style: TextStyle(
-                          color: Theme.of(context).textTheme.bodySmall?.color,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+            ),
+            const SizedBox(height: 16),
+            _sectionCard(
+              context,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _sectionTitle(context, l10n.features),
+                  const SizedBox(height: 8),
+                  _featureItem(
+                    context,
+                    Icons.lock,
+                    l10n.featureEncryption,
+                    l10n.featureEncryptionDescription,
                   ),
-                ),
+                  _featureItem(
+                    context,
+                    Icons.storage,
+                    l10n.featureLocalStorage,
+                    l10n.featureLocalStorageDescription,
+                  ),
+                  _featureItem(
+                    context,
+                    Icons.generating_tokens,
+                    l10n.featurePasswordGeneration,
+                    l10n.featurePasswordGenerationDescription,
+                  ),
+                  _featureItem(
+                    context,
+                    Icons.backup,
+                    l10n.featureBackupRestore,
+                    l10n.featureBackupRestoreDescription,
+                  ),
+                  _featureItem(
+                    context,
+                    Icons.search,
+                    l10n.featureFastSearch,
+                    l10n.featureFastSearchDescription,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            _sectionCard(
+              context,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _sectionTitle(context, l10n.securityNotes),
+                  const SizedBox(height: 12),
+                  Text(
+                    l10n.securityNotesBody,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            _sectionCard(
+              context,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _sectionTitle(context, l10n.developerInformation),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.contactEmail('283187631@qq.com'),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    l10n.copyrightNotice(DateTime.now().year),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildFeatureItem(
+  Widget _sectionCard(BuildContext context, {required Widget child}) {
+    return Card(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Padding(padding: const EdgeInsets.all(16), child: child),
+    );
+  }
+
+  Widget _sectionTitle(BuildContext context, String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).textTheme.titleLarge?.color,
+      ),
+    );
+  }
+
+  Widget _featureItem(
     BuildContext context,
     IconData icon,
     String title,
     String description,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

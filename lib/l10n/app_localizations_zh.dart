@@ -320,7 +320,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get delete => '删除';
 
   @override
-  String get confirm => '确定';
+  String get confirm => '确认';
 
   @override
   String get confirmDelete => '确认删除';
@@ -670,4 +670,357 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cameraUnavailable => '相机不可用，请重试';
+
+  @override
+  String get changeMasterPassword => '修改主密码';
+
+  @override
+  String get changeMasterPasswordDescription => '更改主密码后，您的所有密码数据将使用新密码重新加密。';
+
+  @override
+  String get currentMasterPasswordRequiredLabel => '当前主密码 *';
+
+  @override
+  String get newMasterPasswordRequiredLabel => '新主密码 *';
+
+  @override
+  String get confirmNewMasterPasswordRequiredLabel => '确认新主密码 *';
+
+  @override
+  String get newMasterPasswordRequired => '请输入新主密码';
+
+  @override
+  String newMasterPasswordMinLength(int minLength) {
+    return '新主密码至少需要 $minLength 个字符';
+  }
+
+  @override
+  String get newMasterPasswordMustDiffer => '新密码不能与当前密码相同';
+
+  @override
+  String get confirmNewMasterPasswordRequired => '请确认新主密码';
+
+  @override
+  String get newMasterPasswordsDoNotMatch => '两次输入的新密码不一致';
+
+  @override
+  String get masterPasswordChanged => '主密码已成功更改';
+
+  @override
+  String get masterPasswordChangeIncorrect => '更改失败，请检查当前主密码是否正确';
+
+  @override
+  String get masterPasswordChangeFailed => '无法修改主密码，请重试';
+
+  @override
+  String get dataManagement => '数据管理';
+
+  @override
+  String get backupAndRestore => '备份与恢复';
+
+  @override
+  String get backupAndRestoreDescription => '备份或恢复您的密码数据';
+
+  @override
+  String get themeSettings => '主题设置';
+
+  @override
+  String get useSystemMaterialYouColors => '使用系统 Material You 颜色';
+
+  @override
+  String get themePresets => '主题方案预设';
+
+  @override
+  String get themeYellowDark => '黄黑经典';
+
+  @override
+  String get themeBlueLight => '蓝白简约';
+
+  @override
+  String get darkBackground => '深色背景';
+
+  @override
+  String get lightBackground => '浅色背景';
+
+  @override
+  String get about => '关于';
+
+  @override
+  String get aboutApp => '关于应用';
+
+  @override
+  String get appInformationAndVersion => '应用信息和版本';
+
+  @override
+  String get backupSecurityNotice =>
+      '备份文件已使用 AES-256 加密，可安全存储或分享。\n恢复时需要输入备份时使用的主密码。';
+
+  @override
+  String get creatingEncryptedBackup => '正在加密数据并生成备份文件';
+
+  @override
+  String get backupFailed => '无法创建备份，请重试';
+
+  @override
+  String get backupFileCreated => '备份文件已生成';
+
+  @override
+  String get passwordEntries => '密码条目';
+
+  @override
+  String get otpTokens => 'OTP 令牌';
+
+  @override
+  String get fileName => '文件名';
+
+  @override
+  String backupPasswordEntryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个密码条目',
+      zero: '0 个密码条目',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个分类',
+      zero: '0 个分类',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupOtpCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个 OTP 令牌',
+      zero: '0 个 OTP 令牌',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get exportBackupPrompt => '请点击下方按钮，将备份文件保存到文件 App、网盘、邮件或可信聊天工具等安全位置。';
+
+  @override
+  String get shareOrExportFile => '分享 / 导出文件';
+
+  @override
+  String get later => '稍后处理';
+
+  @override
+  String get backupShareSubject => '密盾安存 - 密码备份文件';
+
+  @override
+  String get backupShareText => '这是「密盾安存」生成的加密备份文件，请妥善保管。恢复时需要输入备份密码。';
+
+  @override
+  String get backupShared => '备份文件已成功分享';
+
+  @override
+  String get backupShareFailed => '无法分享备份文件，请重试';
+
+  @override
+  String get openingFilePicker => '正在打开文件选择器';
+
+  @override
+  String get selectBackupFileTitle => '选择 .passbackup 备份文件';
+
+  @override
+  String get filePickerFailed => '无法打开文件选择器，请重试';
+
+  @override
+  String get selectedFileUnavailable => '无法访问所选文件';
+
+  @override
+  String get invalidBackupFileTitle => '文件格式不正确';
+
+  @override
+  String invalidBackupFileMessage(String fileName) {
+    return '请选择后缀为 .passbackup 的备份文件。\n\n当前选择的文件：$fileName';
+  }
+
+  @override
+  String get readingEncryptedBackup => '正在读取并解密备份文件';
+
+  @override
+  String get confirmRestore => '确认恢复';
+
+  @override
+  String restoreSummary(String fileName, String summary) {
+    return '文件：$fileName\n$summary\n\n此操作将删除当前所有密码数据，并替换为备份中的数据。此操作无法撤销，确定要继续吗？';
+  }
+
+  @override
+  String restoreSummaryWithOtp(String fileName, String summary) {
+    return '文件：$fileName\n$summary\n\n此操作将删除当前所有密码数据和 OTP 令牌，并替换为备份中的数据。此操作无法撤销，确定要继续吗？';
+  }
+
+  @override
+  String restoreCountSummary(String counts) {
+    return '将恢复 $counts。';
+  }
+
+  @override
+  String restoreCountJoinTwo(String first, String second) {
+    return '$first和$second';
+  }
+
+  @override
+  String restoreCountJoinThree(String first, String second, String third) {
+    return '$first、$second和$third';
+  }
+
+  @override
+  String get restoringData => '正在恢复数据';
+
+  @override
+  String restoreSucceeded(String summary) {
+    return '成功恢复 $summary';
+  }
+
+  @override
+  String get restoreFailed => '无法恢复备份，请检查文件和密码后重试';
+
+  @override
+  String get understood => '知道了';
+
+  @override
+  String get createBackup => '创建备份';
+
+  @override
+  String get createBackupSubtitle => '生成加密 .passbackup 文件';
+
+  @override
+  String get createBackupDescription => '将所有密码和 OTP 令牌导出为加密备份文件，可安全保存或分享。';
+
+  @override
+  String get createBackupFile => '创建备份文件';
+
+  @override
+  String get restoreBackup => '恢复备份';
+
+  @override
+  String get restoreBackupSubtitle => '从 .passbackup 文件恢复';
+
+  @override
+  String get restoreBackupDescription =>
+      '选择之前导出的 .passbackup 备份文件进行恢复。\n注意：恢复操作将覆盖当前所有密码数据。';
+
+  @override
+  String get selectBackupFileToRestore => '选择备份文件恢复';
+
+  @override
+  String get usageHelp => '使用帮助';
+
+  @override
+  String get backupHelpTitle => '备份';
+
+  @override
+  String get backupHelpDescription => '点击「创建备份文件」，输入主密码，再将文件保存到安全位置。';
+
+  @override
+  String get restoreHelpTitle => '恢复';
+
+  @override
+  String get restoreHelpDescription =>
+      '点击「选择备份文件恢复」，选择 .passbackup 文件，再输入备份密码。';
+
+  @override
+  String get migrationHelpTitle => '跨设备迁移';
+
+  @override
+  String get migrationHelpDescription => '在旧设备创建备份并安全传输，在新设备下载文件后恢复。';
+
+  @override
+  String get rememberBackupPassword => '请牢记备份密码，忘记密码将无法恢复数据。';
+
+  @override
+  String get restorePasswordDialogTitle => '输入备份密码以恢复';
+
+  @override
+  String get createBackupPasswordDialogTitle => '输入主密码以创建备份';
+
+  @override
+  String get restorePasswordPrompt => '请输入创建备份时使用的主密码：';
+
+  @override
+  String get createBackupPasswordPrompt => '请输入您的主密码以生成备份密钥：';
+
+  @override
+  String get restorePasswordHint => '请输入备份时设置的密码，密码错误将无法恢复数据。';
+
+  @override
+  String get createBackupPasswordHint => '备份使用固定的加密密钥，可在不同设备间互通。';
+
+  @override
+  String get aboutDescription => '安全、简单、可靠的本地密码管理工具，所有数据均不会上传。';
+
+  @override
+  String versionLabel(String version, String buildNumber) {
+    return '版本 $version ($buildNumber)';
+  }
+
+  @override
+  String get versionUnavailable => '版本信息不可用';
+
+  @override
+  String get features => '功能特性';
+
+  @override
+  String get featureEncryption => '安全加密';
+
+  @override
+  String get featureEncryptionDescription => '使用 AES-256 加密保护您的密码数据。';
+
+  @override
+  String get featureLocalStorage => '本地存储';
+
+  @override
+  String get featureLocalStorageDescription => '所有数据仅存储在本机，不会上传到服务器。';
+
+  @override
+  String get featurePasswordGeneration => '密码生成';
+
+  @override
+  String get featurePasswordGenerationDescription => '使用内置生成器创建安全的随机密码。';
+
+  @override
+  String get featureBackupRestore => '备份恢复';
+
+  @override
+  String get featureBackupRestoreDescription => '支持创建加密备份并按需恢复。';
+
+  @override
+  String get featureFastSearch => '快速搜索';
+
+  @override
+  String get featureFastSearchDescription => '快速查找和管理密码条目。';
+
+  @override
+  String get securityNotes => '安全说明';
+
+  @override
+  String get securityNotesBody =>
+      '• 主密码是解锁所有数据的唯一钥匙，请务必牢记\n• 所有敏感数据均使用 AES 加密保护\n• 应用不会收集或传输任何个人数据\n• 建议定期创建备份以防数据丢失\n• 应用进入后台时会自动锁定密码库';
+
+  @override
+  String get developerInformation => '开发信息';
+
+  @override
+  String contactEmail(String email) {
+    return '联系邮箱：$email';
+  }
+
+  @override
+  String copyrightNotice(int year) {
+    return '© $year 密盾安存。保留所有权利。';
+  }
 }

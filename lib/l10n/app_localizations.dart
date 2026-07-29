@@ -659,7 +659,7 @@ abstract class AppLocalizations {
   /// Generic confirm action
   ///
   /// In zh, this message translates to:
-  /// **'确定'**
+  /// **'确认'**
   String get confirm;
 
   /// Title for delete confirmation dialogs
@@ -1297,6 +1297,612 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'相机不可用，请重试'**
   String get cameraUnavailable;
+
+  /// Title and action for changing the master password
+  ///
+  /// In zh, this message translates to:
+  /// **'修改主密码'**
+  String get changeMasterPassword;
+
+  /// Security explanation on the change master password page
+  ///
+  /// In zh, this message translates to:
+  /// **'更改主密码后，您的所有密码数据将使用新密码重新加密。'**
+  String get changeMasterPasswordDescription;
+
+  /// Required current master password field label
+  ///
+  /// In zh, this message translates to:
+  /// **'当前主密码 *'**
+  String get currentMasterPasswordRequiredLabel;
+
+  /// Required new master password field label
+  ///
+  /// In zh, this message translates to:
+  /// **'新主密码 *'**
+  String get newMasterPasswordRequiredLabel;
+
+  /// Required new master password confirmation field label
+  ///
+  /// In zh, this message translates to:
+  /// **'确认新主密码 *'**
+  String get confirmNewMasterPasswordRequiredLabel;
+
+  /// Validation message for an empty new master password
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入新主密码'**
+  String get newMasterPasswordRequired;
+
+  /// Validation message for a short new master password
+  ///
+  /// In zh, this message translates to:
+  /// **'新主密码至少需要 {minLength} 个字符'**
+  String newMasterPasswordMinLength(int minLength);
+
+  /// Validation message when old and new master passwords match
+  ///
+  /// In zh, this message translates to:
+  /// **'新密码不能与当前密码相同'**
+  String get newMasterPasswordMustDiffer;
+
+  /// Validation message for an empty new password confirmation
+  ///
+  /// In zh, this message translates to:
+  /// **'请确认新主密码'**
+  String get confirmNewMasterPasswordRequired;
+
+  /// Validation message when new master password confirmation differs
+  ///
+  /// In zh, this message translates to:
+  /// **'两次输入的新密码不一致'**
+  String get newMasterPasswordsDoNotMatch;
+
+  /// Success message after changing the master password
+  ///
+  /// In zh, this message translates to:
+  /// **'主密码已成功更改'**
+  String get masterPasswordChanged;
+
+  /// Message shown when the current password is incorrect during change
+  ///
+  /// In zh, this message translates to:
+  /// **'更改失败，请检查当前主密码是否正确'**
+  String get masterPasswordChangeIncorrect;
+
+  /// Generic safe master password change failure
+  ///
+  /// In zh, this message translates to:
+  /// **'无法修改主密码，请重试'**
+  String get masterPasswordChangeFailed;
+
+  /// Settings section title for data management
+  ///
+  /// In zh, this message translates to:
+  /// **'数据管理'**
+  String get dataManagement;
+
+  /// Title for backup and restore
+  ///
+  /// In zh, this message translates to:
+  /// **'备份与恢复'**
+  String get backupAndRestore;
+
+  /// Settings description for backup and restore
+  ///
+  /// In zh, this message translates to:
+  /// **'备份或恢复您的密码数据'**
+  String get backupAndRestoreDescription;
+
+  /// Settings section title for theme controls
+  ///
+  /// In zh, this message translates to:
+  /// **'主题设置'**
+  String get themeSettings;
+
+  /// Setting to use Material You system colors
+  ///
+  /// In zh, this message translates to:
+  /// **'使用系统 Material You 颜色'**
+  String get useSystemMaterialYouColors;
+
+  /// Heading for predefined app themes
+  ///
+  /// In zh, this message translates to:
+  /// **'主题方案预设'**
+  String get themePresets;
+
+  /// Name of the yellow and black theme
+  ///
+  /// In zh, this message translates to:
+  /// **'黄黑经典'**
+  String get themeYellowDark;
+
+  /// Name of the blue and white theme
+  ///
+  /// In zh, this message translates to:
+  /// **'蓝白简约'**
+  String get themeBlueLight;
+
+  /// Description of a dark theme preview
+  ///
+  /// In zh, this message translates to:
+  /// **'深色背景'**
+  String get darkBackground;
+
+  /// Description of a light theme preview
+  ///
+  /// In zh, this message translates to:
+  /// **'浅色背景'**
+  String get lightBackground;
+
+  /// About section and page title
+  ///
+  /// In zh, this message translates to:
+  /// **'关于'**
+  String get about;
+
+  /// Settings action that opens the about page
+  ///
+  /// In zh, this message translates to:
+  /// **'关于应用'**
+  String get aboutApp;
+
+  /// Settings description for the about page
+  ///
+  /// In zh, this message translates to:
+  /// **'应用信息和版本'**
+  String get appInformationAndVersion;
+
+  /// Encryption notice at the top of the backup page
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件已使用 AES-256 加密，可安全存储或分享。\n恢复时需要输入备份时使用的主密码。'**
+  String get backupSecurityNotice;
+
+  /// Progress while creating a backup file
+  ///
+  /// In zh, this message translates to:
+  /// **'正在加密数据并生成备份文件'**
+  String get creatingEncryptedBackup;
+
+  /// Generic safe backup creation failure
+  ///
+  /// In zh, this message translates to:
+  /// **'无法创建备份，请重试'**
+  String get backupFailed;
+
+  /// Title of the backup success dialog
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件已生成'**
+  String get backupFileCreated;
+
+  /// Label for password entries in backup summaries
+  ///
+  /// In zh, this message translates to:
+  /// **'密码条目'**
+  String get passwordEntries;
+
+  /// Label for OTP tokens in backup summaries
+  ///
+  /// In zh, this message translates to:
+  /// **'OTP 令牌'**
+  String get otpTokens;
+
+  /// Label for a backup file name
+  ///
+  /// In zh, this message translates to:
+  /// **'文件名'**
+  String get fileName;
+
+  /// Localized password entry count in backup flows
+  ///
+  /// In zh, this message translates to:
+  /// **'{count, plural, =0{0 个密码条目} other{{count} 个密码条目}}'**
+  String backupPasswordEntryCount(int count);
+
+  /// Localized category count in backup flows
+  ///
+  /// In zh, this message translates to:
+  /// **'{count, plural, =0{0 个分类} other{{count} 个分类}}'**
+  String backupCategoryCount(int count);
+
+  /// Localized OTP token count in backup flows
+  ///
+  /// In zh, this message translates to:
+  /// **'{count, plural, =0{0 个 OTP 令牌} other{{count} 个 OTP 令牌}}'**
+  String backupOtpCount(int count);
+
+  /// Prompt to export a generated backup
+  ///
+  /// In zh, this message translates to:
+  /// **'请点击下方按钮，将备份文件保存到文件 App、网盘、邮件或可信聊天工具等安全位置。'**
+  String get exportBackupPrompt;
+
+  /// Action that opens the system share panel for a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'分享 / 导出文件'**
+  String get shareOrExportFile;
+
+  /// Action that postpones exporting a generated backup
+  ///
+  /// In zh, this message translates to:
+  /// **'稍后处理'**
+  String get later;
+
+  /// Subject used when sharing a backup file
+  ///
+  /// In zh, this message translates to:
+  /// **'密盾安存 - 密码备份文件'**
+  String get backupShareSubject;
+
+  /// Text used when sharing a backup file
+  ///
+  /// In zh, this message translates to:
+  /// **'这是「密盾安存」生成的加密备份文件，请妥善保管。恢复时需要输入备份密码。'**
+  String get backupShareText;
+
+  /// Success message after sharing a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件已成功分享'**
+  String get backupShared;
+
+  /// Generic safe backup share failure
+  ///
+  /// In zh, this message translates to:
+  /// **'无法分享备份文件，请重试'**
+  String get backupShareFailed;
+
+  /// Progress while opening the backup file picker
+  ///
+  /// In zh, this message translates to:
+  /// **'正在打开文件选择器'**
+  String get openingFilePicker;
+
+  /// System file picker title for selecting a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'选择 .passbackup 备份文件'**
+  String get selectBackupFileTitle;
+
+  /// Generic safe file picker failure
+  ///
+  /// In zh, this message translates to:
+  /// **'无法打开文件选择器，请重试'**
+  String get filePickerFailed;
+
+  /// Message when a selected backup has no accessible path
+  ///
+  /// In zh, this message translates to:
+  /// **'无法访问所选文件'**
+  String get selectedFileUnavailable;
+
+  /// Title for an invalid backup file extension
+  ///
+  /// In zh, this message translates to:
+  /// **'文件格式不正确'**
+  String get invalidBackupFileTitle;
+
+  /// Invalid backup extension message preserving the original file name
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择后缀为 .passbackup 的备份文件。\n\n当前选择的文件：{fileName}'**
+  String invalidBackupFileMessage(String fileName);
+
+  /// Progress while reading a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'正在读取并解密备份文件'**
+  String get readingEncryptedBackup;
+
+  /// Title and action for confirming a backup restore
+  ///
+  /// In zh, this message translates to:
+  /// **'确认恢复'**
+  String get confirmRestore;
+
+  /// Destructive restore confirmation for a backup without OTP tokens
+  ///
+  /// In zh, this message translates to:
+  /// **'文件：{fileName}\n{summary}\n\n此操作将删除当前所有密码数据，并替换为备份中的数据。此操作无法撤销，确定要继续吗？'**
+  String restoreSummary(String fileName, String summary);
+
+  /// Destructive restore confirmation for a backup containing OTP tokens
+  ///
+  /// In zh, this message translates to:
+  /// **'文件：{fileName}\n{summary}\n\n此操作将删除当前所有密码数据和 OTP 令牌，并替换为备份中的数据。此操作无法撤销，确定要继续吗？'**
+  String restoreSummaryWithOtp(String fileName, String summary);
+
+  /// Summary of localized counts before restoring
+  ///
+  /// In zh, this message translates to:
+  /// **'将恢复 {counts}。'**
+  String restoreCountSummary(String counts);
+
+  /// Joins two localized restore count fragments
+  ///
+  /// In zh, this message translates to:
+  /// **'{first}和{second}'**
+  String restoreCountJoinTwo(String first, String second);
+
+  /// Joins three localized restore count fragments
+  ///
+  /// In zh, this message translates to:
+  /// **'{first}、{second}和{third}'**
+  String restoreCountJoinThree(String first, String second, String third);
+
+  /// Progress while applying a backup restore
+  ///
+  /// In zh, this message translates to:
+  /// **'正在恢复数据'**
+  String get restoringData;
+
+  /// Restore success message with localized count summary
+  ///
+  /// In zh, this message translates to:
+  /// **'成功恢复 {summary}'**
+  String restoreSucceeded(String summary);
+
+  /// Generic safe backup restore failure
+  ///
+  /// In zh, this message translates to:
+  /// **'无法恢复备份，请检查文件和密码后重试'**
+  String get restoreFailed;
+
+  /// Action that dismisses an informational warning
+  ///
+  /// In zh, this message translates to:
+  /// **'知道了'**
+  String get understood;
+
+  /// Heading for creating a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'创建备份'**
+  String get createBackup;
+
+  /// Subtitle for creating a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'生成加密 .passbackup 文件'**
+  String get createBackupSubtitle;
+
+  /// Description of backup creation
+  ///
+  /// In zh, this message translates to:
+  /// **'将所有密码和 OTP 令牌导出为加密备份文件，可安全保存或分享。'**
+  String get createBackupDescription;
+
+  /// Action that starts backup creation
+  ///
+  /// In zh, this message translates to:
+  /// **'创建备份文件'**
+  String get createBackupFile;
+
+  /// Heading for restoring a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复备份'**
+  String get restoreBackup;
+
+  /// Subtitle for restoring a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'从 .passbackup 文件恢复'**
+  String get restoreBackupSubtitle;
+
+  /// Description and destructive warning for restoring a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'选择之前导出的 .passbackup 备份文件进行恢复。\n注意：恢复操作将覆盖当前所有密码数据。'**
+  String get restoreBackupDescription;
+
+  /// Action that starts selecting a backup file
+  ///
+  /// In zh, this message translates to:
+  /// **'选择备份文件恢复'**
+  String get selectBackupFileToRestore;
+
+  /// Heading for backup and restore instructions
+  ///
+  /// In zh, this message translates to:
+  /// **'使用帮助'**
+  String get usageHelp;
+
+  /// Title of the backup help step
+  ///
+  /// In zh, this message translates to:
+  /// **'备份'**
+  String get backupHelpTitle;
+
+  /// Instructions for creating and exporting a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'点击「创建备份文件」，输入主密码，再将文件保存到安全位置。'**
+  String get backupHelpDescription;
+
+  /// Title of the restore help step
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复'**
+  String get restoreHelpTitle;
+
+  /// Instructions for restoring a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'点击「选择备份文件恢复」，选择 .passbackup 文件，再输入备份密码。'**
+  String get restoreHelpDescription;
+
+  /// Title of the cross-device migration help step
+  ///
+  /// In zh, this message translates to:
+  /// **'跨设备迁移'**
+  String get migrationHelpTitle;
+
+  /// Instructions for moving data between devices
+  ///
+  /// In zh, this message translates to:
+  /// **'在旧设备创建备份并安全传输，在新设备下载文件后恢复。'**
+  String get migrationHelpDescription;
+
+  /// Warning that backup passwords cannot be recovered
+  ///
+  /// In zh, this message translates to:
+  /// **'请牢记备份密码，忘记密码将无法恢复数据。'**
+  String get rememberBackupPassword;
+
+  /// Title of the restore password dialog
+  ///
+  /// In zh, this message translates to:
+  /// **'输入备份密码以恢复'**
+  String get restorePasswordDialogTitle;
+
+  /// Title of the backup creation password dialog
+  ///
+  /// In zh, this message translates to:
+  /// **'输入主密码以创建备份'**
+  String get createBackupPasswordDialogTitle;
+
+  /// Prompt for the password used by a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入创建备份时使用的主密码：'**
+  String get restorePasswordPrompt;
+
+  /// Prompt for a master password when creating a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入您的主密码以生成备份密钥：'**
+  String get createBackupPasswordPrompt;
+
+  /// Hint in the restore password dialog
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入备份时设置的密码，密码错误将无法恢复数据。'**
+  String get restorePasswordHint;
+
+  /// Hint in the create backup password dialog
+  ///
+  /// In zh, this message translates to:
+  /// **'备份使用固定的加密密钥，可在不同设备间互通。'**
+  String get createBackupPasswordHint;
+
+  /// Short app description on the about page
+  ///
+  /// In zh, this message translates to:
+  /// **'安全、简单、可靠的本地密码管理工具，所有数据均不会上传。'**
+  String get aboutDescription;
+
+  /// Application version and build number
+  ///
+  /// In zh, this message translates to:
+  /// **'版本 {version} ({buildNumber})'**
+  String versionLabel(String version, String buildNumber);
+
+  /// Safe fallback when application version information cannot be read
+  ///
+  /// In zh, this message translates to:
+  /// **'版本信息不可用'**
+  String get versionUnavailable;
+
+  /// About page feature section title
+  ///
+  /// In zh, this message translates to:
+  /// **'功能特性'**
+  String get features;
+
+  /// About page encryption feature title
+  ///
+  /// In zh, this message translates to:
+  /// **'安全加密'**
+  String get featureEncryption;
+
+  /// About page encryption feature description
+  ///
+  /// In zh, this message translates to:
+  /// **'使用 AES-256 加密保护您的密码数据。'**
+  String get featureEncryptionDescription;
+
+  /// About page local storage feature title
+  ///
+  /// In zh, this message translates to:
+  /// **'本地存储'**
+  String get featureLocalStorage;
+
+  /// About page local storage feature description
+  ///
+  /// In zh, this message translates to:
+  /// **'所有数据仅存储在本机，不会上传到服务器。'**
+  String get featureLocalStorageDescription;
+
+  /// About page password generation feature title
+  ///
+  /// In zh, this message translates to:
+  /// **'密码生成'**
+  String get featurePasswordGeneration;
+
+  /// About page password generation feature description
+  ///
+  /// In zh, this message translates to:
+  /// **'使用内置生成器创建安全的随机密码。'**
+  String get featurePasswordGenerationDescription;
+
+  /// About page backup feature title
+  ///
+  /// In zh, this message translates to:
+  /// **'备份恢复'**
+  String get featureBackupRestore;
+
+  /// About page backup feature description
+  ///
+  /// In zh, this message translates to:
+  /// **'支持创建加密备份并按需恢复。'**
+  String get featureBackupRestoreDescription;
+
+  /// About page search feature title
+  ///
+  /// In zh, this message translates to:
+  /// **'快速搜索'**
+  String get featureFastSearch;
+
+  /// About page search feature description
+  ///
+  /// In zh, this message translates to:
+  /// **'快速查找和管理密码条目。'**
+  String get featureFastSearchDescription;
+
+  /// About page security section title
+  ///
+  /// In zh, this message translates to:
+  /// **'安全说明'**
+  String get securityNotes;
+
+  /// Security guidance shown on the about page
+  ///
+  /// In zh, this message translates to:
+  /// **'• 主密码是解锁所有数据的唯一钥匙，请务必牢记\n• 所有敏感数据均使用 AES 加密保护\n• 应用不会收集或传输任何个人数据\n• 建议定期创建备份以防数据丢失\n• 应用进入后台时会自动锁定密码库'**
+  String get securityNotesBody;
+
+  /// About page developer section title
+  ///
+  /// In zh, this message translates to:
+  /// **'开发信息'**
+  String get developerInformation;
+
+  /// Developer contact email
+  ///
+  /// In zh, this message translates to:
+  /// **'联系邮箱：{email}'**
+  String contactEmail(String email);
+
+  /// About page copyright notice
+  ///
+  /// In zh, this message translates to:
+  /// **'© {year} 密盾安存。保留所有权利。'**
+  String copyrightNotice(int year);
 }
 
 class _AppLocalizationsDelegate

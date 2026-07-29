@@ -925,5 +925,521 @@
   "cameraUnavailable": "The camera is unavailable. Please try again.",
   "@cameraUnavailable": {
     "description": "Generic QR scanner camera error"
+  },
+  "changeMasterPassword": "Change Master Password",
+  "@changeMasterPassword": {
+    "description": "Title and action for changing the master password"
+  },
+  "changeMasterPasswordDescription": "After changing your master password, all password data will be re-encrypted with the new password.",
+  "@changeMasterPasswordDescription": {
+    "description": "Security explanation on the change master password page"
+  },
+  "currentMasterPasswordRequiredLabel": "Current Master Password *",
+  "@currentMasterPasswordRequiredLabel": {
+    "description": "Required current master password field label"
+  },
+  "newMasterPasswordRequiredLabel": "New Master Password *",
+  "@newMasterPasswordRequiredLabel": {
+    "description": "Required new master password field label"
+  },
+  "confirmNewMasterPasswordRequiredLabel": "Confirm New Master Password *",
+  "@confirmNewMasterPasswordRequiredLabel": {
+    "description": "Required new master password confirmation field label"
+  },
+  "newMasterPasswordRequired": "Enter a new master password.",
+  "@newMasterPasswordRequired": {
+    "description": "Validation message for an empty new master password"
+  },
+  "newMasterPasswordMinLength": "New master password must be at least {minLength} characters.",
+  "@newMasterPasswordMinLength": {
+    "description": "Validation message for a short new master password",
+    "placeholders": {
+      "minLength": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "newMasterPasswordMustDiffer": "The new password must be different from the current password.",
+  "@newMasterPasswordMustDiffer": {
+    "description": "Validation message when old and new master passwords match"
+  },
+  "confirmNewMasterPasswordRequired": "Confirm your new master password.",
+  "@confirmNewMasterPasswordRequired": {
+    "description": "Validation message for an empty new password confirmation"
+  },
+  "newMasterPasswordsDoNotMatch": "The new master passwords do not match.",
+  "@newMasterPasswordsDoNotMatch": {
+    "description": "Validation message when new master password confirmation differs"
+  },
+  "masterPasswordChanged": "Master password changed successfully.",
+  "@masterPasswordChanged": {
+    "description": "Success message after changing the master password"
+  },
+  "masterPasswordChangeIncorrect": "Could not change the master password. Check your current password.",
+  "@masterPasswordChangeIncorrect": {
+    "description": "Message shown when the current password is incorrect during change"
+  },
+  "masterPasswordChangeFailed": "Could not change the master password. Please try again.",
+  "@masterPasswordChangeFailed": {
+    "description": "Generic safe master password change failure"
+  },
+  "dataManagement": "Data Management",
+  "@dataManagement": {
+    "description": "Settings section title for data management"
+  },
+  "backupAndRestore": "Backup & Restore",
+  "@backupAndRestore": {
+    "description": "Title for backup and restore"
+  },
+  "backupAndRestoreDescription": "Back up or restore your password data",
+  "@backupAndRestoreDescription": {
+    "description": "Settings description for backup and restore"
+  },
+  "themeSettings": "Theme",
+  "@themeSettings": {
+    "description": "Settings section title for theme controls"
+  },
+  "useSystemMaterialYouColors": "Use system Material You colors",
+  "@useSystemMaterialYouColors": {
+    "description": "Setting to use Material You system colors"
+  },
+  "themePresets": "Theme presets",
+  "@themePresets": {
+    "description": "Heading for predefined app themes"
+  },
+  "themeYellowDark": "Yellow & Black",
+  "@themeYellowDark": {
+    "description": "Name of the yellow and black theme"
+  },
+  "themeBlueLight": "Blue & White",
+  "@themeBlueLight": {
+    "description": "Name of the blue and white theme"
+  },
+  "darkBackground": "Dark background",
+  "@darkBackground": {
+    "description": "Description of a dark theme preview"
+  },
+  "lightBackground": "Light background",
+  "@lightBackground": {
+    "description": "Description of a light theme preview"
+  },
+  "about": "About",
+  "@about": {
+    "description": "About section and page title"
+  },
+  "aboutApp": "About App",
+  "@aboutApp": {
+    "description": "Settings action that opens the about page"
+  },
+  "appInformationAndVersion": "App information and version",
+  "@appInformationAndVersion": {
+    "description": "Settings description for the about page"
+  },
+  "backupSecurityNotice": "Backup files are encrypted with AES-256 and can be stored or shared safely.\nEnter the master password used to create the backup when restoring.",
+  "@backupSecurityNotice": {
+    "description": "Encryption notice at the top of the backup page"
+  },
+  "creatingEncryptedBackup": "Encrypting data and creating the backup file",
+  "@creatingEncryptedBackup": {
+    "description": "Progress while creating a backup file"
+  },
+  "backupFailed": "Could not create the backup. Please try again.",
+  "@backupFailed": {
+    "description": "Generic safe backup creation failure"
+  },
+  "backupFileCreated": "Backup File Created",
+  "@backupFileCreated": {
+    "description": "Title of the backup success dialog"
+  },
+  "passwordEntries": "Password entries",
+  "@passwordEntries": {
+    "description": "Label for password entries in backup summaries"
+  },
+  "otpTokens": "OTP tokens",
+  "@otpTokens": {
+    "description": "Label for OTP tokens in backup summaries"
+  },
+  "fileName": "File name",
+  "@fileName": {
+    "description": "Label for a backup file name"
+  },
+  "backupPasswordEntryCount": "{count, plural, =0{No password entries} =1{1 password entry} other{{count} password entries}}",
+  "@backupPasswordEntryCount": {
+    "description": "Localized password entry count in backup flows",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "backupCategoryCount": "{count, plural, =0{No categories} =1{1 category} other{{count} categories}}",
+  "@backupCategoryCount": {
+    "description": "Localized category count in backup flows",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "backupOtpCount": "{count, plural, =0{No OTP tokens} =1{1 OTP token} other{{count} OTP tokens}}",
+  "@backupOtpCount": {
+    "description": "Localized OTP token count in backup flows",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "exportBackupPrompt": "Use the button below to save the backup file in a secure location, such as Files, a cloud drive, email, or a trusted chat.",
+  "@exportBackupPrompt": {
+    "description": "Prompt to export a generated backup"
+  },
+  "shareOrExportFile": "Share / Export File",
+  "@shareOrExportFile": {
+    "description": "Action that opens the system share panel for a backup"
+  },
+  "later": "Later",
+  "@later": {
+    "description": "Action that postpones exporting a generated backup"
+  },
+  "backupShareSubject": "Secure Vault - Password Backup",
+  "@backupShareSubject": {
+    "description": "Subject used when sharing a backup file"
+  },
+  "backupShareText": "This encrypted backup was created by Secure Vault. Keep it safe. Restoring it requires the backup password.",
+  "@backupShareText": {
+    "description": "Text used when sharing a backup file"
+  },
+  "backupShared": "Backup file shared successfully.",
+  "@backupShared": {
+    "description": "Success message after sharing a backup"
+  },
+  "backupShareFailed": "Could not share the backup file. Please try again.",
+  "@backupShareFailed": {
+    "description": "Generic safe backup share failure"
+  },
+  "openingFilePicker": "Opening the file picker",
+  "@openingFilePicker": {
+    "description": "Progress while opening the backup file picker"
+  },
+  "selectBackupFileTitle": "Select a .passbackup File",
+  "@selectBackupFileTitle": {
+    "description": "System file picker title for selecting a backup"
+  },
+  "filePickerFailed": "Could not open the file picker. Please try again.",
+  "@filePickerFailed": {
+    "description": "Generic safe file picker failure"
+  },
+  "selectedFileUnavailable": "The selected file cannot be accessed.",
+  "@selectedFileUnavailable": {
+    "description": "Message when a selected backup has no accessible path"
+  },
+  "invalidBackupFileTitle": "Invalid File Format",
+  "@invalidBackupFileTitle": {
+    "description": "Title for an invalid backup file extension"
+  },
+  "invalidBackupFileMessage": "Select a file ending in .passbackup.\n\nSelected file: {fileName}",
+  "@invalidBackupFileMessage": {
+    "description": "Invalid backup extension message preserving the original file name",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "archive.txt"
+      }
+    }
+  },
+  "readingEncryptedBackup": "Reading and decrypting the backup file",
+  "@readingEncryptedBackup": {
+    "description": "Progress while reading a backup"
+  },
+  "confirmRestore": "Confirm Restore",
+  "@confirmRestore": {
+    "description": "Title and action for confirming a backup restore"
+  },
+  "restoreSummary": "File: {fileName}\n{summary}\n\nThis will delete all current password data and replace it with the backup. This cannot be undone. Continue?",
+  "@restoreSummary": {
+    "description": "Destructive restore confirmation for a backup without OTP tokens",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "password_backup.passbackup"
+      },
+      "summary": {
+        "type": "String",
+        "example": "Restore 2 password entries, 1 category, and 1 OTP token."
+      }
+    }
+  },
+  "restoreSummaryWithOtp": "File: {fileName}\n{summary}\n\nThis will delete all current password data and OTP tokens and replace them with the backup. This cannot be undone. Continue?",
+  "@restoreSummaryWithOtp": {
+    "description": "Destructive restore confirmation for a backup containing OTP tokens",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "password_backup.passbackup"
+      },
+      "summary": {
+        "type": "String",
+        "example": "Restore 2 password entries, 1 category, and 1 OTP token."
+      }
+    }
+  },
+  "restoreCountSummary": "Restore {counts}.",
+  "@restoreCountSummary": {
+    "description": "Summary of localized counts before restoring",
+    "placeholders": {
+      "counts": {
+        "type": "String",
+        "example": "2 password entries, 1 category, and 1 OTP token"
+      }
+    }
+  },
+  "restoreCountJoinTwo": "{first} and {second}",
+  "@restoreCountJoinTwo": {
+    "description": "Joins two localized restore count fragments",
+    "placeholders": {
+      "first": {
+        "type": "String",
+        "example": "2 password entries"
+      },
+      "second": {
+        "type": "String",
+        "example": "1 OTP token"
+      }
+    }
+  },
+  "restoreCountJoinThree": "{first}, {second}, and {third}",
+  "@restoreCountJoinThree": {
+    "description": "Joins three localized restore count fragments",
+    "placeholders": {
+      "first": {
+        "type": "String",
+        "example": "2 password entries"
+      },
+      "second": {
+        "type": "String",
+        "example": "1 category"
+      },
+      "third": {
+        "type": "String",
+        "example": "1 OTP token"
+      }
+    }
+  },
+  "restoringData": "Restoring data",
+  "@restoringData": {
+    "description": "Progress while applying a backup restore"
+  },
+  "restoreSucceeded": "Restored {summary} successfully.",
+  "@restoreSucceeded": {
+    "description": "Restore success message with localized count summary",
+    "placeholders": {
+      "summary": {
+        "type": "String",
+        "example": "2 password entries, 1 category, 1 OTP token"
+      }
+    }
+  },
+  "restoreFailed": "Could not restore the backup. Check the file and password, then try again.",
+  "@restoreFailed": {
+    "description": "Generic safe backup restore failure"
+  },
+  "understood": "OK",
+  "@understood": {
+    "description": "Action that dismisses an informational warning"
+  },
+  "createBackup": "Create Backup",
+  "@createBackup": {
+    "description": "Heading for creating a backup"
+  },
+  "createBackupSubtitle": "Create an encrypted .passbackup file",
+  "@createBackupSubtitle": {
+    "description": "Subtitle for creating a backup"
+  },
+  "createBackupDescription": "Export all passwords and OTP tokens to an encrypted backup file that you can save or share securely.",
+  "@createBackupDescription": {
+    "description": "Description of backup creation"
+  },
+  "createBackupFile": "Create Backup File",
+  "@createBackupFile": {
+    "description": "Action that starts backup creation"
+  },
+  "restoreBackup": "Restore Backup",
+  "@restoreBackup": {
+    "description": "Heading for restoring a backup"
+  },
+  "restoreBackupSubtitle": "Restore from a .passbackup file",
+  "@restoreBackupSubtitle": {
+    "description": "Subtitle for restoring a backup"
+  },
+  "restoreBackupDescription": "Select an exported .passbackup file.\nRestoring replaces all current password data.",
+  "@restoreBackupDescription": {
+    "description": "Description and destructive warning for restoring a backup"
+  },
+  "selectBackupFileToRestore": "Select Backup File to Restore",
+  "@selectBackupFileToRestore": {
+    "description": "Action that starts selecting a backup file"
+  },
+  "usageHelp": "Help",
+  "@usageHelp": {
+    "description": "Heading for backup and restore instructions"
+  },
+  "backupHelpTitle": "Back Up",
+  "@backupHelpTitle": {
+    "description": "Title of the backup help step"
+  },
+  "backupHelpDescription": "Tap Create Backup File, enter the master password, then save the file in a secure location.",
+  "@backupHelpDescription": {
+    "description": "Instructions for creating and exporting a backup"
+  },
+  "restoreHelpTitle": "Restore",
+  "@restoreHelpTitle": {
+    "description": "Title of the restore help step"
+  },
+  "restoreHelpDescription": "Tap Select Backup File to Restore, choose a .passbackup file, then enter its backup password.",
+  "@restoreHelpDescription": {
+    "description": "Instructions for restoring a backup"
+  },
+  "migrationHelpTitle": "Move to Another Device",
+  "@migrationHelpTitle": {
+    "description": "Title of the cross-device migration help step"
+  },
+  "migrationHelpDescription": "Create a backup on the old device, transfer it securely, download it on the new device, then restore it.",
+  "@migrationHelpDescription": {
+    "description": "Instructions for moving data between devices"
+  },
+  "rememberBackupPassword": "Remember the backup password. Data cannot be restored without it.",
+  "@rememberBackupPassword": {
+    "description": "Warning that backup passwords cannot be recovered"
+  },
+  "restorePasswordDialogTitle": "Enter Backup Password to Restore",
+  "@restorePasswordDialogTitle": {
+    "description": "Title of the restore password dialog"
+  },
+  "createBackupPasswordDialogTitle": "Enter Master Password to Create Backup",
+  "@createBackupPasswordDialogTitle": {
+    "description": "Title of the backup creation password dialog"
+  },
+  "restorePasswordPrompt": "Enter the master password used to create this backup:",
+  "@restorePasswordPrompt": {
+    "description": "Prompt for the password used by a backup"
+  },
+  "createBackupPasswordPrompt": "Enter your master password to generate the backup key:",
+  "@createBackupPasswordPrompt": {
+    "description": "Prompt for a master password when creating a backup"
+  },
+  "restorePasswordHint": "Use the password entered when this backup was created. An incorrect password cannot decrypt the data.",
+  "@restorePasswordHint": {
+    "description": "Hint in the restore password dialog"
+  },
+  "createBackupPasswordHint": "The backup uses a consistent encryption key so it can be restored on another device.",
+  "@createBackupPasswordHint": {
+    "description": "Hint in the create backup password dialog"
+  },
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Generic confirm action"
+  },
+  "aboutDescription": "A secure, simple, and reliable local password manager. Your data is never uploaded.",
+  "@aboutDescription": {
+    "description": "Short app description on the about page"
+  },
+  "versionLabel": "Version {version} ({buildNumber})",
+  "@versionLabel": {
+    "description": "Application version and build number",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "1.0.1"
+      },
+      "buildNumber": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "versionUnavailable": "Version unavailable",
+  "@versionUnavailable": {
+    "description": "Safe fallback when application version information cannot be read"
+  },
+  "features": "Features",
+  "@features": {
+    "description": "About page feature section title"
+  },
+  "featureEncryption": "Secure Encryption",
+  "@featureEncryption": {
+    "description": "About page encryption feature title"
+  },
+  "featureEncryptionDescription": "AES-256 encryption protects your password data.",
+  "@featureEncryptionDescription": {
+    "description": "About page encryption feature description"
+  },
+  "featureLocalStorage": "Local Storage",
+  "@featureLocalStorage": {
+    "description": "About page local storage feature title"
+  },
+  "featureLocalStorageDescription": "All data stays on this device and is never uploaded to a server.",
+  "@featureLocalStorageDescription": {
+    "description": "About page local storage feature description"
+  },
+  "featurePasswordGeneration": "Password Generation",
+  "@featurePasswordGeneration": {
+    "description": "About page password generation feature title"
+  },
+  "featurePasswordGenerationDescription": "Create strong random passwords with the built-in generator.",
+  "@featurePasswordGenerationDescription": {
+    "description": "About page password generation feature description"
+  },
+  "featureBackupRestore": "Backup & Restore",
+  "@featureBackupRestore": {
+    "description": "About page backup feature title"
+  },
+  "featureBackupRestoreDescription": "Create encrypted backups and restore them when needed.",
+  "@featureBackupRestoreDescription": {
+    "description": "About page backup feature description"
+  },
+  "featureFastSearch": "Fast Search",
+  "@featureFastSearch": {
+    "description": "About page search feature title"
+  },
+  "featureFastSearchDescription": "Find and manage password entries quickly.",
+  "@featureFastSearchDescription": {
+    "description": "About page search feature description"
+  },
+  "securityNotes": "Security Notes",
+  "@securityNotes": {
+    "description": "About page security section title"
+  },
+  "securityNotesBody": "• Your master password is the only key to your data. Remember it.\n• Sensitive data is protected with AES encryption.\n• The app does not collect or transmit personal data.\n• Create backups regularly to prevent data loss.\n• The vault locks automatically when the app enters the background.",
+  "@securityNotesBody": {
+    "description": "Security guidance shown on the about page"
+  },
+  "developerInformation": "Developer Information",
+  "@developerInformation": {
+    "description": "About page developer section title"
+  },
+  "contactEmail": "Contact: {email}",
+  "@contactEmail": {
+    "description": "Developer contact email",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "support@example.com"
+      }
+    }
+  },
+  "copyrightNotice": "© {year} Secure Vault. All rights reserved.",
+  "@copyrightNotice": {
+    "description": "About page copyright notice",
+    "placeholders": {
+      "year": {
+        "type": "int",
+        "example": "2026"
+      }
+    }
   }
 }

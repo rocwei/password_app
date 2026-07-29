@@ -151,8 +151,8 @@ void main() {
     expect(loadCalls, 1);
     expect(tester.widget<Switch>(biometricSwitch()).value, isTrue);
 
-    await tester.ensureVisible(find.text('修改主密码'));
-    await tester.tap(find.text('修改主密码'));
+    await tester.ensureVisible(find.text('Change Master Password'));
+    await tester.tap(find.text('Change Master Password'));
     await tester.pumpAndSettle();
     expect(find.byType(ChangeMasterPasswordPage), findsOneWidget);
 
@@ -193,8 +193,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.text('修改主密码'));
-      await tester.tap(find.text('修改主密码'));
+      await tester.ensureVisible(find.text('Change Master Password'));
+      await tester.tap(find.text('Change Master Password'));
       await tester.pumpAndSettle();
 
       Navigator.of(tester.element(find.byType(ChangeMasterPasswordPage))).pop();
