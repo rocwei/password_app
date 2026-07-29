@@ -224,8 +224,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deletingLocalVault => 'Deleting local vault';
 
   @override
-  String get masterPasswordChangedWithRecoveryRequired =>
-      'Your master password was changed. Use the new password from now on. Some security data could not be updated. Unlock again, check your OTP tokens, and re-enable biometrics.';
+  String get masterPasswordChangedWithBiometricDisabled =>
+      'Your master password was changed. Use the new password from now on. Biometric unlock was disabled. Enable it again in Settings.';
+
+  @override
+  String get masterPasswordChangeFailedWithBiometricDisabled =>
+      'Your master password was not changed. Keep using your old password. Biometric unlock was disabled. Enable it again in Settings.';
 
   @override
   String get settings => 'Settings';

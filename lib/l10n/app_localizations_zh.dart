@@ -207,8 +207,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deletingLocalVault => '正在删除本地密码库';
 
   @override
-  String get masterPasswordChangedWithRecoveryRequired =>
-      '主密码已更改，请使用新密码；部分安全数据更新未完成。请重新解锁后检查 OTP，并重新启用生物识别。';
+  String get masterPasswordChangedWithBiometricDisabled =>
+      '主密码已更改，请使用新密码；生物识别已关闭，请重新启用。';
+
+  @override
+  String get masterPasswordChangeFailedWithBiometricDisabled =>
+      '主密码未更改，请继续使用旧密码；生物识别已关闭，请重新启用。';
 
   @override
   String get settings => '设置';

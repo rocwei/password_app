@@ -19,33 +19,62 @@ void main() {
     );
   }
 
-  testWidgets('partial password change shows recovery guidance, never success', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      buildPage(
-        changeMasterPassword: (_, _) async =>
-            MasterPasswordChangeResult.changedWithRecoveryRequired,
-      ),
-    );
-
+  Future<void> submit(WidgetTester tester) async {
     await tester.enterText(find.byType(TextFormField).at(0), 'old-password');
     await tester.enterText(find.byType(TextFormField).at(1), 'new-password');
     await tester.enterText(find.byType(TextFormField).at(2), 'new-password');
     await tester.ensureVisible(find.text('更改主密码'));
     await tester.tap(find.text('更改主密码'));
     await tester.pumpAndSettle();
+  }
 
-    expect(
-      find.text(
-        'Your master password was changed. Use the new password from now on. '
-        'Some security data could not be updated. Unlock again, check your OTP '
-        'tokens, and re-enable biometrics.',
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('主密码已成功更改'), findsNothing);
-    expect(find.text('更改失败，请检查旧密码是否正确'), findsNothing);
-    expect(find.byType(ChangeMasterPasswordPage), findsOneWidget);
-  });
+  testWidgets(
+    'committed password with failed biometric re-enable reports exact state',
+    (tester) async {
+      await tester.pumpWidget(
+        buildPage(
+          changeMasterPassword: (_, _) async =>
+              MasterPasswordChangeResult.successWithBiometricDisabled,
+        ),
+      );
+
+      await submit(tester);
+
+      expect(
+        find.text(
+          'Your master password was changed. Use the new password from now on. '
+          'Biometric unlock was disabled. Enable it again in Settings.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('OTP'), findsNothing);
+      expect(find.text('主密码已成功更改'), findsNothing);
+      expect(find.byType(ChangeMasterPasswordPage), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'failed biometric rollback says the old password is still active',
+    (tester) async {
+      await tester.pumpWidget(
+        buildPage(
+          changeMasterPassword: (_, _) async =>
+              MasterPasswordChangeResult.failedWithBiometricDisabled,
+        ),
+      );
+
+      await submit(tester);
+
+      expect(
+        find.text(
+          'Your master password was not changed. Keep using your old password. '
+          'Biometric unlock was disabled. Enable it again in Settings.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('OTP'), findsNothing);
+      expect(find.text('主密码已成功更改'), findsNothing);
+      expect(find.byType(ChangeMasterPasswordPage), findsOneWidget);
+    },
+  );
 }

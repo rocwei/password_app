@@ -470,11 +470,17 @@ abstract class AppLocalizations {
   /// **'正在删除本地密码库'**
   String get deletingLocalVault;
 
-  /// Recovery guidance after a master password change only partially updates security data
+  /// 主密码成功更改但生物识别无法重新启用时显示
   ///
   /// In zh, this message translates to:
-  /// **'主密码已更改，请使用新密码；部分安全数据更新未完成。请重新解锁后检查 OTP，并重新启用生物识别。'**
-  String get masterPasswordChangedWithRecoveryRequired;
+  /// **'主密码已更改，请使用新密码；生物识别已关闭，请重新启用。'**
+  String get masterPasswordChangedWithBiometricDisabled;
+
+  /// 主密码未更改且旧生物识别密钥无法恢复时显示
+  ///
+  /// In zh, this message translates to:
+  /// **'主密码未更改，请继续使用旧密码；生物识别已关闭，请重新启用。'**
+  String get masterPasswordChangeFailedWithBiometricDisabled;
 
   /// Settings page title
   ///

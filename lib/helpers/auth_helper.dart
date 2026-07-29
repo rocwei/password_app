@@ -7,41 +7,33 @@ import 'database_helper.dart';
 import 'encryption_helper.dart';
 import 'biometric_helper.dart';
 import 'local_vault_deletion_service.dart';
-import 'otp_helper.dart';
 
 enum MasterPasswordChangeResult {
   success,
+  successWithBiometricDisabled,
   incorrectPassword,
   failed,
-  changedWithRecoveryRequired,
+  failedWithBiometricDisabled,
 }
 
 class MasterPasswordChangeOperations {
   const MasterPasswordChangeOperations({
     required this.getPasswordEntries,
     required this.decryptPassword,
-    required this.captureOtpSnapshot,
-    required this.decryptOtpSecret,
     required this.readBiometricKey,
+    required this.deleteBiometricKey,
     required this.setEncryptionKey,
     required this.encryptPassword,
-    required this.encryptOtpSecret,
-    required this.replaceOtpTokensAtomically,
-    required this.restoreOtpSnapshot,
     required this.writeBiometricKey,
     required this.updateMasterPasswordDataAtomically,
   });
 
   final Future<List<PasswordEntry>> Function(int userId) getPasswordEntries;
   final String Function(String encryptedPassword) decryptPassword;
-  final Future<OtpTokenSnapshot> Function() captureOtpSnapshot;
-  final String Function(String encryptedSecret) decryptOtpSecret;
   final Future<String?> Function(int userId) readBiometricKey;
+  final Future<void> Function(int userId) deleteBiometricKey;
   final void Function(String encryptionKey) setEncryptionKey;
   final String Function(String plainPassword) encryptPassword;
-  final String Function(String plainSecret) encryptOtpSecret;
-  final Future<void> Function(List<OtpToken> tokens) replaceOtpTokensAtomically;
-  final Future<void> Function(OtpTokenSnapshot snapshot) restoreOtpSnapshot;
   final Future<void> Function(int userId, String encryptionKey)
   writeBiometricKey;
   final Future<void> Function(User user, List<PasswordEntry> entries)
@@ -262,17 +254,23 @@ class AuthHelper {
 
     final currentUser = _currentUser!;
     final currentEncryptionKey = _encryptionKey!;
-    try {
-      final hashedOldPassword = EncryptionHelper.hashMasterPassword(
-        oldPassword,
-        currentUser.salt,
-      );
-      if (hashedOldPassword != currentUser.masterPasswordHash) {
-        return MasterPasswordChangeResult.incorrectPassword;
-      }
 
-      final changeOperations =
-          operations ?? _buildMasterPasswordChangeOperations();
+    final hashedOldPassword = EncryptionHelper.hashMasterPassword(
+      oldPassword,
+      currentUser.salt,
+    );
+    if (hashedOldPassword != currentUser.masterPasswordHash) {
+      return MasterPasswordChangeResult.incorrectPassword;
+    }
+
+    final changeOperations =
+        operations ?? _buildMasterPasswordChangeOperations();
+    late final User updatedUser;
+    late final String newEncryptionKey;
+    late final List<PasswordEntry> updatedEntries;
+    late final String? oldBiometricKey;
+
+    try {
       final entries = await changeOperations.getPasswordEntries(
         currentUser.id!,
       );
@@ -282,15 +280,7 @@ class AuthHelper {
           changeOperations.decryptPassword(entry.encryptedPassword),
         );
       }
-
-      final otpSnapshot = await changeOperations.captureOtpSnapshot();
-      final decryptedOtpSecrets = <String>[];
-      for (final token in otpSnapshot.tokens) {
-        decryptedOtpSecrets.add(
-          changeOperations.decryptOtpSecret(token.secret),
-        );
-      }
-      final oldBiometricKey = await changeOperations.readBiometricKey(
+      oldBiometricKey = await changeOperations.readBiometricKey(
         currentUser.id!,
       );
 
@@ -299,38 +289,25 @@ class AuthHelper {
         newPassword,
         newSalt,
       );
-      final newEncryptionKey = EncryptionHelper.deriveKey(newPassword, newSalt);
-      final updatedUser = currentUser.copyWith(
+      newEncryptionKey = EncryptionHelper.deriveKey(newPassword, newSalt);
+      updatedUser = currentUser.copyWith(
         masterPasswordHash: newHashedPassword,
         salt: newSalt,
         updatedAt: DateTime.now(),
       );
 
-      final updatedEntries = <PasswordEntry>[];
-      final updatedOtpTokens = <OtpToken>[];
+      final precomputedEntries = <PasswordEntry>[];
       var precomputationSucceeded = false;
       var restoredOldKeyAfterPrecomputation = false;
       try {
         changeOperations.setEncryptionKey(newEncryptionKey);
         for (var index = 0; index < entries.length; index++) {
-          updatedEntries.add(
+          precomputedEntries.add(
             entries[index].copyWith(
               encryptedPassword: changeOperations.encryptPassword(
                 decryptedPasswords[index],
               ),
               updatedAt: DateTime.now(),
-            ),
-          );
-        }
-        for (var index = 0; index < otpSnapshot.tokens.length; index++) {
-          final token = otpSnapshot.tokens[index];
-          updatedOtpTokens.add(
-            OtpToken(
-              id: token.id,
-              label: token.label,
-              secret: changeOperations.encryptOtpSecret(
-                decryptedOtpSecrets[index],
-              ),
             ),
           );
         }
@@ -347,75 +324,60 @@ class AuthHelper {
       }
       if (!precomputationSucceeded ||
           !restoredOldKeyAfterPrecomputation ||
-          updatedEntries.length != entries.length ||
-          updatedOtpTokens.length != otpSnapshot.tokens.length) {
-        return restoredOldKeyAfterPrecomputation
-            ? MasterPasswordChangeResult.failed
-            : MasterPasswordChangeResult.changedWithRecoveryRequired;
+          precomputedEntries.length != entries.length) {
+        return MasterPasswordChangeResult.failed;
       }
-
-      var otpWriteAttempted = false;
-      var biometricWriteAttempted = false;
-      try {
-        otpWriteAttempted = true;
-        await changeOperations.replaceOtpTokensAtomically(updatedOtpTokens);
-
-        if (oldBiometricKey != null && oldBiometricKey.isNotEmpty) {
-          biometricWriteAttempted = true;
-          await changeOperations.writeBiometricKey(
-            updatedUser.id!,
-            newEncryptionKey,
-          );
-        }
-
-        await changeOperations.updateMasterPasswordDataAtomically(
-          updatedUser,
-          updatedEntries,
-        );
-      } catch (_) {
-        var rollbackSucceeded = true;
-        if (biometricWriteAttempted) {
-          try {
-            await changeOperations.writeBiometricKey(
-              currentUser.id!,
-              oldBiometricKey!,
-            );
-          } catch (_) {
-            rollbackSucceeded = false;
-          }
-        }
-        if (otpWriteAttempted) {
-          try {
-            await changeOperations.restoreOtpSnapshot(otpSnapshot);
-          } catch (_) {
-            rollbackSucceeded = false;
-          }
-        }
-        try {
-          changeOperations.setEncryptionKey(currentEncryptionKey);
-        } catch (_) {
-          rollbackSucceeded = false;
-        }
-        _currentUser = currentUser;
-        _encryptionKey = currentEncryptionKey;
-        return rollbackSucceeded
-            ? MasterPasswordChangeResult.failed
-            : MasterPasswordChangeResult.changedWithRecoveryRequired;
-      }
-
-      try {
-        changeOperations.setEncryptionKey(newEncryptionKey);
-      } catch (_) {
-        return MasterPasswordChangeResult.changedWithRecoveryRequired;
-      }
-      _currentUser = updatedUser;
-      _encryptionKey = newEncryptionKey;
-      return MasterPasswordChangeResult.success;
+      updatedEntries = precomputedEntries;
     } catch (_) {
       _currentUser = currentUser;
       _encryptionKey = currentEncryptionKey;
       return MasterPasswordChangeResult.failed;
     }
+
+    final biometricWasEnabled =
+        oldBiometricKey != null && oldBiometricKey.isNotEmpty;
+    if (biometricWasEnabled) {
+      try {
+        await changeOperations.deleteBiometricKey(currentUser.id!);
+      } catch (_) {
+        return MasterPasswordChangeResult.failed;
+      }
+    }
+
+    try {
+      await changeOperations.updateMasterPasswordDataAtomically(
+        updatedUser,
+        updatedEntries,
+      );
+    } catch (_) {
+      if (biometricWasEnabled) {
+        try {
+          await changeOperations.writeBiometricKey(
+            currentUser.id!,
+            oldBiometricKey,
+          );
+        } catch (_) {
+          return MasterPasswordChangeResult.failedWithBiometricDisabled;
+        }
+      }
+      return MasterPasswordChangeResult.failed;
+    }
+
+    changeOperations.setEncryptionKey(newEncryptionKey);
+    _currentUser = updatedUser;
+    _encryptionKey = newEncryptionKey;
+
+    if (biometricWasEnabled) {
+      try {
+        await changeOperations.writeBiometricKey(
+          updatedUser.id!,
+          newEncryptionKey,
+        );
+      } catch (_) {
+        return MasterPasswordChangeResult.successWithBiometricDisabled;
+      }
+    }
+    return MasterPasswordChangeResult.success;
   }
 
   MasterPasswordChangeOperations _buildMasterPasswordChangeOperations() {
@@ -423,16 +385,14 @@ class AuthHelper {
     return MasterPasswordChangeOperations(
       getPasswordEntries: dbHelper.getPasswordEntries,
       decryptPassword: EncryptionHelper().decryptString,
-      captureOtpSnapshot: OtpHelper.captureSnapshotOrThrow,
-      decryptOtpSecret: OtpHelper.decryptSecret,
       readBiometricKey: (userId) {
         return _secureStorage.read(key: 'encryption_key_$userId');
       },
+      deleteBiometricKey: (userId) {
+        return _secureStorage.delete(key: 'encryption_key_$userId');
+      },
       setEncryptionKey: EncryptionHelper().setEncryptionKey,
       encryptPassword: EncryptionHelper().encryptString,
-      encryptOtpSecret: EncryptionHelper().encryptString,
-      replaceOtpTokensAtomically: OtpHelper.replaceAllTokensOrThrow,
-      restoreOtpSnapshot: OtpHelper.restoreSnapshotOrThrow,
       writeBiometricKey: (userId, encryptionKey) {
         return _secureStorage.write(
           key: 'encryption_key_$userId',

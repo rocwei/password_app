@@ -278,9 +278,13 @@
   "@deletingLocalVault": {
     "description": "Accessibility progress label while permanent local vault deletion is running"
   },
-  "masterPasswordChangedWithRecoveryRequired": "Your master password was changed. Use the new password from now on. Some security data could not be updated. Unlock again, check your OTP tokens, and re-enable biometrics.",
-  "@masterPasswordChangedWithRecoveryRequired": {
-    "description": "Recovery guidance after a master password change only partially updates security data"
+  "masterPasswordChangedWithBiometricDisabled": "Your master password was changed. Use the new password from now on. Biometric unlock was disabled. Enable it again in Settings.",
+  "@masterPasswordChangedWithBiometricDisabled": {
+    "description": "Shown when the master password changed successfully but biometric unlock could not be re-enabled"
+  },
+  "masterPasswordChangeFailedWithBiometricDisabled": "Your master password was not changed. Keep using your old password. Biometric unlock was disabled. Enable it again in Settings.",
+  "@masterPasswordChangeFailedWithBiometricDisabled": {
+    "description": "Shown when the master password was not changed and the previous biometric key could not be restored"
   },
   "settings": "Settings",
   "@settings": {

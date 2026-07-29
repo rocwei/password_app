@@ -41,8 +41,10 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
       return;
     }
 
-    final recoveryMessage =
-        context.l10n.masterPasswordChangedWithRecoveryRequired;
+    final biometricDisabledAfterSuccessMessage =
+        context.l10n.masterPasswordChangedWithBiometricDisabled;
+    final biometricDisabledAfterFailureMessage =
+        context.l10n.masterPasswordChangeFailedWithBiometricDisabled;
 
     setState(() {
       _isLoading = true;
@@ -69,6 +71,14 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
             ),
           );
           Navigator.of(context).pop();
+        case MasterPasswordChangeResult.successWithBiometricDisabled:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(biometricDisabledAfterSuccessMessage),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 8),
+            ),
+          );
         case MasterPasswordChangeResult.incorrectPassword:
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -83,10 +93,10 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
               backgroundColor: Colors.red,
             ),
           );
-        case MasterPasswordChangeResult.changedWithRecoveryRequired:
+        case MasterPasswordChangeResult.failedWithBiometricDisabled:
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(recoveryMessage),
+              content: Text(biometricDisabledAfterFailureMessage),
               backgroundColor: Colors.orange,
               duration: const Duration(seconds: 8),
             ),
