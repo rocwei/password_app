@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:password_manager/helpers/auth_helper.dart';
 import 'package:password_manager/helpers/encryption_helper.dart';
 import 'package:password_manager/helpers/local_vault_deletion_service.dart';
 import 'package:password_manager/models/user.dart';
@@ -19,6 +20,13 @@ void main() {
       ),
       salt: salt,
     );
+  });
+
+  test('AuthHelper exposes the local vault deletion interface', () {
+    final Future<LocalVaultDeletionResult> Function(String) deleteLocalVault =
+        AuthHelper().deleteLocalVault;
+
+    expect(deleteLocalVault, isNotNull);
   });
 
   test('returns unavailable when the user is missing', () async {

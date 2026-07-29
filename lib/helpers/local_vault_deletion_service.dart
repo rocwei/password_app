@@ -1,4 +1,7 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 import '../models/user.dart';
+import 'database_helper.dart';
 import 'encryption_helper.dart';
 
 enum LocalVaultDeletionResult {
@@ -10,9 +13,13 @@ enum LocalVaultDeletionResult {
 
 class LocalVaultDeletionService {
   LocalVaultDeletionService({
-    required this.deleteDatabase,
-    required this.clearSecureStorage,
-  });
+    Future<void> Function()? deleteDatabase,
+    Future<void> Function()? clearSecureStorage,
+  }) : deleteDatabase =
+           deleteDatabase ?? (() => DatabaseHelper().deleteAllLocalData()),
+       clearSecureStorage =
+           clearSecureStorage ??
+           (() => const FlutterSecureStorage().deleteAll());
 
   final Future<void> Function() deleteDatabase;
   final Future<void> Function() clearSecureStorage;

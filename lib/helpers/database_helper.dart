@@ -361,8 +361,24 @@ class DatabaseHelper {
     );
   }
 
+  Future<void> deleteAllLocalData() async {
+    final path = join(await getDatabasesPath(), 'password_manager.db');
+    final db = _database;
+    _database = null;
+
+    if (db != null && db.isOpen) {
+      await db.close();
+    }
+
+    await deleteDatabase(path);
+  }
+
   Future<void> close() async {
-    final db = await database;
-    await db.close();
+    final db = _database;
+    _database = null;
+
+    if (db != null && db.isOpen) {
+      await db.close();
+    }
   }
 }

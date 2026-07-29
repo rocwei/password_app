@@ -3,6 +3,7 @@ import '../models/user.dart';
 import 'database_helper.dart';
 import 'encryption_helper.dart';
 import 'biometric_helper.dart';
+import 'local_vault_deletion_service.dart';
 import 'otp_helper.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -15,6 +16,8 @@ class AuthHelper {
   String? _encryptionKey;
   // 安全存储实例，用于保存/读取加密密钥（用于生物识别解锁）
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final LocalVaultDeletionService _localVaultDeletionService =
+      LocalVaultDeletionService();
 
   User? get currentUser => _currentUser;
   bool get isLoggedIn => _currentUser != null && _encryptionKey != null;
@@ -340,6 +343,14 @@ class AuthHelper {
     _currentUser = null;
     _encryptionKey = null;
     EncryptionHelper().clearKey();
+  }
+
+  Future<LocalVaultDeletionResult> deleteLocalVault(String masterPassword) {
+    return _localVaultDeletionService.delete(
+      user: _currentUser,
+      masterPassword: masterPassword,
+      clearSession: logout,
+    );
   }
 
   // 获取当前用户ID
