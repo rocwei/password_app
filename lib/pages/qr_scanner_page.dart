@@ -3,7 +3,12 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../l10n/l10n.dart';
 
-typedef QrScannerBuilder = Widget Function(BuildContext context);
+typedef QrScannerBuilder =
+    Widget Function(
+      BuildContext context,
+      void Function(BarcodeCapture capture) onDetect,
+    );
+typedef CameraAction = Future<void> Function();
 
 enum OtpUriParseError {
   malformed,
@@ -82,6 +87,19 @@ OtpUriParseResult parseOtpUri(String rawValue) {
   }
 }
 
+OtpUriParseResult parseOtpCapture(BarcodeCapture capture) {
+  OtpUriParseResult? firstFailure;
+  for (final barcode in capture.barcodes) {
+    final rawValue = barcode.rawValue;
+    if (rawValue == null) continue;
+    final result = parseOtpUri(rawValue);
+    if (result.data != null) return result;
+    firstFailure ??= result;
+  }
+  return firstFailure ??
+      const OtpUriParseResult.failure(OtpUriParseError.malformed);
+}
+
 class QrScannerCameraError extends StatelessWidget {
   const QrScannerCameraError({super.key, required this.errorCode});
 
@@ -109,9 +127,20 @@ class QrScannerCameraError extends StatelessWidget {
 }
 
 class QrScannerPage extends StatefulWidget {
-  const QrScannerPage({super.key, this.scannerBuilder});
+  const QrScannerPage({
+    super.key,
+    this.scannerBuilder,
+    this.initialCameraErrorCode,
+    this.toggleTorch,
+    this.switchCamera,
+    this.now,
+  });
 
   final QrScannerBuilder? scannerBuilder;
+  final MobileScannerErrorCode? initialCameraErrorCode;
+  final CameraAction? toggleTorch;
+  final CameraAction? switchCamera;
+  final DateTime Function()? now;
 
   @override
   State<QrScannerPage> createState() => _QrScannerPageState();
@@ -120,6 +149,14 @@ class QrScannerPage extends StatefulWidget {
 class _QrScannerPageState extends State<QrScannerPage> {
   final MobileScannerController _controller = MobileScannerController();
   bool _isProcessing = false;
+  MobileScannerErrorCode? _cameraErrorCode;
+  DateTime? _lastRejectedAt;
+
+  @override
+  void initState() {
+    super.initState();
+    _cameraErrorCode = widget.initialCameraErrorCode;
+  }
 
   @override
   void dispose() {
@@ -130,23 +167,14 @@ class _QrScannerPageState extends State<QrScannerPage> {
   void _onDetect(BarcodeCapture capture) {
     if (_isProcessing) return;
 
-    for (final barcode in capture.barcodes) {
-      final rawValue = barcode.rawValue;
-      if (rawValue == null) continue;
-      setState(() => _isProcessing = true);
-      _processOtpUri(rawValue);
-      break;
-    }
-  }
-
-  void _processOtpUri(String rawValue) {
-    final result = parseOtpUri(rawValue);
+    final result = parseOtpCapture(capture);
     final data = result.data;
     if (data == null) {
-      _showParseError(result.error ?? OtpUriParseError.malformed);
-      if (mounted) setState(() => _isProcessing = false);
+      _showParseErrorOnce(result.error ?? OtpUriParseError.malformed);
       return;
     }
+
+    setState(() => _isProcessing = true);
 
     if (!mounted) return;
     Navigator.of(context).pop(<String, String>{
@@ -155,6 +183,17 @@ class _QrScannerPageState extends State<QrScannerPage> {
       'issuer': data.issuer ?? '',
       'path': data.path,
     });
+  }
+
+  void _showParseErrorOnce(OtpUriParseError error) {
+    final now = (widget.now ?? DateTime.now)();
+    final recentlyRejected =
+        _lastRejectedAt != null &&
+        now.difference(_lastRejectedAt!) < const Duration(seconds: 2);
+    if (recentlyRejected) return;
+
+    _lastRejectedAt = now;
+    _showParseError(error);
   }
 
   void _showParseError(OtpUriParseError error) {
@@ -167,7 +206,9 @@ class _QrScannerPageState extends State<QrScannerPage> {
       OtpUriParseError.notOtpAuth ||
       OtpUriParseError.unsupportedType => l10n.invalidOtpQrCode,
     };
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: Theme.of(context).colorScheme.error,
@@ -177,15 +218,42 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
   Widget _buildScanner(BuildContext context) {
     final scannerBuilder = widget.scannerBuilder;
-    if (scannerBuilder != null) return scannerBuilder(context);
+    if (scannerBuilder != null) return scannerBuilder(context, _onDetect);
 
     return MobileScanner(
       controller: _controller,
       onDetect: _onDetect,
       errorBuilder: (context, error, child) {
+        _recordCameraError(error.errorCode);
         return QrScannerCameraError(errorCode: error.errorCode);
       },
     );
+  }
+
+  void _recordCameraError(MobileScannerErrorCode errorCode) {
+    if (_cameraErrorCode == errorCode) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _cameraErrorCode == errorCode) return;
+      setState(() => _cameraErrorCode = errorCode);
+    });
+  }
+
+  Future<void> _handleCameraAction(CameraAction action) async {
+    if (_cameraErrorCode != null) return;
+    try {
+      await action();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _cameraErrorCode = MobileScannerErrorCode.genericError;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.cameraUnavailable),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
   }
 
   @override
@@ -206,7 +274,11 @@ class _QrScannerPageState extends State<QrScannerPage> {
               },
             ),
             tooltip: l10n.toggleTorch,
-            onPressed: _controller.toggleTorch,
+            onPressed: _cameraErrorCode == null
+                ? () => _handleCameraAction(
+                    widget.toggleTorch ?? _controller.toggleTorch,
+                  )
+                : null,
           ),
           IconButton(
             icon: ValueListenableBuilder(
@@ -220,7 +292,11 @@ class _QrScannerPageState extends State<QrScannerPage> {
               },
             ),
             tooltip: l10n.switchCamera,
-            onPressed: _controller.switchCamera,
+            onPressed: _cameraErrorCode == null
+                ? () => _handleCameraAction(
+                    widget.switchCamera ?? _controller.switchCamera,
+                  )
+                : null,
           ),
         ],
       ),

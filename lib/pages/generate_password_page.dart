@@ -130,14 +130,24 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
       return;
     }
 
-    await Clipboard.setData(ClipboardData(text: _generatedPassword));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(context.l10n.passwordCopied),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    try {
+      await Clipboard.setData(ClipboardData(text: _generatedPassword));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.passwordCopied),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.passwordCopyFailed),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _savePassword() async {

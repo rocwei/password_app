@@ -580,6 +580,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordCopied => 'Password copied to clipboard.';
 
   @override
+  String get passwordCopyFailed =>
+      'Could not copy the password. Please try again.';
+
+  @override
   String get generatePasswordFirst => 'Generate a password first.';
 
   @override

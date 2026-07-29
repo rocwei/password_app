@@ -17,6 +17,23 @@ typedef OtpTokenSaver = Future<void> Function(OtpToken token);
 typedef OtpTokenDeleter = Future<void> Function(String id);
 typedef OtpScanner =
     Future<Map<String, String>?> Function(BuildContext context);
+typedef OtpClock = DateTime Function();
+typedef OtpTickerFactory = OtpTicker Function(VoidCallback callback);
+typedef OtpCodeGenerator = OtpCodeResult Function(String secret, int timestamp);
+
+abstract interface class OtpTicker {
+  void cancel();
+}
+
+class _PeriodicOtpTicker implements OtpTicker {
+  _PeriodicOtpTicker(VoidCallback callback)
+    : _timer = Timer.periodic(const Duration(seconds: 1), (_) => callback());
+
+  final Timer _timer;
+
+  @override
+  void cancel() => _timer.cancel();
+}
 
 enum OtpCodeError { emptySecret, invalidSecret }
 
@@ -35,12 +52,18 @@ class OtpPage extends StatefulWidget {
     this.saveToken,
     this.deleteToken,
     this.scanQrCode,
+    this.now,
+    this.tickerFactory,
+    this.codeGenerator,
   });
 
   final OtpTokenLoader? loadTokens;
   final OtpTokenSaver? saveToken;
   final OtpTokenDeleter? deleteToken;
   final OtpScanner? scanQrCode;
+  final OtpClock? now;
+  final OtpTickerFactory? tickerFactory;
+  final OtpCodeGenerator? codeGenerator;
 
   @override
   State<OtpPage> createState() => _OtpPageState();
@@ -55,31 +78,78 @@ class _OtpItem {
   _OtpItem withCode(String value) => _OtpItem(token: token, code: value);
 }
 
-class _OtpPageState extends State<OtpPage> {
+class _OtpPageState extends State<OtpPage> with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   final _labelController = TextEditingController();
   final _secretController = TextEditingController();
   List<_OtpItem> _otpList = [];
-  late final Timer _timer;
+  late final OtpTicker _ticker;
+  int? _timeWindow;
   int _secondsRemaining = 30;
   bool _isLoading = true;
   bool _hasLoadError = false;
+  bool _isSavingOtp = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _syncOtpTime(notify: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _loadOtpTokens();
     });
-    _startTimer();
+    _ticker = (widget.tickerFactory ?? _createTicker)(_onTick);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _labelController.dispose();
     _secretController.dispose();
-    _timer.cancel();
+    _ticker.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncOtpTime();
+    }
+  }
+
+  OtpTicker _createTicker(VoidCallback callback) {
+    return _PeriodicOtpTicker(callback);
+  }
+
+  DateTime _now() => (widget.now ?? DateTime.now)();
+
+  void _onTick() => _syncOtpTime();
+
+  void _syncOtpTime({bool notify = true}) {
+    final epochSeconds = _now().millisecondsSinceEpoch ~/ 1000;
+    final timeWindow = epochSeconds ~/ 30;
+    final secondsRemaining = 30 - (epochSeconds % 30);
+    final refreshCodes = _timeWindow != null && _timeWindow != timeWindow;
+    _timeWindow = timeWindow;
+
+    List<_OtpItem> updatedItems = _otpList;
+    if (refreshCodes) {
+      updatedItems = _otpList.map((item) {
+        final result = _generateOtpCode(item.token.secret);
+        return item.withCode(result.code ?? '------');
+      }).toList();
+    }
+
+    if (!notify) {
+      _secondsRemaining = secondsRemaining;
+      _otpList = updatedItems;
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _secondsRemaining = secondsRemaining;
+      _otpList = updatedItems;
+    });
   }
 
   Future<void> _loadOtpTokens() async {
@@ -95,7 +165,7 @@ class _OtpPageState extends State<OtpPage> {
       if (!mounted) return;
       setState(() {
         _otpList = tokens.map((token) {
-          final result = generateOtpCode(token.secret);
+          final result = _generateOtpCode(token.secret);
           return _OtpItem(token: token, code: result.code ?? '------');
         }).toList();
         _isLoading = false;
@@ -110,26 +180,6 @@ class _OtpPageState extends State<OtpPage> {
     }
   }
 
-  void _startTimer() {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    _secondsRemaining = 30 - ((now ~/ 1000) % 30);
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() {
-        if (_secondsRemaining <= 1) {
-          _secondsRemaining = 30;
-          _otpList = _otpList.map((item) {
-            final result = generateOtpCode(item.token.secret);
-            return item.withCode(result.code ?? '------');
-          }).toList();
-        } else {
-          _secondsRemaining--;
-        }
-      });
-    });
-  }
-
   String _generateId() {
     final random = math.Random();
     return '${DateTime.now().millisecondsSinceEpoch}${random.nextInt(1000)}';
@@ -142,7 +192,12 @@ class _OtpPageState extends State<OtpPage> {
     return cleaned;
   }
 
-  OtpCodeResult generateOtpCode(String secret) {
+  OtpCodeResult _generateOtpCode(String secret) {
+    final timestamp = _now().millisecondsSinceEpoch;
+    return (widget.codeGenerator ?? _generateOtpCodeAt)(secret, timestamp);
+  }
+
+  OtpCodeResult _generateOtpCodeAt(String secret, int timestamp) {
     if (secret.isEmpty) {
       return const OtpCodeResult.failure(OtpCodeError.emptySecret);
     }
@@ -155,7 +210,7 @@ class _OtpPageState extends State<OtpPage> {
     try {
       final code = OTP.generateTOTPCodeString(
         cleanedSecret,
-        DateTime.now().millisecondsSinceEpoch,
+        timestamp,
         length: 6,
         interval: 30,
         algorithm: Algorithm.SHA1,
@@ -167,7 +222,11 @@ class _OtpPageState extends State<OtpPage> {
     }
   }
 
-  Future<void> _addOtp() async {
+  Future<void> _addOtp(
+    BuildContext dialogContext,
+    StateSetter setDialogState,
+  ) async {
+    if (_isSavingOtp) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final cleanedSecret = cleanOtpSecret(_secretController.text);
@@ -179,7 +238,7 @@ class _OtpPageState extends State<OtpPage> {
       return;
     }
 
-    final codeResult = generateOtpCode(cleanedSecret);
+    final codeResult = _generateOtpCode(cleanedSecret);
     if (codeResult.error != null) {
       _showMessage(context.l10n.invalidOtpCode, isError: true);
       return;
@@ -191,6 +250,11 @@ class _OtpPageState extends State<OtpPage> {
       secret: cleanedSecret,
     );
 
+    setState(() => _isSavingOtp = true);
+    if (dialogContext.mounted) {
+      setDialogState(() {});
+    }
+
     try {
       await (widget.saveToken ?? OtpHelper.saveToken)(token);
       if (!mounted) return;
@@ -198,11 +262,19 @@ class _OtpPageState extends State<OtpPage> {
         _otpList.add(_OtpItem(token: token, code: codeResult.code!));
         _labelController.clear();
         _secretController.clear();
+        _isSavingOtp = false;
       });
-      Navigator.of(context).pop();
+      if (dialogContext.mounted) {
+        setDialogState(() {});
+        Navigator.of(dialogContext).pop();
+      }
       _showMessage(context.l10n.otpAdded);
     } catch (_) {
       if (!mounted) return;
+      setState(() => _isSavingOtp = false);
+      if (dialogContext.mounted) {
+        setDialogState(() {});
+      }
       _showMessage(context.l10n.otpAddFailed, isError: true);
     }
   }
@@ -270,68 +342,104 @@ class _OtpPageState extends State<OtpPage> {
   }
 
   void _showAddOtpDialog() {
-    final l10n = context.l10n;
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.addOtp),
-        content: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _labelController,
-                  decoration: InputDecoration(
-                    labelText: l10n.accountName,
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.accountNameRequired;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _secretController,
-                  decoration: InputDecoration(
-                    labelText: l10n.secretKey,
-                    border: const OutlineInputBorder(),
-                    helperText: l10n.secretKeyHelper,
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.qr_code_scanner),
-                      tooltip: l10n.scanQrCode,
-                      onPressed: () {
-                        Navigator.of(dialogContext).pop();
-                        _scanQrCode();
-                      },
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final l10n = dialogContext.l10n;
+            return PopScope(
+              canPop: !_isSavingOtp,
+              child: AlertDialog(
+                title: Text(l10n.addOtp),
+                content: SingleChildScrollView(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: _labelController,
+                          decoration: InputDecoration(
+                            labelText: l10n.accountName,
+                            border: const OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return l10n.accountNameRequired;
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _secretController,
+                          decoration: InputDecoration(
+                            labelText: l10n.secretKey,
+                            border: const OutlineInputBorder(),
+                            helperText: l10n.secretKeyHelper,
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.qr_code_scanner),
+                              tooltip: l10n.scanQrCode,
+                              onPressed: _isSavingOtp
+                                  ? null
+                                  : () {
+                                      Navigator.of(dialogContext).pop();
+                                      _scanQrCode();
+                                    },
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return l10n.secretKeyRequired;
+                            }
+                            final cleanedValue = cleanOtpSecret(value);
+                            if (cleanedValue.isEmpty) {
+                              return l10n.secretKeyInvalid;
+                            }
+                            if (cleanedValue.length < 8) {
+                              return l10n.secretKeyTooShort;
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.secretKeyRequired;
-                    }
-                    final cleanedValue = cleanOtpSecret(value);
-                    if (cleanedValue.isEmpty) return l10n.secretKeyInvalid;
-                    if (cleanedValue.length < 8) return l10n.secretKeyTooShort;
-                    return null;
-                  },
                 ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.cancel),
-          ),
-          ElevatedButton(onPressed: _addOtp, child: Text(l10n.addOtp)),
-        ],
-      ),
+                actions: [
+                  TextButton(
+                    onPressed: _isSavingOtp
+                        ? null
+                        : () => Navigator.of(dialogContext).pop(),
+                    child: Text(l10n.cancel),
+                  ),
+                  ElevatedButton(
+                    onPressed: _isSavingOtp
+                        ? null
+                        : () => _addOtp(dialogContext, setDialogState),
+                    child: _isSavingOtp
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox.square(
+                                dimension: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(l10n.addOtp),
+                            ],
+                          )
+                        : Text(l10n.addOtp),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

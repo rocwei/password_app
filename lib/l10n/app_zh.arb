@@ -752,6 +752,10 @@
   "@passwordCopied": {
     "description": "Success message after copying a generated password"
   },
+  "passwordCopyFailed": "无法复制密码，请重试",
+  "@passwordCopyFailed": {
+    "description": "Generic generated-password copy failure"
+  },
   "generatePasswordFirst": "请先生成密码",
   "@generatePasswordFirst": {
     "description": "Message shown when saving without a generated password"

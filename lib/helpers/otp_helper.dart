@@ -4,12 +4,37 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'encryption_helper.dart';
 import 'auth_helper.dart';
 
-enum OtpStorageOperation { load, save, delete }
+enum OtpStorageOperation { load, save, delete, clear, importTokens }
 
 class OtpStorageException implements Exception {
   const OtpStorageException(this.operation);
 
   final OtpStorageOperation operation;
+}
+
+abstract interface class OtpStorageBackend {
+  Future<String?> read({required String key});
+
+  Future<void> write({required String key, required String value});
+
+  Future<void> delete({required String key});
+}
+
+class _SecureOtpStorageBackend implements OtpStorageBackend {
+  const _SecureOtpStorageBackend();
+
+  static const _storage = FlutterSecureStorage();
+
+  @override
+  Future<String?> read({required String key}) => _storage.read(key: key);
+
+  @override
+  Future<void> write({required String key, required String value}) {
+    return _storage.write(key: key, value: value);
+  }
+
+  @override
+  Future<void> delete({required String key}) => _storage.delete(key: key);
 }
 
 class OtpToken {
@@ -43,38 +68,31 @@ class OtpToken {
 }
 
 class OtpHelper {
-  static const _storage = FlutterSecureStorage();
+  static const OtpStorageBackend _defaultStorage = _SecureOtpStorageBackend();
+  static OtpStorageBackend _storage = _defaultStorage;
   static const _otpTokensPrefix = 'otp_token_';
   static const _otpTokenIdsKey = 'otp_token_ids';
+
+  @visibleForTesting
+  static void setStorageBackendForTesting(OtpStorageBackend backend) {
+    _storage = backend;
+  }
+
+  @visibleForTesting
+  static void resetStorageBackendForTesting() {
+    _storage = _defaultStorage;
+  }
 
   // 获取所有保存的OTP令牌
   static Future<List<OtpToken>> getAllTokens() async {
     try {
       final idsJson = await _storage.read(key: _otpTokenIdsKey);
-
-      if (idsJson == null || idsJson.isEmpty) {
-        return [];
-      }
-
-      final decodedIds = jsonDecode(idsJson);
-      if (decodedIds is! List<dynamic>) {
-        throw const FormatException('Invalid OTP token index');
-      }
+      final ids = _decodeIds(idsJson);
       final List<OtpToken> tokens = [];
 
-      for (final id in decodedIds) {
-        if (id is! String || id.isEmpty) {
-          throw const FormatException('Invalid OTP token ID');
-        }
+      for (final id in ids) {
         final tokenJson = await _storage.read(key: _otpTokensPrefix + id);
-        if (tokenJson == null || tokenJson.isEmpty) {
-          throw const FormatException('Missing OTP token record');
-        }
-        final decodedToken = jsonDecode(tokenJson);
-        if (decodedToken is! Map<String, dynamic>) {
-          throw const FormatException('Invalid OTP token record');
-        }
-        final token = OtpToken.fromJson(decodedToken);
+        final token = _decodeToken(tokenJson);
         if (token.id != id) {
           throw const FormatException('OTP token ID mismatch');
         }
@@ -119,25 +137,30 @@ class OtpHelper {
 
   // 保存OTP令牌
   static Future<void> saveToken(OtpToken token) async {
+    String? oldIndex;
+    String? oldRecord;
+    var mutationStarted = false;
     try {
-      // 保存令牌数据 (令牌中的secret应该已经加密)
+      oldIndex = await _storage.read(key: _otpTokenIdsKey);
+      final ids = _decodeIds(oldIndex);
+      oldRecord = await _storage.read(key: _otpTokensPrefix + token.id);
+
       final tokenJson = jsonEncode(token.toJson());
+      mutationStarted = true;
       await _storage.write(key: _otpTokensPrefix + token.id, value: tokenJson);
-
-      // 更新ID列表
-      final idsJson = await _storage.read(key: _otpTokenIdsKey);
-      List<String> ids = [];
-
-      if (idsJson != null && idsJson.isNotEmpty) {
-        final List<dynamic> idsList = jsonDecode(idsJson);
-        ids = idsList.map((id) => id.toString()).toList();
-      }
 
       if (!ids.contains(token.id)) {
         ids.add(token.id);
         await _storage.write(key: _otpTokenIdsKey, value: jsonEncode(ids));
       }
     } catch (e) {
+      if (mutationStarted) {
+        await _restoreSingleToken(
+          id: token.id,
+          record: oldRecord,
+          index: oldIndex,
+        );
+      }
       if (kDebugMode) {
         print('保存令牌出错: $e');
       }
@@ -170,20 +193,24 @@ class OtpHelper {
 
   // 删除OTP令牌
   static Future<void> deleteToken(String id) async {
+    String? oldIndex;
+    String? oldRecord;
+    var mutationStarted = false;
     try {
-      // 删除令牌数据
+      oldIndex = await _storage.read(key: _otpTokenIdsKey);
+      final ids = _decodeIds(oldIndex);
+      oldRecord = await _storage.read(key: _otpTokensPrefix + id);
+
+      mutationStarted = true;
       await _storage.delete(key: _otpTokensPrefix + id);
 
-      // 更新ID列表
-      final idsJson = await _storage.read(key: _otpTokenIdsKey);
-      if (idsJson != null && idsJson.isNotEmpty) {
-        final List<dynamic> idsList = jsonDecode(idsJson);
-        final List<String> ids = idsList.map((id) => id.toString()).toList();
-
-        ids.remove(id);
+      if (ids.remove(id)) {
         await _storage.write(key: _otpTokenIdsKey, value: jsonEncode(ids));
       }
     } catch (e) {
+      if (mutationStarted) {
+        await _restoreSingleToken(id: id, record: oldRecord, index: oldIndex);
+      }
       if (kDebugMode) {
         print('删除令牌出错: $e');
       }
@@ -193,23 +220,21 @@ class OtpHelper {
 
   // 清空所有OTP令牌
   static Future<void> clearAllTokens() async {
+    _OtpStorageSnapshot? snapshot;
     try {
-      final idsJson = await _storage.read(key: _otpTokenIdsKey);
-      if (idsJson != null && idsJson.isNotEmpty) {
-        final List<dynamic> idsList = jsonDecode(idsJson);
-
-        // 删除所有令牌
-        for (final id in idsList) {
-          await _storage.delete(key: _otpTokensPrefix + id.toString());
-        }
+      snapshot = await _captureSnapshot();
+      for (final id in snapshot.records.keys) {
+        await _storage.delete(key: _otpTokensPrefix + id);
       }
-
-      // 清空ID列表
       await _storage.delete(key: _otpTokenIdsKey);
     } catch (e) {
+      if (snapshot != null) {
+        await _restoreSnapshot(snapshot, snapshot.records.keys.toSet());
+      }
       if (kDebugMode) {
         print('清空令牌出错: $e');
       }
+      throw const OtpStorageException(OtpStorageOperation.clear);
     }
   }
 
@@ -223,20 +248,150 @@ class OtpHelper {
   static Future<void> importTokens(
     List<Map<String, dynamic>> tokensData,
   ) async {
+    late final List<OtpToken> tokens;
     try {
-      // 先清空现有令牌
-      await clearAllTokens();
-
-      // 导入新令牌
-      for (final tokenData in tokensData) {
-        final token = OtpToken.fromJson(tokenData);
-        await saveToken(token);
+      tokens = tokensData.map(OtpToken.fromJson).toList();
+      final ids = tokens.map((token) => token.id).toSet();
+      if (ids.length != tokens.length) {
+        throw const FormatException('Duplicate OTP token ID');
       }
     } catch (e) {
       if (kDebugMode) {
         print('恢复令牌出错: $e');
       }
-      rethrow;
+      throw const OtpStorageException(OtpStorageOperation.importTokens);
+    }
+
+    _OtpStorageSnapshot? snapshot;
+    final importedIds = tokens.map((token) => token.id).toSet();
+    try {
+      snapshot = await _captureSnapshot();
+
+      for (final id in snapshot.records.keys) {
+        await _storage.delete(key: _otpTokensPrefix + id);
+      }
+      for (final token in tokens) {
+        await _storage.write(
+          key: _otpTokensPrefix + token.id,
+          value: jsonEncode(token.toJson()),
+        );
+      }
+      if (tokens.isEmpty) {
+        await _storage.delete(key: _otpTokenIdsKey);
+      } else {
+        await _storage.write(
+          key: _otpTokenIdsKey,
+          value: jsonEncode(tokens.map((token) => token.id).toList()),
+        );
+      }
+    } catch (e) {
+      if (snapshot != null) {
+        await _restoreSnapshot(snapshot, {
+          ...snapshot.records.keys,
+          ...importedIds,
+        });
+      }
+      if (kDebugMode) {
+        print('恢复令牌出错: $e');
+      }
+      throw const OtpStorageException(OtpStorageOperation.importTokens);
     }
   }
+
+  static List<String> _decodeIds(String? idsJson) {
+    if (idsJson == null || idsJson.isEmpty) return [];
+    final decodedIds = jsonDecode(idsJson);
+    if (decodedIds is! List<dynamic>) {
+      throw const FormatException('Invalid OTP token index');
+    }
+
+    final ids = <String>[];
+    for (final id in decodedIds) {
+      if (id is! String || id.isEmpty || ids.contains(id)) {
+        throw const FormatException('Invalid OTP token ID');
+      }
+      ids.add(id);
+    }
+    return ids;
+  }
+
+  static OtpToken _decodeToken(String? tokenJson) {
+    if (tokenJson == null || tokenJson.isEmpty) {
+      throw const FormatException('Missing OTP token record');
+    }
+    final decodedToken = jsonDecode(tokenJson);
+    if (decodedToken is! Map<String, dynamic>) {
+      throw const FormatException('Invalid OTP token record');
+    }
+    return OtpToken.fromJson(decodedToken);
+  }
+
+  static Future<_OtpStorageSnapshot> _captureSnapshot() async {
+    final index = await _storage.read(key: _otpTokenIdsKey);
+    final ids = _decodeIds(index);
+    final records = <String, String>{};
+    for (final id in ids) {
+      final record = await _storage.read(key: _otpTokensPrefix + id);
+      final token = _decodeToken(record);
+      if (token.id != id) {
+        throw const FormatException('OTP token ID mismatch');
+      }
+      records[id] = record!;
+    }
+    return _OtpStorageSnapshot(index: index, records: records);
+  }
+
+  static Future<void> _restoreSingleToken({
+    required String id,
+    required String? record,
+    required String? index,
+  }) async {
+    try {
+      if (record == null) {
+        await _storage.delete(key: _otpTokensPrefix + id);
+      } else {
+        await _storage.write(key: _otpTokensPrefix + id, value: record);
+      }
+    } catch (_) {}
+    await _restoreIndex(index);
+  }
+
+  static Future<void> _restoreSnapshot(
+    _OtpStorageSnapshot snapshot,
+    Set<String> affectedIds,
+  ) async {
+    for (final id in affectedIds) {
+      try {
+        await _storage.delete(key: _otpTokensPrefix + id);
+      } catch (_) {}
+    }
+    for (final entry in snapshot.records.entries) {
+      try {
+        await _storage.write(
+          key: _otpTokensPrefix + entry.key,
+          value: entry.value,
+        );
+      } catch (_) {}
+    }
+    await _restoreIndex(snapshot.index);
+  }
+
+  static Future<void> _restoreIndex(String? index) async {
+    try {
+      if (index == null) {
+        await _storage.delete(key: _otpTokenIdsKey);
+      } else {
+        await _storage.write(key: _otpTokenIdsKey, value: index);
+      }
+    } catch (_) {
+      // The original storage operation remains the stable public failure.
+    }
+  }
+}
+
+class _OtpStorageSnapshot {
+  const _OtpStorageSnapshot({required this.index, required this.records});
+
+  final String? index;
+  final Map<String, String> records;
 }

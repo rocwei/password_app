@@ -549,6 +549,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get passwordCopied => '密码已复制到剪贴板';
 
   @override
+  String get passwordCopyFailed => '无法复制密码，请重试';
+
+  @override
   String get generatePasswordFirst => '请先生成密码';
 
   @override

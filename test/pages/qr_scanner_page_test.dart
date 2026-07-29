@@ -90,7 +90,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       buildLocalizedPage(
-        QrScannerPage(scannerBuilder: (_) => const SizedBox.expand()),
+        QrScannerPage(scannerBuilder: (_, _) => const SizedBox.expand()),
       ),
     );
 
@@ -112,7 +112,8 @@ void main() {
       await tester.pumpWidget(
         buildLocalizedPage(
           QrScannerPage(
-            scannerBuilder: (_) => const QrScannerCameraError(
+            initialCameraErrorCode: MobileScannerErrorCode.permissionDenied,
+            scannerBuilder: (_, _) => const QrScannerCameraError(
               errorCode: MobileScannerErrorCode.permissionDenied,
             ),
           ),
@@ -128,7 +129,188 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(
+        tester
+            .widget<IconButton>(
+              find.byWidgetPredicate(
+                (widget) =>
+                    widget is IconButton &&
+                    widget.tooltip ==
+                        (locale.languageCode == 'en'
+                            ? 'Toggle torch'
+                            : '切换手电筒'),
+              ),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<IconButton>(
+              find.byWidgetPredicate(
+                (widget) =>
+                    widget is IconButton &&
+                    widget.tooltip ==
+                        (locale.languageCode == 'en'
+                            ? 'Switch camera'
+                            : '切换摄像头'),
+              ),
+            )
+            .onPressed,
+        isNull,
+      );
       expect(tester.takeException(), isNull);
     }
+  });
+
+  test('capture parser prefers a valid TOTP after invalid entries', () {
+    final result = parseOtpCapture(
+      BarcodeCapture(
+        barcodes: const [
+          Barcode(rawValue: 'https://example.com/not-otp'),
+          Barcode(
+            rawValue:
+                'otpauth://totp/Chosen%20Account'
+                '?secret=JBSWY3DPEHPK3PXP&issuer=Chosen',
+          ),
+        ],
+      ),
+    );
+
+    expect(result.error, isNull);
+    expect(result.data?.label, 'Chosen - Chosen Account');
+    expect(result.data?.secret, 'JBSWY3DPEHPK3PXP');
+  });
+
+  testWidgets(
+    'scanner callback returns a valid TOTP found later in a capture',
+    (tester) async {
+      late void Function(BarcodeCapture) detect;
+      Map<String, String>? scanResult;
+      await tester.pumpWidget(
+        buildLocalizedPage(
+          Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () async {
+                  scanResult = await Navigator.of(context)
+                      .push<Map<String, String>>(
+                        MaterialPageRoute(
+                          builder: (_) => QrScannerPage(
+                            scannerBuilder: (_, onDetect) {
+                              detect = onDetect;
+                              return const SizedBox.expand();
+                            },
+                          ),
+                        ),
+                      );
+                },
+                child: const Text('Open scanner'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open scanner'));
+      await tester.pumpAndSettle();
+
+      detect(
+        BarcodeCapture(
+          barcodes: const [
+            Barcode(rawValue: 'otpauth://hotp/Skipped?secret=BAD&counter=1'),
+            Barcode(
+              rawValue:
+                  'otpauth://totp/User%20Label'
+                  '?secret=JBSWY3DPEHPK3PXP&issuer=Issuer',
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(scanResult?['label'], 'Issuer - User Label');
+      expect(scanResult?['secret'], 'JBSWY3DPEHPK3PXP');
+      expect(find.text('Open scanner'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('repeated invalid captures do not queue duplicate snackbars', (
+    tester,
+  ) async {
+    late void Function(BarcodeCapture) detect;
+    await tester.pumpWidget(
+      buildLocalizedPage(
+        QrScannerPage(
+          scannerBuilder: (_, onDetect) {
+            detect = onDetect;
+            return const SizedBox.expand();
+          },
+        ),
+      ),
+    );
+    final capture = BarcodeCapture(
+      barcodes: const [Barcode(rawValue: 'https://example.com/not-otp')],
+    );
+
+    detect(capture);
+    detect(capture);
+    await tester.pump();
+
+    expect(find.text('This is not a valid OTP QR code.'), findsOneWidget);
+    ScaffoldMessenger.of(
+      tester.element(find.byType(QrScannerPage)),
+    ).removeCurrentSnackBar();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('This is not a valid OTP QR code.'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('camera action failure is handled and disables controls', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildLocalizedPage(
+        QrScannerPage(
+          scannerBuilder: (_, _) => const SizedBox.expand(),
+          toggleTorch: () async {
+            throw StateError('camera-platform-secret');
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Toggle torch'));
+    await tester.pump();
+
+    expect(
+      find.text('The camera is unavailable. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('camera-platform-secret'), findsNothing);
+    expect(
+      tester
+          .widget<IconButton>(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is IconButton && widget.tooltip == 'Toggle torch',
+            ),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<IconButton>(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is IconButton && widget.tooltip == 'Switch camera',
+            ),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(tester.takeException(), isNull);
   });
 }

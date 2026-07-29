@@ -1064,6 +1064,12 @@ abstract class AppLocalizations {
   /// **'密码已复制到剪贴板'**
   String get passwordCopied;
 
+  /// Generic generated-password copy failure
+  ///
+  /// In zh, this message translates to:
+  /// **'无法复制密码，请重试'**
+  String get passwordCopyFailed;
+
   /// Message shown when saving without a generated password
   ///
   /// In zh, this message translates to:
