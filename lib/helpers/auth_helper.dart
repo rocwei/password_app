@@ -10,7 +10,29 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class AuthHelper {
   static final AuthHelper _instance = AuthHelper._internal();
   factory AuthHelper() => _instance;
-  AuthHelper._internal();
+  AuthHelper._internal()
+    : _hasUsersForRegistration = (() => DatabaseHelper().hasUsers()),
+      _insertUserForRegistration = ((user) =>
+          DatabaseHelper().insertUser(user)),
+      _deriveKeyForRegistration = ((password, salt) =>
+          EncryptionHelper.deriveKey(password, salt)),
+      _setEncryptionKeyForRegistration = ((key) =>
+          EncryptionHelper().setEncryptionKey(key));
+
+  AuthHelper.forTesting({
+    required Future<bool> Function() hasUsers,
+    required Future<int> Function(User) insertUser,
+    required String Function(String, String) deriveKey,
+    required void Function(String) setEncryptionKey,
+  }) : _hasUsersForRegistration = hasUsers,
+       _insertUserForRegistration = insertUser,
+       _deriveKeyForRegistration = deriveKey,
+       _setEncryptionKeyForRegistration = setEncryptionKey;
+
+  final Future<bool> Function() _hasUsersForRegistration;
+  final Future<int> Function(User) _insertUserForRegistration;
+  final String Function(String, String) _deriveKeyForRegistration;
+  final void Function(String) _setEncryptionKeyForRegistration;
 
   User? _currentUser;
   String? _encryptionKey;
@@ -24,10 +46,8 @@ class AuthHelper {
 
   // 单用户注册（不需要用户名，自动使用"user"作为用户名）
   Future<bool> registerSingleUser(String masterPassword) async {
-    final dbHelper = DatabaseHelper();
-
     // false 只表示本机已经存在密码库。
-    final hasExistingUsers = await dbHelper.hasUsers();
+    final hasExistingUsers = await _hasUsersForRegistration();
     if (hasExistingUsers) {
       return false;
     }
@@ -39,6 +59,10 @@ class AuthHelper {
       salt,
     );
 
+    // deriveKey 始终返回 Base64 编码的 32 字节 AES-256 密钥。
+    // 在持久化前完成派生，避免写入后再因密码派生失败留下半完成密码库。
+    final derivedKey = _deriveKeyForRegistration(masterPassword, salt);
+
     final user = User(
       username: "user",
       masterPasswordHash: hashedPassword,
@@ -47,15 +71,14 @@ class AuthHelper {
       updatedAt: DateTime.now(),
     );
 
-    final userId = await dbHelper.insertUser(user);
+    final userId = await _insertUserForRegistration(user);
     if (userId <= 0) {
       throw StateError('Failed to insert local vault user');
     }
 
-    final unlocked = await _unlockSingleUser(masterPassword);
-    if (!unlocked) {
-      throw StateError('Failed to unlock newly created local vault');
-    }
+    _setEncryptionKeyForRegistration(derivedKey);
+    _currentUser = user.copyWith(id: userId);
+    _encryptionKey = derivedKey;
 
     return true;
   }
