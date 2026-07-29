@@ -68,6 +68,16 @@ class OtpToken {
   }
 }
 
+class OtpLoadResult {
+  OtpLoadResult({
+    required List<OtpToken> tokens,
+    required this.skippedLegacyTokenCount,
+  }) : tokens = List<OtpToken>.unmodifiable(tokens);
+
+  final List<OtpToken> tokens;
+  final int skippedLegacyTokenCount;
+}
+
 class OtpHelper {
   static const OtpStorageBackend _defaultStorage = _SecureOtpStorageBackend();
   static OtpStorageBackend _storage = _defaultStorage;
@@ -92,10 +102,25 @@ class OtpHelper {
     return _enqueue(_getAllTokensUnlocked);
   }
 
+  static Future<OtpLoadResult> getAllTokensWithReport() {
+    return _enqueue(_getAllTokensWithReportUnlocked);
+  }
+
   static Future<List<OtpToken>> _getAllTokensUnlocked() async {
+    return (await _getAllTokensWithReportUnlocked()).tokens;
+  }
+
+  static Future<OtpLoadResult> _getAllTokensWithReportUnlocked() async {
     try {
-      await _recoverPendingTransaction();
-      return _tokensFromSnapshot(await _captureSnapshot());
+      final recoveredTransaction = await _recoverPendingTransaction();
+      final legacySnapshot = recoveredTransaction == null
+          ? await _captureLegacySnapshot()
+          : null;
+      final snapshot = legacySnapshot?.snapshot ?? await _captureSnapshot();
+      return OtpLoadResult(
+        tokens: _tokensFromSnapshot(snapshot),
+        skippedLegacyTokenCount: legacySnapshot?.skippedTokenCount ?? 0,
+      );
     } on _OtpRecoveryFailure {
       throw const OtpStorageException(
         OtpStorageOperation.load,
@@ -355,6 +380,39 @@ class OtpHelper {
     return _OtpStorageSnapshot(index: index, records: records);
   }
 
+  static Future<_LegacyOtpSnapshot> _captureLegacySnapshot() async {
+    final index = await _storage.read(key: _otpTokenIdsKey);
+    final ids = _decodeIds(index);
+    final validIds = <String>[];
+    final records = <String, String>{};
+
+    for (final id in ids) {
+      final record = await _storage.read(key: _otpTokensPrefix + id);
+      try {
+        final token = _decodeToken(record);
+        if (token.id != id) {
+          throw const FormatException('OTP token ID mismatch');
+        }
+        validIds.add(id);
+        records[id] = record!;
+      } catch (error) {
+        _debugLog('跳过损坏的旧版 OTP 令牌', error);
+      }
+    }
+
+    if (validIds.length != ids.length) {
+      await _writeIndex(validIds.isEmpty ? null : jsonEncode(validIds));
+    }
+
+    return _LegacyOtpSnapshot(
+      snapshot: _OtpStorageSnapshot(
+        index: validIds.isEmpty ? null : jsonEncode(validIds),
+        records: records,
+      ),
+      skippedTokenCount: ids.length - validIds.length,
+    );
+  }
+
   static List<OtpToken> _tokensFromSnapshot(_OtpStorageSnapshot snapshot) {
     return _decodeIds(
       snapshot.index,
@@ -449,6 +507,16 @@ class _OtpStorageSnapshot {
   Map<String, dynamic> toJson() {
     return {'index': index, 'records': records};
   }
+}
+
+class _LegacyOtpSnapshot {
+  const _LegacyOtpSnapshot({
+    required this.snapshot,
+    required this.skippedTokenCount,
+  });
+
+  final _OtpStorageSnapshot snapshot;
+  final int skippedTokenCount;
 }
 
 class _OtpStorageJournal {

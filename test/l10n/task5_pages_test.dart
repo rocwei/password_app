@@ -347,6 +347,35 @@ void main() {
   });
 
   testWidgets(
+    'OTP reports skipped damaged legacy accounts without hiding valid ones',
+    (tester) async {
+      const label = 'Still available';
+      await tester.pumpWidget(
+        buildLocalizedPage(
+          OtpPage(
+            loadTokenReport: () async => OtpLoadResult(
+              tokens: [
+                OtpToken(id: 'valid', label: label, secret: 'JBSWY3DPEHPK3PXP'),
+              ],
+              skippedLegacyTokenCount: 2,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text(label), findsOneWidget);
+      expect(find.text('Skipped 2 damaged OTP accounts.'), findsOneWidget);
+      expect(
+        find.text('Could not load OTP accounts. Please try again.'),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'OTP refresh failure preserves existing accounts and shows error',
     (tester) async {
       const label = 'Existing / 原样';

@@ -834,6 +834,16 @@
   "@otpLoadFailed": {
     "description": "Generic OTP account loading failure"
   },
+  "otpLegacyAccountsSkipped": "{count, plural, =1{Skipped 1 damaged OTP account.} other{Skipped {count} damaged OTP accounts.}}",
+  "@otpLegacyAccountsSkipped": {
+    "description": "Warning shown after damaged legacy OTP records are skipped",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
   "otpAddFailed": "Could not add the OTP account. Please try again.",
   "@otpAddFailed": {
     "description": "Generic OTP account add failure"

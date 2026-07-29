@@ -643,6 +643,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get otpLoadFailed => 'Could not load OTP accounts. Please try again.';
 
   @override
+  String otpLegacyAccountsSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Skipped $count damaged OTP accounts.',
+      one: 'Skipped 1 damaged OTP account.',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get otpAddFailed => 'Could not add the OTP account. Please try again.';
 
   @override

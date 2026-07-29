@@ -834,6 +834,16 @@
   "@otpLoadFailed": {
     "description": "Generic OTP account loading failure"
   },
+  "otpLegacyAccountsSkipped": "{count, plural, =1{已跳过 1 个损坏的旧版 OTP 账户。} other{已跳过 {count} 个损坏的旧版 OTP 账户。}}",
+  "@otpLegacyAccountsSkipped": {
+    "description": "Warning shown after damaged legacy OTP records are skipped",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
   "otpAddFailed": "无法添加 OTP 账户，请重试",
   "@otpAddFailed": {
     "description": "Generic OTP account add failure"

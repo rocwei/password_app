@@ -1178,6 +1178,12 @@ abstract class AppLocalizations {
   /// **'无法加载 OTP 账户，请重试'**
   String get otpLoadFailed;
 
+  /// Warning shown after damaged legacy OTP records are skipped
+  ///
+  /// In zh, this message translates to:
+  /// **'{count, plural, =1{已跳过 1 个损坏的旧版 OTP 账户。} other{已跳过 {count} 个损坏的旧版 OTP 账户。}}'**
+  String otpLegacyAccountsSkipped(int count);
+
   /// Generic OTP account add failure
   ///
   /// In zh, this message translates to:

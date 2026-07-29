@@ -608,6 +608,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get otpLoadFailed => '无法加载 OTP 账户，请重试';
 
   @override
+  String otpLegacyAccountsSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已跳过 $count 个损坏的旧版 OTP 账户。',
+      one: '已跳过 1 个损坏的旧版 OTP 账户。',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get otpAddFailed => '无法添加 OTP 账户，请重试';
 
   @override

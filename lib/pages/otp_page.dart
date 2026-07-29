@@ -13,6 +13,7 @@ import '../l10n/l10n.dart';
 import 'qr_scanner_page.dart';
 
 typedef OtpTokenLoader = Future<List<OtpToken>> Function();
+typedef OtpTokenReportLoader = Future<OtpLoadResult> Function();
 typedef OtpTokenSaver = Future<void> Function(OtpToken token);
 typedef OtpTokenDeleter = Future<void> Function(String id);
 typedef OtpScanner =
@@ -49,6 +50,7 @@ class OtpPage extends StatefulWidget {
   const OtpPage({
     super.key,
     this.loadTokens,
+    this.loadTokenReport,
     this.saveToken,
     this.deleteToken,
     this.scanQrCode,
@@ -58,6 +60,7 @@ class OtpPage extends StatefulWidget {
   });
 
   final OtpTokenLoader? loadTokens;
+  final OtpTokenReportLoader? loadTokenReport;
   final OtpTokenSaver? saveToken;
   final OtpTokenDeleter? deleteToken;
   final OtpScanner? scanQrCode;
@@ -161,16 +164,34 @@ class _OtpPageState extends State<OtpPage> with WidgetsBindingObserver {
     }
 
     try {
-      final tokens = await (widget.loadTokens ?? OtpHelper.getAllTokens)();
+      final OtpLoadResult loadResult;
+      if (widget.loadTokenReport case final loadTokenReport?) {
+        loadResult = await loadTokenReport();
+      } else if (widget.loadTokens case final loadTokens?) {
+        loadResult = OtpLoadResult(
+          tokens: await loadTokens(),
+          skippedLegacyTokenCount: 0,
+        );
+      } else {
+        loadResult = await OtpHelper.getAllTokensWithReport();
+      }
       if (!mounted) return;
       setState(() {
-        _otpList = tokens.map((token) {
+        _otpList = loadResult.tokens.map((token) {
           final result = _generateOtpCode(token.secret);
           return _OtpItem(token: token, code: result.code ?? '------');
         }).toList();
         _isLoading = false;
         _hasLoadError = false;
       });
+      if (loadResult.skippedLegacyTokenCount > 0) {
+        _showMessage(
+          context.l10n.otpLegacyAccountsSkipped(
+            loadResult.skippedLegacyTokenCount,
+          ),
+          isWarning: true,
+        );
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
