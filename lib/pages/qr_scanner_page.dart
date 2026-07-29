@@ -9,6 +9,7 @@ typedef QrScannerBuilder =
       void Function(BarcodeCapture capture) onDetect,
     );
 typedef CameraAction = Future<void> Function();
+typedef ScanElapsed = Duration Function();
 
 enum OtpUriParseError {
   malformed,
@@ -133,35 +134,46 @@ class QrScannerPage extends StatefulWidget {
     this.initialCameraErrorCode,
     this.toggleTorch,
     this.switchCamera,
-    this.now,
+    this.controller,
+    this.scanElapsed,
   });
 
   final QrScannerBuilder? scannerBuilder;
   final MobileScannerErrorCode? initialCameraErrorCode;
   final CameraAction? toggleTorch;
   final CameraAction? switchCamera;
-  final DateTime Function()? now;
+  final MobileScannerController? controller;
+  final ScanElapsed? scanElapsed;
 
   @override
   State<QrScannerPage> createState() => _QrScannerPageState();
 }
 
 class _QrScannerPageState extends State<QrScannerPage> {
-  final MobileScannerController _controller = MobileScannerController();
+  late final MobileScannerController _controller;
+  final Stopwatch _scanStopwatch = Stopwatch();
   bool _isProcessing = false;
   MobileScannerErrorCode? _cameraErrorCode;
-  DateTime? _lastRejectedAt;
+  Duration? _lastRejectedAt;
 
   @override
   void initState() {
     super.initState();
+    _controller = widget.controller ?? MobileScannerController();
     _cameraErrorCode = widget.initialCameraErrorCode;
+    _controller.startArguments.addListener(_handleControllerReadyChanged);
+    _scanStopwatch.start();
   }
 
   @override
   void dispose() {
+    _controller.startArguments.removeListener(_handleControllerReadyChanged);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _handleControllerReadyChanged() {
+    if (mounted) setState(() {});
   }
 
   void _onDetect(BarcodeCapture capture) {
@@ -186,10 +198,10 @@ class _QrScannerPageState extends State<QrScannerPage> {
   }
 
   void _showParseErrorOnce(OtpUriParseError error) {
-    final now = (widget.now ?? DateTime.now)();
+    final now = (widget.scanElapsed ?? () => _scanStopwatch.elapsed)();
     final recentlyRejected =
         _lastRejectedAt != null &&
-        now.difference(_lastRejectedAt!) < const Duration(seconds: 2);
+        now - _lastRejectedAt! < const Duration(seconds: 2);
     if (recentlyRejected) return;
 
     _lastRejectedAt = now;
@@ -239,14 +251,11 @@ class _QrScannerPageState extends State<QrScannerPage> {
   }
 
   Future<void> _handleCameraAction(CameraAction action) async {
-    if (_cameraErrorCode != null) return;
+    if (!_cameraControlsEnabled) return;
     try {
       await action();
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _cameraErrorCode = MobileScannerErrorCode.genericError;
-      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(context.l10n.cameraUnavailable),
@@ -254,6 +263,13 @@ class _QrScannerPageState extends State<QrScannerPage> {
         ),
       );
     }
+  }
+
+  bool get _cameraControlsEnabled {
+    final isReady =
+        widget.scannerBuilder != null ||
+        _controller.startArguments.value != null;
+    return isReady && _cameraErrorCode == null;
   }
 
   @override
@@ -274,7 +290,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
               },
             ),
             tooltip: l10n.toggleTorch,
-            onPressed: _cameraErrorCode == null
+            onPressed: _cameraControlsEnabled
                 ? () => _handleCameraAction(
                     widget.toggleTorch ?? _controller.toggleTorch,
                   )
@@ -292,7 +308,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
               },
             ),
             tooltip: l10n.switchCamera,
-            onPressed: _cameraErrorCode == null
+            onPressed: _cameraControlsEnabled
                 ? () => _handleCameraAction(
                     widget.switchCamera ?? _controller.switchCamera,
                   )

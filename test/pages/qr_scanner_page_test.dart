@@ -105,6 +105,21 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'production camera controls stay disabled before initialization',
+    (tester) async {
+      await tester.pumpWidget(
+        buildLocalizedPage(
+          QrScannerPage(controller: MobileScannerController(autoStart: false)),
+        ),
+      );
+
+      expect(_iconButton(tester, 'Toggle torch').onPressed, isNull);
+      expect(_iconButton(tester, 'Switch camera').onPressed, isNull);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('camera permission error follows the current locale', (
     tester,
   ) async {
@@ -235,47 +250,60 @@ void main() {
     },
   );
 
-  testWidgets('repeated invalid captures do not queue duplicate snackbars', (
-    tester,
-  ) async {
-    late void Function(BarcodeCapture) detect;
-    await tester.pumpWidget(
-      buildLocalizedPage(
-        QrScannerPage(
-          scannerBuilder: (_, onDetect) {
-            detect = onDetect;
-            return const SizedBox.expand();
-          },
+  testWidgets(
+    'monotonic throttle suppresses repeated invalid capture messages',
+    (tester) async {
+      late void Function(BarcodeCapture) detect;
+      var elapsed = Duration.zero;
+      await tester.pumpWidget(
+        buildLocalizedPage(
+          QrScannerPage(
+            scanElapsed: () => elapsed,
+            scannerBuilder: (_, onDetect) {
+              detect = onDetect;
+              return const SizedBox.expand();
+            },
+          ),
         ),
-      ),
-    );
-    final capture = BarcodeCapture(
-      barcodes: const [Barcode(rawValue: 'https://example.com/not-otp')],
-    );
+      );
+      final capture = BarcodeCapture(
+        barcodes: const [Barcode(rawValue: 'https://example.com/not-otp')],
+      );
 
-    detect(capture);
-    detect(capture);
-    await tester.pump();
+      detect(capture);
+      elapsed = const Duration(seconds: 1);
+      detect(capture);
+      await tester.pump();
 
-    expect(find.text('This is not a valid OTP QR code.'), findsOneWidget);
-    ScaffoldMessenger.of(
-      tester.element(find.byType(QrScannerPage)),
-    ).removeCurrentSnackBar();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('This is not a valid OTP QR code.'), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('This is not a valid OTP QR code.'), findsOneWidget);
+      ScaffoldMessenger.of(
+        tester.element(find.byType(QrScannerPage)),
+      ).removeCurrentSnackBar();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('This is not a valid OTP QR code.'), findsNothing);
 
-  testWidgets('camera action failure is handled and disables controls', (
+      elapsed = const Duration(seconds: 3);
+      detect(capture);
+      await tester.pump();
+      expect(find.text('This is not a valid OTP QR code.'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('transient camera action failure remains retryable', (
     tester,
   ) async {
+    var toggleCalls = 0;
     await tester.pumpWidget(
       buildLocalizedPage(
         QrScannerPage(
           scannerBuilder: (_, _) => const SizedBox.expand(),
           toggleTorch: () async {
-            throw StateError('camera-platform-secret');
+            toggleCalls++;
+            if (toggleCalls == 1) {
+              throw StateError('camera-platform-secret');
+            }
           },
         ),
       ),
@@ -289,28 +317,21 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('camera-platform-secret'), findsNothing);
-    expect(
-      tester
-          .widget<IconButton>(
-            find.byWidgetPredicate(
-              (widget) =>
-                  widget is IconButton && widget.tooltip == 'Toggle torch',
-            ),
-          )
-          .onPressed,
-      isNull,
-    );
-    expect(
-      tester
-          .widget<IconButton>(
-            find.byWidgetPredicate(
-              (widget) =>
-                  widget is IconButton && widget.tooltip == 'Switch camera',
-            ),
-          )
-          .onPressed,
-      isNull,
-    );
+    expect(_iconButton(tester, 'Toggle torch').onPressed, isNotNull);
+    expect(_iconButton(tester, 'Switch camera').onPressed, isNotNull);
+
+    await tester.tap(find.byTooltip('Toggle torch'));
+    await tester.pump();
+    expect(toggleCalls, 2);
+    expect(_iconButton(tester, 'Toggle torch').onPressed, isNotNull);
     expect(tester.takeException(), isNull);
   });
+}
+
+IconButton _iconButton(WidgetTester tester, String tooltip) {
+  return tester.widget<IconButton>(
+    find.byWidgetPredicate(
+      (widget) => widget is IconButton && widget.tooltip == tooltip,
+    ),
+  );
 }
