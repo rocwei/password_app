@@ -143,7 +143,9 @@ class _DeleteLocalVaultDialogState extends State<DeleteLocalVaultDialog> {
         children: [
           const Text('此操作会永久删除本机保存的密码、分类、OTP、主密码设置、生物识别密钥和主题偏好，且无法恢复。'),
           const SizedBox(height: 12),
-          const Text('已经导出的 .passbackup 备份文件不会被删除。'),
+          const Text('App 内临时生成或导入缓存的 .passbackup 副本会一并删除。'),
+          const SizedBox(height: 12),
+          const Text('已保存到文件 App、网盘、邮件或聊天工具等外部位置的备份不会自动删除。'),
           if (_isLoading) ...[
             const SizedBox(height: 20),
             Semantics(

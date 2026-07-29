@@ -25,8 +25,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('永久删除本地密码库？'), findsOneWidget);
-    expect(find.textContaining('.passbackup'), findsOneWidget);
-    expect(find.textContaining('不会被删除'), findsOneWidget);
+    expect(find.text('App 内临时生成或导入缓存的 .passbackup 副本会一并删除。'), findsOneWidget);
+    expect(find.text('已保存到文件 App、网盘、邮件或聊天工具等外部位置的备份不会自动删除。'), findsOneWidget);
   });
 
   testWidgets('does not continue when the password is empty', (tester) async {

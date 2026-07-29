@@ -6,7 +6,7 @@
 
 - [ ] 将联系人姓名“待填写”替换为可联系的真实姓名。
 - [ ] 将联系人电话“待填写”替换为可联系的真实电话。
-- [ ] 将 `support@example.com` 替换为真实可收信的支持邮箱。
+- [ ] **提交阻塞项：**将 `support@example.com` 替换为真实可收信的支持邮箱；替换前不可部署隐私政策页和支持页。
 - [ ] 在实体 iPhone 上按下方清单录制完整删除流程。
 - [ ] 将录屏上传，并在 App Store Connect 的 App Review Information / Notes 中附上视频或可访问的附件。
 - [ ] 确认隐私政策 URL 和支持 URL 已部署到公开可访问地址。
@@ -39,11 +39,11 @@
 1. 输入当前主密码完成验证。
 2. 阅读永久删除说明并再次确认删除。
 
-确认后会永久删除本机保存的密码、分类、OTP、主密码验证数据、生物识别密钥和主题偏好。删除不可恢复，完成后应用会返回“设置主密码”页面。
+确认后会永久删除 App 管理的本地密码、分类、OTP、主密码验证数据、生物识别密钥、主题偏好，以及 App 沙盒临时目录中生成的 `.passbackup` 文件和 `received_backups/` 内的导入缓存副本。删除不可恢复，完成后应用会返回“设置主密码”页面。
 
 如果 iOS 钥匙串清理异常，应用会进入不可绕过的安全清理页面。在安全存储清理完成前不能创建新的本地密码库；重新启动应用也不能绕过该步骤。
 
-用户主动导出并保存在 App 外部的 `.passbackup` 文件不属于应用当前容器内的数据，不会被自动删除。用户如需一并删除，应前往文件实际保存位置手动删除。
+用户已经导出并保存在文件 App、网盘、邮件、聊天工具等 App 外部位置的 `.passbackup` 文件不属于 App 管理的缓存，不会被自动删除。用户如需一并删除，应前往文件实际保存位置手动删除。
 
 ## 实体设备录屏清单
 
@@ -68,11 +68,11 @@ We have also added an in-app permanent deletion flow at:
 
 Settings > Data Management > Delete Local Vault
 
-The user first verifies the current master password and then confirms permanent deletion. The app deletes all locally stored passwords, categories, OTP data, master-password verification data, biometric keys, and theme preferences. This action is irreversible. After deletion, the app returns to the Set Master Password screen.
+The user first verifies the current master password and then confirms permanent deletion. The app deletes app-managed local vault data, including passwords, categories, OTP data, master-password verification data, biometric keys, and theme preferences. It also deletes temporary `.passbackup` files generated inside the app sandbox and imported backup copies stored in the app's `received_backups/` cache. This action is irreversible. After deletion, the app returns to the Set Master Password screen.
 
 If iOS Keychain cleanup cannot be completed, the app blocks creation of a new local vault until secure storage cleanup succeeds. Restarting the app does not bypass this recovery step.
 
-Encrypted `.passbackup` files that the user previously exported and saved outside the app are not automatically deleted. The user can delete those files from their chosen external storage location.
+Encrypted `.passbackup` files that the user previously exported to external locations such as the Files app, cloud drives, email, or messaging apps are not affected and are not automatically deleted. The user can delete those files from the external location where they were saved.
 
 No review account is required because the app has no server account system. We will attach a physical-device screen recording in App Review Information showing local vault setup or unlock, navigation to the deletion option, master-password verification, final confirmation, and the return to the Set Master Password screen after deletion.
 
@@ -90,7 +90,6 @@ Thank you.
 
 - 相机：用于扫描 OTP 二维码。
 - Face ID / Touch ID：用于本机快速解锁。
-- 照片：用于保存二维码图片或相关图片。
 - 文件访问和分享：用于导入、导出和分享加密备份文件。
 
 ## 出口合规说明草稿

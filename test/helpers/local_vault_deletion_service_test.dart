@@ -24,6 +24,7 @@ void main() {
   test('returns unavailable when the user is missing', () async {
     final calls = <String>[];
     final service = LocalVaultDeletionService(
+      clearBackupCache: () async => calls.add('backup'),
       deleteDatabase: () async => calls.add('database'),
       clearSecureStorage: () async => calls.add('storage'),
     );
@@ -43,6 +44,7 @@ void main() {
     () async {
       final calls = <String>[];
       final service = LocalVaultDeletionService(
+        clearBackupCache: () async => calls.add('backup'),
         deleteDatabase: () async => calls.add('database'),
         clearSecureStorage: () async => calls.add('storage'),
       );
@@ -58,45 +60,82 @@ void main() {
     },
   );
 
-  test('deletes database, storage, and session in order', () async {
-    final calls = <String>[];
-    final databaseCompleter = Completer<void>();
-    final storageCompleter = Completer<void>();
-    final service = LocalVaultDeletionService(
-      deleteDatabase: () {
-        calls.add('database');
-        return databaseCompleter.future;
-      },
-      clearSecureStorage: () {
-        calls.add('storage');
-        return storageCompleter.future;
-      },
-    );
+  test(
+    'deletes backup cache, database, storage, and session in order',
+    () async {
+      final calls = <String>[];
+      final backupCompleter = Completer<void>();
+      final databaseCompleter = Completer<void>();
+      final storageCompleter = Completer<void>();
+      final service = LocalVaultDeletionService(
+        clearBackupCache: () {
+          calls.add('backup');
+          return backupCompleter.future;
+        },
+        deleteDatabase: () {
+          calls.add('database');
+          return databaseCompleter.future;
+        },
+        clearSecureStorage: () {
+          calls.add('storage');
+          return storageCompleter.future;
+        },
+      );
 
-    final deletion = service.delete(
-      user: user,
-      masterPassword: 'StrongPass123',
-      clearSession: () => calls.add('session'),
-    );
+      final deletion = service.delete(
+        user: user,
+        masterPassword: 'StrongPass123',
+        clearSession: () => calls.add('session'),
+      );
 
-    await Future<void>.value();
-    expect(calls, ['database']);
+      await Future<void>.value();
+      expect(calls, ['backup']);
 
-    databaseCompleter.complete();
-    await Future<void>.value();
-    expect(calls, ['database', 'storage']);
+      backupCompleter.complete();
+      await Future<void>.value();
+      expect(calls, ['backup', 'database']);
 
-    storageCompleter.complete();
-    await Future<void>.value();
-    expect(calls, ['database', 'storage', 'session']);
-    expect(await deletion, LocalVaultDeletionResult.success);
-  });
+      databaseCompleter.complete();
+      await Future<void>.value();
+      expect(calls, ['backup', 'database', 'storage']);
+
+      storageCompleter.complete();
+      await Future<void>.value();
+      expect(calls, ['backup', 'database', 'storage', 'session']);
+      expect(await deletion, LocalVaultDeletionResult.success);
+    },
+  );
+
+  test(
+    'returns failed without deleting the database when cache cleanup fails',
+    () async {
+      final calls = <String>[];
+      final service = LocalVaultDeletionService(
+        clearBackupCache: () async {
+          calls.add('backup');
+          throw StateError('cache failure');
+        },
+        deleteDatabase: () async => calls.add('database'),
+        clearSecureStorage: () async => calls.add('storage'),
+      );
+
+      final result = await service.delete(
+        user: user,
+        masterPassword: 'StrongPass123',
+        clearSession: () => calls.add('session'),
+      );
+
+      expect(result, LocalVaultDeletionResult.failed);
+      expect(calls, ['backup']);
+    },
+  );
 
   test(
     'clears session when storage cleanup fails after database deletion',
     () async {
       final calls = <String>[];
       final service = LocalVaultDeletionService(
+        clearBackupCache: () async => calls.add('backup'),
         deleteDatabase: () async => calls.add('database'),
         clearSecureStorage: () async {
           calls.add('storage');
@@ -111,7 +150,7 @@ void main() {
       );
 
       expect(result, LocalVaultDeletionResult.deletedWithSecureStorageFailure);
-      expect(calls, ['database', 'storage', 'session']);
+      expect(calls, ['backup', 'database', 'storage', 'session']);
     },
   );
 
@@ -126,6 +165,7 @@ void main() {
         salt: 'not-valid-base64!',
       );
       final service = LocalVaultDeletionService(
+        clearBackupCache: () async => calls.add('backup'),
         deleteDatabase: () async => calls.add('database'),
         clearSecureStorage: () async => calls.add('storage'),
       );
