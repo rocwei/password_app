@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:password_manager/helpers/language_model.dart';
@@ -162,4 +164,64 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.widget<Switch>(biometricSwitch()).value, isFalse);
   });
+
+  testWidgets(
+    'slow refresh hides the stale biometric switch until reading completes',
+    (tester) async {
+      final secondLoad = Completer<bool>();
+      var loadCalls = 0;
+      var enableCalls = 0;
+      var disableCalls = 0;
+      await tester.pumpWidget(
+        buildPage(
+          loadBiometricEnabled: () {
+            loadCalls++;
+            if (loadCalls == 1) {
+              return Future.value(true);
+            }
+            return secondLoad.future;
+          },
+          enableBiometric: () async {
+            enableCalls++;
+            return true;
+          },
+          disableBiometric: () async {
+            disableCalls++;
+            return true;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('修改主密码'));
+      await tester.tap(find.text('修改主密码'));
+      await tester.pumpAndSettle();
+
+      Navigator.of(tester.element(find.byType(ChangeMasterPasswordPage))).pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(loadCalls, 2);
+
+      await tester.drag(find.byType(ListView), const Offset(0, 400));
+      await tester.pump();
+
+      expect(biometricSwitch(), findsNothing);
+      expect(
+        find.descendant(
+          of: find.widgetWithText(ListTile, 'Biometric Unlock'),
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+      expect(enableCalls, 0);
+      expect(disableCalls, 0);
+
+      secondLoad.complete(false);
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Switch>(biometricSwitch()).value, isFalse);
+      expect(enableCalls, 0);
+      expect(disableCalls, 0);
+    },
+  );
 }

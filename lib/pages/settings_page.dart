@@ -129,6 +129,16 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  Future<void> _refreshBiometricEnabled() async {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _loadingBio = true;
+    });
+    await _loadBiometricEnabled();
+  }
+
   Future<void> _toggleBiometric(bool value) async {
     final previousValue = _biometricEnabled;
     setState(() => _loadingBio = true);
@@ -294,7 +304,7 @@ class _SettingsPageState extends State<SettingsPage> {
               if (!mounted) {
                 return;
               }
-              await _loadBiometricEnabled();
+              await _refreshBiometricEnabled();
             },
           ),
           const Divider(height: 1),
