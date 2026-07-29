@@ -1,0 +1,6 @@
+"CFBundleDisplayName" = "密盾安存";
+"CFBundleName" = "密盾安存";
+"NSCameraUsageDescription" = "用于扫描 OTP 二维码并添加验证器账户。";
+"NSFaceIDUsageDescription" = "用于通过面容 ID 解锁本地密码库。";
+"CFBundleTypeName" = "密盾安存备份";
+"UTTypeDescription" = "密盾安存备份文件";

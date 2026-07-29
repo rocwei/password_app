@@ -1,0 +1,6 @@
+"CFBundleDisplayName" = "Secure Vault";
+"CFBundleName" = "Secure Vault";
+"NSCameraUsageDescription" = "Scan OTP QR codes to add authenticator accounts.";
+"NSFaceIDUsageDescription" = "Use Face ID to unlock your local password vault.";
+"CFBundleTypeName" = "Secure Vault Backup";
+"UTTypeDescription" = "Secure Vault backup file";
