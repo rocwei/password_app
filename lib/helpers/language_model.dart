@@ -17,6 +17,7 @@ class LanguageModel extends ChangeNotifier {
   final Future<void> Function(String) _writeMode;
 
   AppLanguageMode _mode = AppLanguageMode.system;
+  Future<void> _modeChangeChain = Future<void>.value();
 
   AppLanguageMode get mode => _mode;
 
@@ -46,14 +47,18 @@ class LanguageModel extends ChangeNotifier {
     }
   }
 
-  Future<void> setMode(AppLanguageMode value) async {
-    if (_mode == value) {
-      return;
-    }
+  Future<void> setMode(AppLanguageMode value) {
+    final change = _modeChangeChain.then((_) async {
+      if (_mode == value) {
+        return;
+      }
 
-    await _writeMode(value.name);
-    _mode = value;
-    notifyListeners();
+      await _writeMode(value.name);
+      _mode = value;
+      notifyListeners();
+    });
+    _modeChangeChain = change.then<void>((_) {}, onError: (_, _) {});
+    return change;
   }
 
   static Locale resolveSystemLocale(List<Locale>? locales) {

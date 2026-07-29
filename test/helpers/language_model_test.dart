@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:password_manager/helpers/language_model.dart';
@@ -24,6 +26,88 @@ void main() {
     expect(stored, 'en');
     expect(model.mode, AppLanguageMode.en);
     expect(model.locale, const Locale('en'));
+
+    final restoredModel = LanguageModel(readMode: () async => stored);
+    await restoredModel.load();
+
+    expect(restoredModel.mode, AppLanguageMode.en);
+    expect(restoredModel.locale, const Locale('en'));
+  });
+
+  test('serializes rapid mode changes in call order', () async {
+    final firstWrite = Completer<void>();
+    final startedWrites = <String>[];
+    String? stored;
+    final model = LanguageModel(
+      writeMode: (value) async {
+        startedWrites.add(value);
+        if (value == 'en') {
+          await firstWrite.future;
+        }
+        stored = value;
+      },
+    );
+
+    final englishChange = model.setMode(AppLanguageMode.en);
+    final chineseChange = model.setMode(AppLanguageMode.zh);
+    await Future<void>.delayed(Duration.zero);
+    final writesBeforeFirstCompleted = List<String>.of(startedWrites);
+
+    firstWrite.complete();
+    await Future.wait([englishChange, chineseChange]);
+
+    expect(writesBeforeFirstCompleted, ['en']);
+    expect(startedWrites, ['en', 'zh']);
+    expect(stored, 'zh');
+    expect(model.mode, AppLanguageMode.zh);
+    expect(model.locale, const Locale('zh'));
+  });
+
+  test('continues queued changes after a write failure', () async {
+    final firstWrite = Completer<void>();
+    final secondWrite = Completer<void>();
+    final startedWrites = <String>[];
+    var notifications = 0;
+    String? stored;
+    final model = LanguageModel(
+      writeMode: (value) async {
+        startedWrites.add(value);
+        if (value == 'en') {
+          await firstWrite.future;
+        } else {
+          await secondWrite.future;
+        }
+        stored = value;
+      },
+    )..addListener(() => notifications++);
+
+    final failedChange = model.setMode(AppLanguageMode.en);
+    final successfulChange = model.setMode(AppLanguageMode.zh);
+    await Future<void>.delayed(Duration.zero);
+    final writesBeforeFailure = List<String>.of(startedWrites);
+    final failureExpectation = expectLater(
+      failedChange,
+      throwsA(isA<StateError>()),
+    );
+
+    firstWrite.completeError(StateError('storage unavailable'));
+    await failureExpectation;
+    await Future<void>.delayed(Duration.zero);
+
+    expect(writesBeforeFailure, ['en']);
+    expect(model.mode, AppLanguageMode.system);
+    expect(model.locale, isNull);
+    expect(stored, isNull);
+    expect(notifications, 0);
+
+    secondWrite.complete();
+    await successfulChange;
+
+    expect(startedWrites, ['en', 'zh']);
+    expect(stored, 'zh');
+    expect(model.mode, AppLanguageMode.zh);
+    expect(model.locale, const Locale('zh'));
+    expect(notifications, 1);
   });
 
   test('does not write or notify when the mode is unchanged', () async {
