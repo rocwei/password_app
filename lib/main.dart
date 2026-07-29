@@ -3,12 +3,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'helpers/auth_helper.dart';
 import 'helpers/theme_settings.dart';
 import 'helpers/file_intent_helper.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
+import 'pages/secure_storage_cleanup_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -194,13 +196,25 @@ class MyApp extends StatelessWidget {
 }
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({
+    super.key,
+    this.hasUsers,
+    this.cleanupSecureStorage,
+    this.delay = const Duration(seconds: 1),
+  });
+
+  final Future<bool> Function()? hasUsers;
+  final Future<void> Function()? cleanupSecureStorage;
+  final Duration delay;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  bool _isChecking = true;
+  String? _errorText;
+
   @override
   void initState() {
     super.initState();
@@ -208,34 +222,68 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkUserStatus() async {
-    // 延迟一下显示启动画面
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(widget.delay);
+
+    late final bool hasUsers;
+    try {
+      hasUsers = await (widget.hasUsers ?? AuthHelper().hasUsers)();
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isChecking = false;
+          _errorText = '无法读取本地密码库，请重试';
+        });
+      }
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    if (hasUsers) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+      return;
+    }
 
     try {
-      final authHelper = AuthHelper();
-      final hasUsers = await authHelper.hasUsers();
-
+      await (widget.cleanupSecureStorage ?? _clearSecureStorage)();
+    } catch (_) {
       if (mounted) {
-        if (hasUsers) {
-          // 如果有用户，跳转到登录页
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const LoginPage()),
-          );
-        } else {
-          // 如果没有用户，跳转到注册页
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const RegisterPage()),
-          );
-        }
-      }
-    } catch (e) {
-      // 如果出错，默认跳转到注册页
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const RegisterPage()),
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) =>
+                SecureStorageCleanupPage(cleanup: widget.cleanupSecureStorage),
+          ),
+          (route) => false,
         );
       }
+      return;
     }
+
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const RegisterPage()),
+      );
+    }
+  }
+
+  static Future<void> _clearSecureStorage() {
+    return const FlutterSecureStorage().deleteAll();
+  }
+
+  void _retry() {
+    if (_isChecking) {
+      return;
+    }
+
+    setState(() {
+      _isChecking = true;
+      _errorText = null;
+    });
+    _checkUserStatus();
   }
 
   @override
@@ -266,9 +314,19 @@ class _SplashScreenState extends State<SplashScreen> {
               style: TextStyle(fontSize: 16, color: Colors.white70),
             ),
             const SizedBox(height: 48),
-            CircularProgressIndicator(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+            if (_isChecking)
+              CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              )
+            else ...[
+              Text(
+                _errorText!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(onPressed: _retry, child: const Text('重试')),
+            ],
           ],
         ),
       ),
