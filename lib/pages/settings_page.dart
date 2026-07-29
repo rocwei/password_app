@@ -9,11 +9,17 @@ import 'backup_restore_page.dart';
 import 'about_page.dart';
 import 'login_page.dart';
 import 'register_page.dart';
+import 'secure_storage_cleanup_page.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key, this.deleteLocalVault});
+  const SettingsPage({
+    super.key,
+    this.deleteLocalVault,
+    this.cleanupSecureStorage,
+  });
 
   final Future<LocalVaultDeletionResult> Function(String)? deleteLocalVault;
+  final Future<void> Function()? cleanupSecureStorage;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -37,7 +43,9 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('锁定'),
           ),
         ],
@@ -71,19 +79,15 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
-    final messenger = ScaffoldMessenger.of(context);
+    final destination =
+        result == LocalVaultDeletionResult.deletedWithSecureStorageFailure
+        ? SecureStorageCleanupPage(cleanup: widget.cleanupSecureStorage)
+        : const RegisterPage();
+
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const RegisterPage()),
+      MaterialPageRoute(builder: (context) => destination),
       (route) => false,
     );
-
-    if (result == LocalVaultDeletionResult.deletedWithSecureStorageFailure) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('本地密码库已删除，但系统安全存储清理未完全完成，请重启设备后重试')),
-        );
-      });
-    }
   }
 
   @override
@@ -127,6 +131,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final themeModel = Provider.of<ThemeModel>(context);
+    final errorColor = Theme.of(context).colorScheme.error;
 
     return Scaffold(
       appBar: AppBar(title: const Text('设置')),
@@ -264,8 +269,8 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const Divider(height: 1),
           ListTile(
-            leading: const Icon(Icons.delete_forever, color: Colors.red),
-            title: const Text('删除本地密码库', style: TextStyle(color: Colors.red)),
+            leading: Icon(Icons.delete_forever, color: errorColor),
+            title: Text('删除本地密码库', style: TextStyle(color: errorColor)),
             subtitle: const Text('永久删除本机保存的密码、分类、OTP 和主密码设置'),
             onTap: _deleteLocalVault,
           ),
