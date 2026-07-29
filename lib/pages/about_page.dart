@@ -44,7 +44,7 @@ class AboutPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '版本 1.0.0',
+                        '版本 1.0.1',
                         style: TextStyle(
                           fontSize: 16,
                           color: Theme.of(
@@ -193,7 +193,7 @@ class AboutPage extends StatelessWidget {
                         //   );
                         // },
                         child: Text(
-                          '联系邮箱: 请不要联系我',
+                          '联系邮箱: 283187631@qq.com',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.primary,
                             decoration: TextDecoration.underline,
@@ -202,7 +202,7 @@ class AboutPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        '© ${DateTime.now().year} 密盾安存. 保留所有权利. 你随便用，我也不管。开心就好。',
+                        '© ${DateTime.now().year} 密盾安存. 保留所有权利. ',
                         style: TextStyle(
                           color: Theme.of(context).textTheme.bodySmall?.color,
                           fontSize: 12,
