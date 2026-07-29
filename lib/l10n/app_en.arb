@@ -669,5 +669,257 @@
         "example": "Jan 2, 2026, 9:30 AM"
       }
     }
+  },
+  "passwordGeneratorTitle": "Password Generator",
+  "@passwordGeneratorTitle": {
+    "description": "Title of the password generator page"
+  },
+  "generatedPassword": "Generated Password",
+  "@generatedPassword": {
+    "description": "Heading above the generated password"
+  },
+  "generatePasswordPrompt": "Select at least one character type.",
+  "@generatePasswordPrompt": {
+    "description": "Prompt shown when no password character types are selected"
+  },
+  "passwordStrength": "Strength:",
+  "@passwordStrength": {
+    "description": "Label before the generated password strength"
+  },
+  "passwordStrengthNone": "None",
+  "@passwordStrengthNone": {
+    "description": "Password strength when no password is available"
+  },
+  "passwordStrengthWeak": "Weak",
+  "@passwordStrengthWeak": {
+    "description": "Weak password strength"
+  },
+  "passwordStrengthMedium": "Medium",
+  "@passwordStrengthMedium": {
+    "description": "Medium password strength"
+  },
+  "passwordStrengthStrong": "Strong",
+  "@passwordStrengthStrong": {
+    "description": "Strong password strength"
+  },
+  "passwordStrengthVeryStrong": "Very strong",
+  "@passwordStrengthVeryStrong": {
+    "description": "Very strong password strength"
+  },
+  "passwordSettings": "Password Settings",
+  "@passwordSettings": {
+    "description": "Heading for password generator settings"
+  },
+  "passwordLength": "Password Length: {length}",
+  "@passwordLength": {
+    "description": "Current generated password length",
+    "placeholders": {
+      "length": {
+        "type": "int",
+        "example": "16"
+      }
+    }
+  },
+  "includeUppercaseLetters": "Include uppercase letters (A-Z)",
+  "@includeUppercaseLetters": {
+    "description": "Password generator uppercase option"
+  },
+  "includeLowercaseLetters": "Include lowercase letters (a-z)",
+  "@includeLowercaseLetters": {
+    "description": "Password generator lowercase option"
+  },
+  "includeNumbers": "Include numbers (0-9)",
+  "@includeNumbers": {
+    "description": "Password generator number option"
+  },
+  "includeSpecialCharacters": "Include special characters (!@#$%^&*)",
+  "@includeSpecialCharacters": {
+    "description": "Password generator special character option"
+  },
+  "excludeSimilarCharacters": "Exclude similar characters (il1Lo0O)",
+  "@excludeSimilarCharacters": {
+    "description": "Password generator similar character exclusion option"
+  },
+  "regenerate": "Regenerate",
+  "@regenerate": {
+    "description": "Action to generate another password"
+  },
+  "saveToVault": "Save to Vault",
+  "@saveToVault": {
+    "description": "Action to open the password form with the generated password"
+  },
+  "passwordCopied": "Password copied to clipboard.",
+  "@passwordCopied": {
+    "description": "Success message after copying a generated password"
+  },
+  "generatePasswordFirst": "Generate a password first.",
+  "@generatePasswordFirst": {
+    "description": "Message shown when saving without a generated password"
+  },
+  "oneTimePassword": "One-Time Password",
+  "@oneTimePassword": {
+    "description": "Title of the OTP page"
+  },
+  "otpRefreshCountdown": "OTP refresh countdown",
+  "@otpRefreshCountdown": {
+    "description": "Accessibility label for the OTP refresh progress"
+  },
+  "secondsRemaining": "{seconds} seconds remaining",
+  "@secondsRemaining": {
+    "description": "Accessibility value for the OTP refresh countdown",
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "noOtpAccounts": "No OTP accounts yet",
+  "@noOtpAccounts": {
+    "description": "OTP empty-state heading"
+  },
+  "noOtpAccountsDescription": "Add an account to generate one-time codes.",
+  "@noOtpAccountsDescription": {
+    "description": "OTP empty-state explanation"
+  },
+  "addOtp": "Add OTP",
+  "@addOtp": {
+    "description": "Action and dialog title for adding an OTP account"
+  },
+  "accountName": "Account name",
+  "@accountName": {
+    "description": "Label for the user-provided OTP account name"
+  },
+  "accountNameRequired": "Enter an account name.",
+  "@accountNameRequired": {
+    "description": "Validation message for an empty OTP account name"
+  },
+  "secretKey": "Secret key",
+  "@secretKey": {
+    "description": "Label for an OTP Base32 secret"
+  },
+  "secretKeyHelper": "Enter the Base32 key from your provider.",
+  "@secretKeyHelper": {
+    "description": "Helper text for an OTP secret field"
+  },
+  "secretKeyRequired": "Enter a secret key.",
+  "@secretKeyRequired": {
+    "description": "Validation message for an empty OTP secret"
+  },
+  "secretKeyInvalid": "Enter a valid Base32 secret (A-Z, 2-7).",
+  "@secretKeyInvalid": {
+    "description": "Validation message for an invalid OTP secret"
+  },
+  "secretKeyTooShort": "The secret key is too short. Check the complete key.",
+  "@secretKeyTooShort": {
+    "description": "Validation message for a short OTP secret"
+  },
+  "scanQrCode": "Scan QR Code",
+  "@scanQrCode": {
+    "description": "Title and action for scanning an OTP QR code"
+  },
+  "duplicateOtpSecret": "This secret key already exists.",
+  "@duplicateOtpSecret": {
+    "description": "Message shown when an OTP secret is already saved"
+  },
+  "invalidOtpCode": "Could not generate a code. Check the secret key.",
+  "@invalidOtpCode": {
+    "description": "Message shown when an OTP code cannot be generated"
+  },
+  "otpLoadFailed": "Could not load OTP accounts. Please try again.",
+  "@otpLoadFailed": {
+    "description": "Generic OTP account loading failure"
+  },
+  "otpAddFailed": "Could not add the OTP account. Please try again.",
+  "@otpAddFailed": {
+    "description": "Generic OTP account add failure"
+  },
+  "otpAdded": "OTP account added.",
+  "@otpAdded": {
+    "description": "Success message after adding an OTP account"
+  },
+  "otpDeleteTitle": "Delete OTP account?",
+  "@otpDeleteTitle": {
+    "description": "Title of the OTP delete confirmation dialog"
+  },
+  "otpDeleteConfirmation": "Delete \"{label}\"?",
+  "@otpDeleteConfirmation": {
+    "description": "OTP delete confirmation containing the original account label",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "example": "GitHub"
+      }
+    }
+  },
+  "otpDeleted": "\"{label}\" deleted.",
+  "@otpDeleted": {
+    "description": "Success message containing the original deleted OTP label",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "example": "GitHub"
+      }
+    }
+  },
+  "otpDeleteFailed": "Could not delete the OTP account. Please try again.",
+  "@otpDeleteFailed": {
+    "description": "Generic OTP account delete failure"
+  },
+  "copyOtpCode": "Copy OTP code",
+  "@copyOtpCode": {
+    "description": "Tooltip for copying an OTP code"
+  },
+  "otpCodeCopied": "OTP code copied to clipboard.",
+  "@otpCodeCopied": {
+    "description": "Success message after copying an OTP code"
+  },
+  "otpCopyFailed": "Could not copy the OTP code. Please try again.",
+  "@otpCopyFailed": {
+    "description": "Generic OTP code copy failure"
+  },
+  "otpScanFailed": "Could not scan the QR code. Please try again.",
+  "@otpScanFailed": {
+    "description": "Generic OTP QR scanning failure"
+  },
+  "unknownOtpAccount": "Unknown account",
+  "@unknownOtpAccount": {
+    "description": "Fallback label for a missing OTP account"
+  },
+  "qrScanInstruction": "Align the OTP QR code inside the frame.",
+  "@qrScanInstruction": {
+    "description": "Instruction displayed on the QR scanner"
+  },
+  "toggleTorch": "Toggle torch",
+  "@toggleTorch": {
+    "description": "Tooltip for the QR scanner torch control"
+  },
+  "switchCamera": "Switch camera",
+  "@switchCamera": {
+    "description": "Tooltip for the QR scanner camera switch control"
+  },
+  "invalidOtpQrCode": "This is not a valid OTP QR code.",
+  "@invalidOtpQrCode": {
+    "description": "Message for a non-OTP or malformed QR value"
+  },
+  "otpQrMissingSecret": "The OTP QR code is missing a secret key.",
+  "@otpQrMissingSecret": {
+    "description": "Message for an OTP QR value without a secret"
+  },
+  "otpQrInvalidSecret": "The OTP QR code contains an invalid secret key.",
+  "@otpQrInvalidSecret": {
+    "description": "Message for an OTP QR value whose secret is invalid after cleaning"
+  },
+  "processingQrCode": "Processing QR code",
+  "@processingQrCode": {
+    "description": "Accessibility label while an OTP QR code is being processed"
+  },
+  "cameraPermissionRequired": "Camera permission is required to scan QR codes",
+  "@cameraPermissionRequired": {
+    "description": "Message shown when QR scanning camera permission is denied"
+  },
+  "cameraUnavailable": "The camera is unavailable. Please try again.",
+  "@cameraUnavailable": {
+    "description": "Generic QR scanner camera error"
   }
 }

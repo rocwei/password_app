@@ -1,9 +1,14 @@
 // ignore_for_file: deprecated_member_use
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:math';
+
+import '../l10n/l10n.dart';
 import 'password_detail_page.dart';
+
+enum PasswordStrength { none, weak, medium, strong, veryStrong }
 
 class GeneratePasswordPage extends StatefulWidget {
   const GeneratePasswordPage({super.key});
@@ -21,10 +26,6 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
   bool _includeSpecialChars = false;
   bool _excludeSimilar = true;
 
-  final _titleController = TextEditingController();
-  final _usernameController = TextEditingController();
-
-  // 字符集定义
   static const String _uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   static const String _lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
   static const String _numberChars = '0123456789';
@@ -35,13 +36,6 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
   void initState() {
     super.initState();
     _generatePassword();
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _usernameController.dispose();
-    super.dispose();
   }
 
   void _generatePassword() {
@@ -125,22 +119,34 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
     });
   }
 
-  void _copyToClipboard() {
-    if (_generatedPassword.isNotEmpty) {
-      Clipboard.setData(ClipboardData(text: _generatedPassword));
+  Future<void> _copyToClipboard() async {
+    if (_generatedPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('密码已复制到剪贴板'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(context.l10n.generatePasswordFirst),
+          duration: const Duration(seconds: 2),
         ),
       );
+      return;
     }
+
+    await Clipboard.setData(ClipboardData(text: _generatedPassword));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(context.l10n.passwordCopied),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _savePassword() async {
     if (_generatedPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先生成密码'), duration: Duration(seconds: 2)),
+        SnackBar(
+          content: Text(context.l10n.generatePasswordFirst),
+          duration: const Duration(seconds: 2),
+        ),
       );
       return;
     }
@@ -153,8 +159,8 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
     );
   }
 
-  String _getPasswordStrength() {
-    if (_generatedPassword.isEmpty) return '无';
+  PasswordStrength _getPasswordStrength() {
+    if (_generatedPassword.isEmpty) return PasswordStrength.none;
 
     int score = 0;
 
@@ -169,105 +175,230 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
     if (_includeNumbers) score++;
     if (_includeSpecialChars) score++;
 
-    if (score <= 2) return '弱';
-    if (score <= 4) return '中等';
-    if (score <= 6) return '强';
-    return '非常强';
+    if (score <= 2) return PasswordStrength.weak;
+    if (score <= 4) return PasswordStrength.medium;
+    if (score <= 6) return PasswordStrength.strong;
+    return PasswordStrength.veryStrong;
   }
 
-  Color _getPasswordStrengthColor(BuildContext context) {
-    final strength = _getPasswordStrength();
+  String _getPasswordStrengthLabel(
+    BuildContext context,
+    PasswordStrength strength,
+  ) {
+    final l10n = context.l10n;
+    return switch (strength) {
+      PasswordStrength.none => l10n.passwordStrengthNone,
+      PasswordStrength.weak => l10n.passwordStrengthWeak,
+      PasswordStrength.medium => l10n.passwordStrengthMedium,
+      PasswordStrength.strong => l10n.passwordStrengthStrong,
+      PasswordStrength.veryStrong => l10n.passwordStrengthVeryStrong,
+    };
+  }
+
+  Color _getPasswordStrengthColor(
+    BuildContext context,
+    PasswordStrength strength,
+  ) {
     switch (strength) {
-      case '弱':
+      case PasswordStrength.weak:
         return Colors.red.shade300;
-      case '中等':
+      case PasswordStrength.medium:
         return Colors.orange.shade300;
-      case '强':
+      case PasswordStrength.strong:
         return Theme.of(context).colorScheme.primary;
-      case '非常强':
+      case PasswordStrength.veryStrong:
         return Theme.of(context).colorScheme.secondary;
-      default:
+      case PasswordStrength.none:
         return Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
     }
   }
 
+  Widget _buildActions(BuildContext context) {
+    final l10n = context.l10n;
+    final regenerateButton = ElevatedButton.icon(
+      onPressed: _generatePassword,
+      icon: const Icon(Icons.refresh),
+      label: Text(l10n.regenerate),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+      ),
+    );
+    final saveButton = ElevatedButton.icon(
+      onPressed: _generatedPassword.isEmpty ? null : _savePassword,
+      icon: const Icon(Icons.save),
+      label: Text(l10n.saveToVault),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        foregroundColor: Theme.of(context).colorScheme.onSecondary,
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final useCompactLayout =
+            constraints.maxWidth < 420 ||
+            MediaQuery.textScalerOf(context).scale(14) > 20;
+        if (useCompactLayout) {
+          Widget compactButton({
+            required VoidCallback? onPressed,
+            required IconData icon,
+            required String label,
+            required Color backgroundColor,
+            required Color foregroundColor,
+          }) {
+            return ElevatedButton(
+              onPressed: onPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: backgroundColor,
+                foregroundColor: foregroundColor,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon),
+                  const SizedBox(height: 4),
+                  Text(label, textAlign: TextAlign.center),
+                ],
+              ),
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(
+                child: compactButton(
+                  onPressed: _generatePassword,
+                  icon: Icons.refresh,
+                  label: l10n.regenerate,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: compactButton(
+                  onPressed: _generatedPassword.isEmpty ? null : _savePassword,
+                  icon: Icons.save,
+                  label: l10n.saveToVault,
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                  foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                ),
+              ),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: regenerateButton),
+            const SizedBox(width: 8),
+            Expanded(child: saveButton),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final strength = _getPasswordStrength();
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('密码生成器'),
-        // backgroundColor: const Color.fromARGB(255, 3, 3, 3),
-      ),
+      appBar: AppBar(title: Text(l10n.passwordGeneratorTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 生成的密码显示区域
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              color: Theme.of(context).scaffoldBackgroundColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(
-                  color: Theme.of(context).dividerColor.withOpacity(1),
-                  width: 0.5,
-                ),
-              ),
-              elevation: 0.5,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '生成的密码',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color: Theme.of(context).dividerColor.withOpacity(1),
+                      width: 0.5,
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Theme.of(context).dividerColor,
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                      ),
-                      child: Text(
-                        _generatedPassword.isEmpty
-                            ? '点击生成密码'
-                            : _generatedPassword,
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
+                  ),
+                  elevation: 0.5,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('强度: '),
                         Text(
-                          _getPasswordStrength(),
-                          style: TextStyle(
-                            color: _getPasswordStrengthColor(context),
+                          l10n.generatedPassword,
+                          style: const TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const Spacer(),
-                        IconButton(
-                          onPressed: _copyToClipboard,
-                          icon: const Icon(Icons.copy),
-                          tooltip: '复制密码',
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Theme.of(context).dividerColor,
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                          ),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Text(
+                              _generatedPassword.isEmpty
+                                  ? l10n.generatePasswordPrompt
+                                  : _generatedPassword,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Wrap(
+                                spacing: 4,
+                                children: [
+                                  Text(l10n.passwordStrength),
+                                  Text(
+                                    _getPasswordStrengthLabel(
+                                      context,
+                                      strength,
+                                    ),
+                                    style: TextStyle(
+                                      color: _getPasswordStrengthColor(
+                                        context,
+                                        strength,
+                                      ),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _copyToClipboard,
+                              icon: const Icon(Icons.copy),
+                              tooltip: l10n.copyPassword,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -291,9 +422,9 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        '密码设置',
-                        style: TextStyle(
+                      Text(
+                        l10n.passwordSettings,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -301,7 +432,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                       const SizedBox(height: 16),
 
                       // 密码长度
-                      Text('密码长度: ${_passwordLength.round()}'),
+                      Text(l10n.passwordLength(_passwordLength.round())),
                       Slider(
                         value: _passwordLength,
                         min: 4,
@@ -324,7 +455,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
-                        title: const Text('包含大写字母 (A-Z)'),
+                        title: Text(l10n.includeUppercaseLetters),
                         value: _includeUppercase,
                         onChanged: (value) {
                           setState(() {
@@ -337,7 +468,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
-                        title: const Text('包含小写字母 (a-z)'),
+                        title: Text(l10n.includeLowercaseLetters),
                         value: _includeLowercase,
                         onChanged: (value) {
                           setState(() {
@@ -350,7 +481,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
-                        title: const Text('包含数字 (0-9)'),
+                        title: Text(l10n.includeNumbers),
                         value: _includeNumbers,
                         onChanged: (value) {
                           setState(() {
@@ -363,7 +494,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
-                        title: const Text('包含特殊字符 (!@#\$%^&*)'),
+                        title: Text(l10n.includeSpecialCharacters),
                         value: _includeSpecialChars,
                         onChanged: (value) {
                           setState(() {
@@ -376,7 +507,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
-                        title: const Text('排除相似字符 (il1Lo0O)'),
+                        title: Text(l10n.excludeSimilarCharacters),
                         value: _excludeSimilar,
                         onChanged: (value) {
                           setState(() {
@@ -393,38 +524,7 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
 
             const SizedBox(height: 16),
 
-            // 操作按钮
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _generatePassword,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('重新生成'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _generatedPassword.isEmpty
-                        ? null
-                        : _savePassword,
-                    icon: const Icon(Icons.save),
-                    label: const Text('保存到密码库'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                      foregroundColor: Theme.of(
-                        context,
-                      ).colorScheme.onSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            _buildActions(context),
           ],
         ),
       ),

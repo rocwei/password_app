@@ -518,4 +518,191 @@ class AppLocalizationsEn extends AppLocalizations {
   String updatedAt(String date) {
     return 'Updated: $date';
   }
+
+  @override
+  String get passwordGeneratorTitle => 'Password Generator';
+
+  @override
+  String get generatedPassword => 'Generated Password';
+
+  @override
+  String get generatePasswordPrompt => 'Select at least one character type.';
+
+  @override
+  String get passwordStrength => 'Strength:';
+
+  @override
+  String get passwordStrengthNone => 'None';
+
+  @override
+  String get passwordStrengthWeak => 'Weak';
+
+  @override
+  String get passwordStrengthMedium => 'Medium';
+
+  @override
+  String get passwordStrengthStrong => 'Strong';
+
+  @override
+  String get passwordStrengthVeryStrong => 'Very strong';
+
+  @override
+  String get passwordSettings => 'Password Settings';
+
+  @override
+  String passwordLength(int length) {
+    return 'Password Length: $length';
+  }
+
+  @override
+  String get includeUppercaseLetters => 'Include uppercase letters (A-Z)';
+
+  @override
+  String get includeLowercaseLetters => 'Include lowercase letters (a-z)';
+
+  @override
+  String get includeNumbers => 'Include numbers (0-9)';
+
+  @override
+  String get includeSpecialCharacters =>
+      'Include special characters (!@#\$%^&*)';
+
+  @override
+  String get excludeSimilarCharacters => 'Exclude similar characters (il1Lo0O)';
+
+  @override
+  String get regenerate => 'Regenerate';
+
+  @override
+  String get saveToVault => 'Save to Vault';
+
+  @override
+  String get passwordCopied => 'Password copied to clipboard.';
+
+  @override
+  String get generatePasswordFirst => 'Generate a password first.';
+
+  @override
+  String get oneTimePassword => 'One-Time Password';
+
+  @override
+  String get otpRefreshCountdown => 'OTP refresh countdown';
+
+  @override
+  String secondsRemaining(int seconds) {
+    return '$seconds seconds remaining';
+  }
+
+  @override
+  String get noOtpAccounts => 'No OTP accounts yet';
+
+  @override
+  String get noOtpAccountsDescription =>
+      'Add an account to generate one-time codes.';
+
+  @override
+  String get addOtp => 'Add OTP';
+
+  @override
+  String get accountName => 'Account name';
+
+  @override
+  String get accountNameRequired => 'Enter an account name.';
+
+  @override
+  String get secretKey => 'Secret key';
+
+  @override
+  String get secretKeyHelper => 'Enter the Base32 key from your provider.';
+
+  @override
+  String get secretKeyRequired => 'Enter a secret key.';
+
+  @override
+  String get secretKeyInvalid => 'Enter a valid Base32 secret (A-Z, 2-7).';
+
+  @override
+  String get secretKeyTooShort =>
+      'The secret key is too short. Check the complete key.';
+
+  @override
+  String get scanQrCode => 'Scan QR Code';
+
+  @override
+  String get duplicateOtpSecret => 'This secret key already exists.';
+
+  @override
+  String get invalidOtpCode =>
+      'Could not generate a code. Check the secret key.';
+
+  @override
+  String get otpLoadFailed => 'Could not load OTP accounts. Please try again.';
+
+  @override
+  String get otpAddFailed => 'Could not add the OTP account. Please try again.';
+
+  @override
+  String get otpAdded => 'OTP account added.';
+
+  @override
+  String get otpDeleteTitle => 'Delete OTP account?';
+
+  @override
+  String otpDeleteConfirmation(String label) {
+    return 'Delete \"$label\"?';
+  }
+
+  @override
+  String otpDeleted(String label) {
+    return '\"$label\" deleted.';
+  }
+
+  @override
+  String get otpDeleteFailed =>
+      'Could not delete the OTP account. Please try again.';
+
+  @override
+  String get copyOtpCode => 'Copy OTP code';
+
+  @override
+  String get otpCodeCopied => 'OTP code copied to clipboard.';
+
+  @override
+  String get otpCopyFailed => 'Could not copy the OTP code. Please try again.';
+
+  @override
+  String get otpScanFailed => 'Could not scan the QR code. Please try again.';
+
+  @override
+  String get unknownOtpAccount => 'Unknown account';
+
+  @override
+  String get qrScanInstruction => 'Align the OTP QR code inside the frame.';
+
+  @override
+  String get toggleTorch => 'Toggle torch';
+
+  @override
+  String get switchCamera => 'Switch camera';
+
+  @override
+  String get invalidOtpQrCode => 'This is not a valid OTP QR code.';
+
+  @override
+  String get otpQrMissingSecret => 'The OTP QR code is missing a secret key.';
+
+  @override
+  String get otpQrInvalidSecret =>
+      'The OTP QR code contains an invalid secret key.';
+
+  @override
+  String get processingQrCode => 'Processing QR code';
+
+  @override
+  String get cameraPermissionRequired =>
+      'Camera permission is required to scan QR codes';
+
+  @override
+  String get cameraUnavailable =>
+      'The camera is unavailable. Please try again.';
 }

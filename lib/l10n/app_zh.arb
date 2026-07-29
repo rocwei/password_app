@@ -280,11 +280,11 @@
   },
   "masterPasswordChangedWithBiometricDisabled": "主密码已更改，请使用新密码；生物识别已关闭，请重新启用。",
   "@masterPasswordChangedWithBiometricDisabled": {
-    "description": "主密码成功更改但生物识别无法重新启用时显示"
+    "description": "Shown when the master password changed successfully but biometric unlock could not be re-enabled"
   },
   "masterPasswordChangeFailedWithBiometricDisabled": "主密码未更改，请继续使用旧密码；生物识别已关闭，请重新启用。",
   "@masterPasswordChangeFailedWithBiometricDisabled": {
-    "description": "主密码未更改且旧生物识别密钥无法恢复时显示"
+    "description": "Shown when the master password was not changed and the previous biometric key could not be restored"
   },
   "settings": "设置",
   "@settings": {
@@ -396,7 +396,7 @@
     "placeholders": {
       "categoryName": {
         "type": "String",
-        "example": "工作"
+        "example": "Work"
       }
     }
   },
@@ -434,7 +434,7 @@
     "placeholders": {
       "categoryName": {
         "type": "String",
-        "example": "工作"
+        "example": "Work"
       }
     }
   },
@@ -608,7 +608,7 @@
     "placeholders": {
       "fieldName": {
         "type": "String",
-        "example": "用户名"
+        "example": "Username"
       }
     }
   },
@@ -618,7 +618,7 @@
     "placeholders": {
       "fieldName": {
         "type": "String",
-        "example": "用户名"
+        "example": "Username"
       }
     }
   },
@@ -656,7 +656,7 @@
     "placeholders": {
       "date": {
         "type": "String",
-        "example": "2026年1月2日 09:30"
+        "example": "Jan 2, 2026, 9:30 AM"
       }
     }
   },
@@ -666,8 +666,260 @@
     "placeholders": {
       "date": {
         "type": "String",
-        "example": "2026年1月2日 09:30"
+        "example": "Jan 2, 2026, 9:30 AM"
       }
     }
+  },
+  "passwordGeneratorTitle": "密码生成器",
+  "@passwordGeneratorTitle": {
+    "description": "Title of the password generator page"
+  },
+  "generatedPassword": "生成的密码",
+  "@generatedPassword": {
+    "description": "Heading above the generated password"
+  },
+  "generatePasswordPrompt": "请至少选择一种字符类型",
+  "@generatePasswordPrompt": {
+    "description": "Prompt shown when no password character types are selected"
+  },
+  "passwordStrength": "强度：",
+  "@passwordStrength": {
+    "description": "Label before the generated password strength"
+  },
+  "passwordStrengthNone": "无",
+  "@passwordStrengthNone": {
+    "description": "Password strength when no password is available"
+  },
+  "passwordStrengthWeak": "弱",
+  "@passwordStrengthWeak": {
+    "description": "Weak password strength"
+  },
+  "passwordStrengthMedium": "中等",
+  "@passwordStrengthMedium": {
+    "description": "Medium password strength"
+  },
+  "passwordStrengthStrong": "强",
+  "@passwordStrengthStrong": {
+    "description": "Strong password strength"
+  },
+  "passwordStrengthVeryStrong": "非常强",
+  "@passwordStrengthVeryStrong": {
+    "description": "Very strong password strength"
+  },
+  "passwordSettings": "密码设置",
+  "@passwordSettings": {
+    "description": "Heading for password generator settings"
+  },
+  "passwordLength": "密码长度：{length}",
+  "@passwordLength": {
+    "description": "Current generated password length",
+    "placeholders": {
+      "length": {
+        "type": "int",
+        "example": "16"
+      }
+    }
+  },
+  "includeUppercaseLetters": "包含大写字母 (A-Z)",
+  "@includeUppercaseLetters": {
+    "description": "Password generator uppercase option"
+  },
+  "includeLowercaseLetters": "包含小写字母 (a-z)",
+  "@includeLowercaseLetters": {
+    "description": "Password generator lowercase option"
+  },
+  "includeNumbers": "包含数字 (0-9)",
+  "@includeNumbers": {
+    "description": "Password generator number option"
+  },
+  "includeSpecialCharacters": "包含特殊字符 (!@#$%^&*)",
+  "@includeSpecialCharacters": {
+    "description": "Password generator special character option"
+  },
+  "excludeSimilarCharacters": "排除相似字符 (il1Lo0O)",
+  "@excludeSimilarCharacters": {
+    "description": "Password generator similar character exclusion option"
+  },
+  "regenerate": "重新生成",
+  "@regenerate": {
+    "description": "Action to generate another password"
+  },
+  "saveToVault": "保存到密码库",
+  "@saveToVault": {
+    "description": "Action to open the password form with the generated password"
+  },
+  "passwordCopied": "密码已复制到剪贴板",
+  "@passwordCopied": {
+    "description": "Success message after copying a generated password"
+  },
+  "generatePasswordFirst": "请先生成密码",
+  "@generatePasswordFirst": {
+    "description": "Message shown when saving without a generated password"
+  },
+  "oneTimePassword": "一次性密码",
+  "@oneTimePassword": {
+    "description": "Title of the OTP page"
+  },
+  "otpRefreshCountdown": "OTP 刷新倒计时",
+  "@otpRefreshCountdown": {
+    "description": "Accessibility label for the OTP refresh progress"
+  },
+  "secondsRemaining": "剩余 {seconds} 秒",
+  "@secondsRemaining": {
+    "description": "Accessibility value for the OTP refresh countdown",
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "noOtpAccounts": "暂无 OTP 账户",
+  "@noOtpAccounts": {
+    "description": "OTP empty-state heading"
+  },
+  "noOtpAccountsDescription": "添加账户后即可生成一次性验证码",
+  "@noOtpAccountsDescription": {
+    "description": "OTP empty-state explanation"
+  },
+  "addOtp": "添加 OTP",
+  "@addOtp": {
+    "description": "Action and dialog title for adding an OTP account"
+  },
+  "accountName": "账户名称",
+  "@accountName": {
+    "description": "Label for the user-provided OTP account name"
+  },
+  "accountNameRequired": "请输入账户名称",
+  "@accountNameRequired": {
+    "description": "Validation message for an empty OTP account name"
+  },
+  "secretKey": "密钥",
+  "@secretKey": {
+    "description": "Label for an OTP Base32 secret"
+  },
+  "secretKeyHelper": "请输入服务提供商给出的 Base32 密钥",
+  "@secretKeyHelper": {
+    "description": "Helper text for an OTP secret field"
+  },
+  "secretKeyRequired": "请输入密钥",
+  "@secretKeyRequired": {
+    "description": "Validation message for an empty OTP secret"
+  },
+  "secretKeyInvalid": "请输入有效的 Base32 密钥 (A-Z, 2-7)",
+  "@secretKeyInvalid": {
+    "description": "Validation message for an invalid OTP secret"
+  },
+  "secretKeyTooShort": "密钥太短，请检查是否完整",
+  "@secretKeyTooShort": {
+    "description": "Validation message for a short OTP secret"
+  },
+  "scanQrCode": "扫描二维码",
+  "@scanQrCode": {
+    "description": "Title and action for scanning an OTP QR code"
+  },
+  "duplicateOtpSecret": "该密钥已存在",
+  "@duplicateOtpSecret": {
+    "description": "Message shown when an OTP secret is already saved"
+  },
+  "invalidOtpCode": "无法生成验证码，请检查密钥",
+  "@invalidOtpCode": {
+    "description": "Message shown when an OTP code cannot be generated"
+  },
+  "otpLoadFailed": "无法加载 OTP 账户，请重试",
+  "@otpLoadFailed": {
+    "description": "Generic OTP account loading failure"
+  },
+  "otpAddFailed": "无法添加 OTP 账户，请重试",
+  "@otpAddFailed": {
+    "description": "Generic OTP account add failure"
+  },
+  "otpAdded": "OTP 账户已添加",
+  "@otpAdded": {
+    "description": "Success message after adding an OTP account"
+  },
+  "otpDeleteTitle": "删除 OTP 账户？",
+  "@otpDeleteTitle": {
+    "description": "Title of the OTP delete confirmation dialog"
+  },
+  "otpDeleteConfirmation": "确定删除“{label}”吗？",
+  "@otpDeleteConfirmation": {
+    "description": "OTP delete confirmation containing the original account label",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "example": "GitHub"
+      }
+    }
+  },
+  "otpDeleted": "已删除“{label}”",
+  "@otpDeleted": {
+    "description": "Success message containing the original deleted OTP label",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "example": "GitHub"
+      }
+    }
+  },
+  "otpDeleteFailed": "无法删除 OTP 账户，请重试",
+  "@otpDeleteFailed": {
+    "description": "Generic OTP account delete failure"
+  },
+  "copyOtpCode": "复制 OTP 验证码",
+  "@copyOtpCode": {
+    "description": "Tooltip for copying an OTP code"
+  },
+  "otpCodeCopied": "OTP 验证码已复制到剪贴板",
+  "@otpCodeCopied": {
+    "description": "Success message after copying an OTP code"
+  },
+  "otpCopyFailed": "无法复制 OTP 验证码，请重试",
+  "@otpCopyFailed": {
+    "description": "Generic OTP code copy failure"
+  },
+  "otpScanFailed": "无法扫描二维码，请重试",
+  "@otpScanFailed": {
+    "description": "Generic OTP QR scanning failure"
+  },
+  "unknownOtpAccount": "未知账户",
+  "@unknownOtpAccount": {
+    "description": "Fallback label for a missing OTP account"
+  },
+  "qrScanInstruction": "请将 OTP 二维码对准扫描框",
+  "@qrScanInstruction": {
+    "description": "Instruction displayed on the QR scanner"
+  },
+  "toggleTorch": "切换手电筒",
+  "@toggleTorch": {
+    "description": "Tooltip for the QR scanner torch control"
+  },
+  "switchCamera": "切换摄像头",
+  "@switchCamera": {
+    "description": "Tooltip for the QR scanner camera switch control"
+  },
+  "invalidOtpQrCode": "这不是有效的 OTP 二维码",
+  "@invalidOtpQrCode": {
+    "description": "Message for a non-OTP or malformed QR value"
+  },
+  "otpQrMissingSecret": "OTP 二维码中缺少密钥",
+  "@otpQrMissingSecret": {
+    "description": "Message for an OTP QR value without a secret"
+  },
+  "otpQrInvalidSecret": "OTP 二维码中的密钥无效",
+  "@otpQrInvalidSecret": {
+    "description": "Message for an OTP QR value whose secret is invalid after cleaning"
+  },
+  "processingQrCode": "正在处理二维码",
+  "@processingQrCode": {
+    "description": "Accessibility label while an OTP QR code is being processed"
+  },
+  "cameraPermissionRequired": "扫描二维码需要相机权限",
+  "@cameraPermissionRequired": {
+    "description": "Message shown when QR scanning camera permission is denied"
+  },
+  "cameraUnavailable": "相机不可用，请重试",
+  "@cameraUnavailable": {
+    "description": "Generic QR scanner camera error"
   }
 }

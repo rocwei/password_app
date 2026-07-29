@@ -470,13 +470,13 @@ abstract class AppLocalizations {
   /// **'正在删除本地密码库'**
   String get deletingLocalVault;
 
-  /// 主密码成功更改但生物识别无法重新启用时显示
+  /// Shown when the master password changed successfully but biometric unlock could not be re-enabled
   ///
   /// In zh, this message translates to:
   /// **'主密码已更改，请使用新密码；生物识别已关闭，请重新启用。'**
   String get masterPasswordChangedWithBiometricDisabled;
 
-  /// 主密码未更改且旧生物识别密钥无法恢复时显示
+  /// Shown when the master password was not changed and the previous biometric key could not be restored
   ///
   /// In zh, this message translates to:
   /// **'主密码未更改，请继续使用旧密码；生物识别已关闭，请重新启用。'**
@@ -949,6 +949,348 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'更新时间：{date}'**
   String updatedAt(String date);
+
+  /// Title of the password generator page
+  ///
+  /// In zh, this message translates to:
+  /// **'密码生成器'**
+  String get passwordGeneratorTitle;
+
+  /// Heading above the generated password
+  ///
+  /// In zh, this message translates to:
+  /// **'生成的密码'**
+  String get generatedPassword;
+
+  /// Prompt shown when no password character types are selected
+  ///
+  /// In zh, this message translates to:
+  /// **'请至少选择一种字符类型'**
+  String get generatePasswordPrompt;
+
+  /// Label before the generated password strength
+  ///
+  /// In zh, this message translates to:
+  /// **'强度：'**
+  String get passwordStrength;
+
+  /// Password strength when no password is available
+  ///
+  /// In zh, this message translates to:
+  /// **'无'**
+  String get passwordStrengthNone;
+
+  /// Weak password strength
+  ///
+  /// In zh, this message translates to:
+  /// **'弱'**
+  String get passwordStrengthWeak;
+
+  /// Medium password strength
+  ///
+  /// In zh, this message translates to:
+  /// **'中等'**
+  String get passwordStrengthMedium;
+
+  /// Strong password strength
+  ///
+  /// In zh, this message translates to:
+  /// **'强'**
+  String get passwordStrengthStrong;
+
+  /// Very strong password strength
+  ///
+  /// In zh, this message translates to:
+  /// **'非常强'**
+  String get passwordStrengthVeryStrong;
+
+  /// Heading for password generator settings
+  ///
+  /// In zh, this message translates to:
+  /// **'密码设置'**
+  String get passwordSettings;
+
+  /// Current generated password length
+  ///
+  /// In zh, this message translates to:
+  /// **'密码长度：{length}'**
+  String passwordLength(int length);
+
+  /// Password generator uppercase option
+  ///
+  /// In zh, this message translates to:
+  /// **'包含大写字母 (A-Z)'**
+  String get includeUppercaseLetters;
+
+  /// Password generator lowercase option
+  ///
+  /// In zh, this message translates to:
+  /// **'包含小写字母 (a-z)'**
+  String get includeLowercaseLetters;
+
+  /// Password generator number option
+  ///
+  /// In zh, this message translates to:
+  /// **'包含数字 (0-9)'**
+  String get includeNumbers;
+
+  /// Password generator special character option
+  ///
+  /// In zh, this message translates to:
+  /// **'包含特殊字符 (!@#\$%^&*)'**
+  String get includeSpecialCharacters;
+
+  /// Password generator similar character exclusion option
+  ///
+  /// In zh, this message translates to:
+  /// **'排除相似字符 (il1Lo0O)'**
+  String get excludeSimilarCharacters;
+
+  /// Action to generate another password
+  ///
+  /// In zh, this message translates to:
+  /// **'重新生成'**
+  String get regenerate;
+
+  /// Action to open the password form with the generated password
+  ///
+  /// In zh, this message translates to:
+  /// **'保存到密码库'**
+  String get saveToVault;
+
+  /// Success message after copying a generated password
+  ///
+  /// In zh, this message translates to:
+  /// **'密码已复制到剪贴板'**
+  String get passwordCopied;
+
+  /// Message shown when saving without a generated password
+  ///
+  /// In zh, this message translates to:
+  /// **'请先生成密码'**
+  String get generatePasswordFirst;
+
+  /// Title of the OTP page
+  ///
+  /// In zh, this message translates to:
+  /// **'一次性密码'**
+  String get oneTimePassword;
+
+  /// Accessibility label for the OTP refresh progress
+  ///
+  /// In zh, this message translates to:
+  /// **'OTP 刷新倒计时'**
+  String get otpRefreshCountdown;
+
+  /// Accessibility value for the OTP refresh countdown
+  ///
+  /// In zh, this message translates to:
+  /// **'剩余 {seconds} 秒'**
+  String secondsRemaining(int seconds);
+
+  /// OTP empty-state heading
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无 OTP 账户'**
+  String get noOtpAccounts;
+
+  /// OTP empty-state explanation
+  ///
+  /// In zh, this message translates to:
+  /// **'添加账户后即可生成一次性验证码'**
+  String get noOtpAccountsDescription;
+
+  /// Action and dialog title for adding an OTP account
+  ///
+  /// In zh, this message translates to:
+  /// **'添加 OTP'**
+  String get addOtp;
+
+  /// Label for the user-provided OTP account name
+  ///
+  /// In zh, this message translates to:
+  /// **'账户名称'**
+  String get accountName;
+
+  /// Validation message for an empty OTP account name
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入账户名称'**
+  String get accountNameRequired;
+
+  /// Label for an OTP Base32 secret
+  ///
+  /// In zh, this message translates to:
+  /// **'密钥'**
+  String get secretKey;
+
+  /// Helper text for an OTP secret field
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入服务提供商给出的 Base32 密钥'**
+  String get secretKeyHelper;
+
+  /// Validation message for an empty OTP secret
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入密钥'**
+  String get secretKeyRequired;
+
+  /// Validation message for an invalid OTP secret
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入有效的 Base32 密钥 (A-Z, 2-7)'**
+  String get secretKeyInvalid;
+
+  /// Validation message for a short OTP secret
+  ///
+  /// In zh, this message translates to:
+  /// **'密钥太短，请检查是否完整'**
+  String get secretKeyTooShort;
+
+  /// Title and action for scanning an OTP QR code
+  ///
+  /// In zh, this message translates to:
+  /// **'扫描二维码'**
+  String get scanQrCode;
+
+  /// Message shown when an OTP secret is already saved
+  ///
+  /// In zh, this message translates to:
+  /// **'该密钥已存在'**
+  String get duplicateOtpSecret;
+
+  /// Message shown when an OTP code cannot be generated
+  ///
+  /// In zh, this message translates to:
+  /// **'无法生成验证码，请检查密钥'**
+  String get invalidOtpCode;
+
+  /// Generic OTP account loading failure
+  ///
+  /// In zh, this message translates to:
+  /// **'无法加载 OTP 账户，请重试'**
+  String get otpLoadFailed;
+
+  /// Generic OTP account add failure
+  ///
+  /// In zh, this message translates to:
+  /// **'无法添加 OTP 账户，请重试'**
+  String get otpAddFailed;
+
+  /// Success message after adding an OTP account
+  ///
+  /// In zh, this message translates to:
+  /// **'OTP 账户已添加'**
+  String get otpAdded;
+
+  /// Title of the OTP delete confirmation dialog
+  ///
+  /// In zh, this message translates to:
+  /// **'删除 OTP 账户？'**
+  String get otpDeleteTitle;
+
+  /// OTP delete confirmation containing the original account label
+  ///
+  /// In zh, this message translates to:
+  /// **'确定删除“{label}”吗？'**
+  String otpDeleteConfirmation(String label);
+
+  /// Success message containing the original deleted OTP label
+  ///
+  /// In zh, this message translates to:
+  /// **'已删除“{label}”'**
+  String otpDeleted(String label);
+
+  /// Generic OTP account delete failure
+  ///
+  /// In zh, this message translates to:
+  /// **'无法删除 OTP 账户，请重试'**
+  String get otpDeleteFailed;
+
+  /// Tooltip for copying an OTP code
+  ///
+  /// In zh, this message translates to:
+  /// **'复制 OTP 验证码'**
+  String get copyOtpCode;
+
+  /// Success message after copying an OTP code
+  ///
+  /// In zh, this message translates to:
+  /// **'OTP 验证码已复制到剪贴板'**
+  String get otpCodeCopied;
+
+  /// Generic OTP code copy failure
+  ///
+  /// In zh, this message translates to:
+  /// **'无法复制 OTP 验证码，请重试'**
+  String get otpCopyFailed;
+
+  /// Generic OTP QR scanning failure
+  ///
+  /// In zh, this message translates to:
+  /// **'无法扫描二维码，请重试'**
+  String get otpScanFailed;
+
+  /// Fallback label for a missing OTP account
+  ///
+  /// In zh, this message translates to:
+  /// **'未知账户'**
+  String get unknownOtpAccount;
+
+  /// Instruction displayed on the QR scanner
+  ///
+  /// In zh, this message translates to:
+  /// **'请将 OTP 二维码对准扫描框'**
+  String get qrScanInstruction;
+
+  /// Tooltip for the QR scanner torch control
+  ///
+  /// In zh, this message translates to:
+  /// **'切换手电筒'**
+  String get toggleTorch;
+
+  /// Tooltip for the QR scanner camera switch control
+  ///
+  /// In zh, this message translates to:
+  /// **'切换摄像头'**
+  String get switchCamera;
+
+  /// Message for a non-OTP or malformed QR value
+  ///
+  /// In zh, this message translates to:
+  /// **'这不是有效的 OTP 二维码'**
+  String get invalidOtpQrCode;
+
+  /// Message for an OTP QR value without a secret
+  ///
+  /// In zh, this message translates to:
+  /// **'OTP 二维码中缺少密钥'**
+  String get otpQrMissingSecret;
+
+  /// Message for an OTP QR value whose secret is invalid after cleaning
+  ///
+  /// In zh, this message translates to:
+  /// **'OTP 二维码中的密钥无效'**
+  String get otpQrInvalidSecret;
+
+  /// Accessibility label while an OTP QR code is being processed
+  ///
+  /// In zh, this message translates to:
+  /// **'正在处理二维码'**
+  String get processingQrCode;
+
+  /// Message shown when QR scanning camera permission is denied
+  ///
+  /// In zh, this message translates to:
+  /// **'扫描二维码需要相机权限'**
+  String get cameraPermissionRequired;
+
+  /// Generic QR scanner camera error
+  ///
+  /// In zh, this message translates to:
+  /// **'相机不可用，请重试'**
+  String get cameraUnavailable;
 }
 
 class _AppLocalizationsDelegate

@@ -4,10 +4,19 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'encryption_helper.dart';
 import 'auth_helper.dart';
 
+enum OtpStorageOperation { load, save, delete }
+
+class OtpStorageException implements Exception {
+  const OtpStorageException(this.operation);
+
+  final OtpStorageOperation operation;
+}
+
 class OtpToken {
   final String id;
   final String label;
-  final String secret; // 加密后的密钥
+  // Current OTP page storage keeps the raw Base32 value unchanged.
+  final String secret;
 
   OtpToken({required this.id, required this.label, required this.secret});
 
@@ -68,7 +77,7 @@ class OtpHelper {
       if (kDebugMode) {
         print('获取令牌出错: $e');
       }
-      return [];
+      throw const OtpStorageException(OtpStorageOperation.load);
     }
   }
 
@@ -123,6 +132,7 @@ class OtpHelper {
       if (kDebugMode) {
         print('保存令牌出错: $e');
       }
+      throw const OtpStorageException(OtpStorageOperation.save);
     }
   }
 
@@ -168,6 +178,7 @@ class OtpHelper {
       if (kDebugMode) {
         print('删除令牌出错: $e');
       }
+      throw const OtpStorageException(OtpStorageOperation.delete);
     }
   }
 

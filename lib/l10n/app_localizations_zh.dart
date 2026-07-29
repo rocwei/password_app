@@ -488,4 +488,183 @@ class AppLocalizationsZh extends AppLocalizations {
   String updatedAt(String date) {
     return '更新时间：$date';
   }
+
+  @override
+  String get passwordGeneratorTitle => '密码生成器';
+
+  @override
+  String get generatedPassword => '生成的密码';
+
+  @override
+  String get generatePasswordPrompt => '请至少选择一种字符类型';
+
+  @override
+  String get passwordStrength => '强度：';
+
+  @override
+  String get passwordStrengthNone => '无';
+
+  @override
+  String get passwordStrengthWeak => '弱';
+
+  @override
+  String get passwordStrengthMedium => '中等';
+
+  @override
+  String get passwordStrengthStrong => '强';
+
+  @override
+  String get passwordStrengthVeryStrong => '非常强';
+
+  @override
+  String get passwordSettings => '密码设置';
+
+  @override
+  String passwordLength(int length) {
+    return '密码长度：$length';
+  }
+
+  @override
+  String get includeUppercaseLetters => '包含大写字母 (A-Z)';
+
+  @override
+  String get includeLowercaseLetters => '包含小写字母 (a-z)';
+
+  @override
+  String get includeNumbers => '包含数字 (0-9)';
+
+  @override
+  String get includeSpecialCharacters => '包含特殊字符 (!@#\$%^&*)';
+
+  @override
+  String get excludeSimilarCharacters => '排除相似字符 (il1Lo0O)';
+
+  @override
+  String get regenerate => '重新生成';
+
+  @override
+  String get saveToVault => '保存到密码库';
+
+  @override
+  String get passwordCopied => '密码已复制到剪贴板';
+
+  @override
+  String get generatePasswordFirst => '请先生成密码';
+
+  @override
+  String get oneTimePassword => '一次性密码';
+
+  @override
+  String get otpRefreshCountdown => 'OTP 刷新倒计时';
+
+  @override
+  String secondsRemaining(int seconds) {
+    return '剩余 $seconds 秒';
+  }
+
+  @override
+  String get noOtpAccounts => '暂无 OTP 账户';
+
+  @override
+  String get noOtpAccountsDescription => '添加账户后即可生成一次性验证码';
+
+  @override
+  String get addOtp => '添加 OTP';
+
+  @override
+  String get accountName => '账户名称';
+
+  @override
+  String get accountNameRequired => '请输入账户名称';
+
+  @override
+  String get secretKey => '密钥';
+
+  @override
+  String get secretKeyHelper => '请输入服务提供商给出的 Base32 密钥';
+
+  @override
+  String get secretKeyRequired => '请输入密钥';
+
+  @override
+  String get secretKeyInvalid => '请输入有效的 Base32 密钥 (A-Z, 2-7)';
+
+  @override
+  String get secretKeyTooShort => '密钥太短，请检查是否完整';
+
+  @override
+  String get scanQrCode => '扫描二维码';
+
+  @override
+  String get duplicateOtpSecret => '该密钥已存在';
+
+  @override
+  String get invalidOtpCode => '无法生成验证码，请检查密钥';
+
+  @override
+  String get otpLoadFailed => '无法加载 OTP 账户，请重试';
+
+  @override
+  String get otpAddFailed => '无法添加 OTP 账户，请重试';
+
+  @override
+  String get otpAdded => 'OTP 账户已添加';
+
+  @override
+  String get otpDeleteTitle => '删除 OTP 账户？';
+
+  @override
+  String otpDeleteConfirmation(String label) {
+    return '确定删除“$label”吗？';
+  }
+
+  @override
+  String otpDeleted(String label) {
+    return '已删除“$label”';
+  }
+
+  @override
+  String get otpDeleteFailed => '无法删除 OTP 账户，请重试';
+
+  @override
+  String get copyOtpCode => '复制 OTP 验证码';
+
+  @override
+  String get otpCodeCopied => 'OTP 验证码已复制到剪贴板';
+
+  @override
+  String get otpCopyFailed => '无法复制 OTP 验证码，请重试';
+
+  @override
+  String get otpScanFailed => '无法扫描二维码，请重试';
+
+  @override
+  String get unknownOtpAccount => '未知账户';
+
+  @override
+  String get qrScanInstruction => '请将 OTP 二维码对准扫描框';
+
+  @override
+  String get toggleTorch => '切换手电筒';
+
+  @override
+  String get switchCamera => '切换摄像头';
+
+  @override
+  String get invalidOtpQrCode => '这不是有效的 OTP 二维码';
+
+  @override
+  String get otpQrMissingSecret => 'OTP 二维码中缺少密钥';
+
+  @override
+  String get otpQrInvalidSecret => 'OTP 二维码中的密钥无效';
+
+  @override
+  String get processingQrCode => '正在处理二维码';
+
+  @override
+  String get cameraPermissionRequired => '扫描二维码需要相机权限';
+
+  @override
+  String get cameraUnavailable => '相机不可用，请重试';
 }

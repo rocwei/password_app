@@ -1,42 +1,75 @@
-// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+// ignore_for_file: deprecated_member_use
 
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:otp/otp.dart';
+
 import '../helpers/otp_helper.dart';
-import 'dart:math' as math;
+import '../l10n/l10n.dart';
 import 'qr_scanner_page.dart';
 
+typedef OtpTokenLoader = Future<List<OtpToken>> Function();
+typedef OtpTokenSaver = Future<void> Function(OtpToken token);
+typedef OtpTokenDeleter = Future<void> Function(String id);
+typedef OtpScanner =
+    Future<Map<String, String>?> Function(BuildContext context);
+
+enum OtpCodeError { emptySecret, invalidSecret }
+
+class OtpCodeResult {
+  const OtpCodeResult.success(this.code) : error = null;
+  const OtpCodeResult.failure(this.error) : code = null;
+
+  final String? code;
+  final OtpCodeError? error;
+}
+
 class OtpPage extends StatefulWidget {
-  const OtpPage({super.key});
+  const OtpPage({
+    super.key,
+    this.loadTokens,
+    this.saveToken,
+    this.deleteToken,
+    this.scanQrCode,
+  });
+
+  final OtpTokenLoader? loadTokens;
+  final OtpTokenSaver? saveToken;
+  final OtpTokenDeleter? deleteToken;
+  final OtpScanner? scanQrCode;
 
   @override
   State<OtpPage> createState() => _OtpPageState();
+}
+
+class _OtpItem {
+  const _OtpItem({required this.token, required this.code});
+
+  final OtpToken token;
+  final String code;
+
+  _OtpItem withCode(String value) => _OtpItem(token: token, code: value);
 }
 
 class _OtpPageState extends State<OtpPage> {
   final _formKey = GlobalKey<FormState>();
   final _labelController = TextEditingController();
   final _secretController = TextEditingController();
-  List<Map<String, dynamic>> _otpList = [];
-  late Timer _timer;
+  List<_OtpItem> _otpList = [];
+  late final Timer _timer;
   int _secondsRemaining = 30;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-
-    // 使用Future.microtask来确保在构建完成后加载数据
-    Future.microtask(() {
-      if (mounted) {
-        _loadOtpTokens();
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadOtpTokens();
     });
-
     _startTimer();
   }
 
@@ -48,72 +81,44 @@ class _OtpPageState extends State<OtpPage> {
     super.dispose();
   }
 
-  // 加载保存的OTP令牌
   Future<void> _loadOtpTokens() async {
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
 
     try {
-      final tokens = await OtpHelper.getAllTokens();
-
-      if (!mounted) return; // 检查widget是否仍然挂载
-
+      final tokens = await (widget.loadTokens ?? OtpHelper.getAllTokens)();
+      if (!mounted) return;
       setState(() {
         _otpList = tokens.map((token) {
-          // 添加额外的错误处理，确保即使生成代码失败也不会闪退
-          String code;
-          try {
-            code = _generateOtpCode(token.secret);
-            if (code == 'ERROR') {
-              code = '------'; // 显示占位符而不是错误
-            }
-          } catch (e) {
-            code = '------'; // 显示占位符而不是错误
-          }
-
-          return {
-            'id': token.id,
-            'label': token.label,
-            'secret': token.secret,
-            'code': code,
-          };
+          final result = generateOtpCode(token.secret);
+          return _OtpItem(token: token, code: result.code ?? '------');
         }).toList();
         _isLoading = false;
       });
-    } catch (e) {
-      if (!mounted) return; // 检查widget是否仍然挂载
-
+    } catch (_) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _otpList = []; // 确保列表为空但不为null
+        _otpList = [];
       });
-
-      // 延迟显示错误信息，避免在构建过程中触发
-      Future.microtask(() {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('加载OTP令牌失败: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      });
+      _showMessage(context.l10n.otpLoadFailed, isError: true);
     }
   }
 
   void _startTimer() {
-    // 计算当前时间戳除以30的余数，确定初始剩余秒数
-    final int now = DateTime.now().millisecondsSinceEpoch;
+    final now = DateTime.now().millisecondsSinceEpoch;
     _secondsRemaining = 30 - ((now ~/ 1000) % 30);
 
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
       setState(() {
         if (_secondsRemaining <= 1) {
           _secondsRemaining = 30;
-          // 当计时器归零时，更新所有OTP码
-          _updateAllOtpCodes();
+          _otpList = _otpList.map((item) {
+            final result = generateOtpCode(item.token.secret);
+            return item.withCode(result.code ?? '------');
+          }).toList();
         } else {
           _secondsRemaining--;
         }
@@ -121,560 +126,420 @@ class _OtpPageState extends State<OtpPage> {
     });
   }
 
-  void _updateAllOtpCodes() {
-    // 先测试一个已知有效的密钥
-    _testOtpGeneration();
-
-    for (int i = 0; i < _otpList.length; i++) {
-      final String newCode = _generateOtpCode(_otpList[i]['secret']);
-
-      setState(() {
-        _otpList[i]['code'] = newCode;
-      });
-    }
+  String _generateId() {
+    final random = math.Random();
+    return '${DateTime.now().millisecondsSinceEpoch}${random.nextInt(1000)}';
   }
 
-  // 测试OTP生成函数
-  void _testOtpGeneration() {
+  String cleanOtpSecret(String secret) {
+    if (secret.isEmpty) return '';
+    var cleaned = secret.replaceAll(RegExp(r'\s|-|='), '');
+    cleaned = cleaned.replaceAll(RegExp(r'[^A-Za-z2-7]'), '').toUpperCase();
+    return cleaned;
+  }
+
+  OtpCodeResult generateOtpCode(String secret) {
+    if (secret.isEmpty) {
+      return const OtpCodeResult.failure(OtpCodeError.emptySecret);
+    }
+
+    final cleanedSecret = cleanOtpSecret(secret);
+    if (cleanedSecret.isEmpty) {
+      return const OtpCodeResult.failure(OtpCodeError.invalidSecret);
+    }
+
     try {
-      // 使用一个已知有效的测试密钥
-      final testSecret = "JBSWY3DPEHPK3PXP";
-
-      // 当前时间戳(秒)
-      final currentTimestamp = DateTime.now().millisecondsSinceEpoch;
-
-      // 生成验证码
-      OTP.generateTOTPCodeString(
-        testSecret,
-        currentTimestamp,
+      final code = OTP.generateTOTPCodeString(
+        cleanedSecret,
+        DateTime.now().millisecondsSinceEpoch,
         length: 6,
         interval: 30,
         algorithm: Algorithm.SHA1,
         isGoogle: true,
       );
-    } catch (e) {
-      if (kDebugMode) {
-        print('测试OTP生成失败: $e');
-      }
+      return OtpCodeResult.success(code);
+    } catch (_) {
+      return const OtpCodeResult.failure(OtpCodeError.invalidSecret);
     }
   }
 
-  // 生成随机ID
-  String _generateId() {
-    final random = math.Random();
-    return DateTime.now().millisecondsSinceEpoch.toString() +
-        random.nextInt(1000).toString();
-  }
-
   Future<void> _addOtp() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        // 清理密钥
-        final cleanedSecret = _cleanSecret(_secretController.text);
-        bool isDuplicate = _otpList.any(
-          (otp) => otp['secret'] == cleanedSecret,
-        );
-        if (isDuplicate) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('该密钥已存在'), backgroundColor: Colors.orange),
-          );
-          return;
-        }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-        // 生成OTP代码测试有效性
-        final testCode = _generateOtpCode(cleanedSecret);
-        if (testCode == 'ERROR') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('无法生成验证码，密钥可能无效'),
-              backgroundColor: Colors.red,
-            ),
-          );
-          return;
-        }
+    final cleanedSecret = cleanOtpSecret(_secretController.text);
+    final duplicate = _otpList.any(
+      (item) => item.token.secret == cleanedSecret,
+    );
+    if (duplicate) {
+      _showMessage(context.l10n.duplicateOtpSecret, isWarning: true);
+      return;
+    }
 
-        final id = _generateId();
+    final codeResult = generateOtpCode(cleanedSecret);
+    if (codeResult.error != null) {
+      _showMessage(context.l10n.invalidOtpCode, isError: true);
+      return;
+    }
 
-        // 创建新令牌
-        final newToken = OtpToken(
-          id: id,
-          label: _labelController.text,
-          secret: cleanedSecret,
-        );
+    final token = OtpToken(
+      id: _generateId(),
+      label: _labelController.text,
+      secret: cleanedSecret,
+    );
 
-        // 保存到安全存储
-        await OtpHelper.saveToken(newToken);
-
-        // 更新UI
-        setState(() {
-          _otpList.add(<String, String>{
-            'id': id,
-            'label': _labelController.text,
-            'secret': cleanedSecret,
-            'code': testCode,
-          });
-          _labelController.clear();
-          _secretController.clear();
-        });
-
-        Navigator.of(context).pop();
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('添加OTP令牌失败: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
+    try {
+      await (widget.saveToken ?? OtpHelper.saveToken)(token);
+      if (!mounted) return;
+      setState(() {
+        _otpList.add(_OtpItem(token: token, code: codeResult.code!));
+        _labelController.clear();
+        _secretController.clear();
+      });
+      Navigator.of(context).pop();
+      _showMessage(context.l10n.otpAdded);
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage(context.l10n.otpAddFailed, isError: true);
     }
   }
 
   Future<void> _deleteOtp(String id) async {
-    // 获取令牌名称用于显示在确认对话框中
-    final String tokenName = _otpList.firstWhere(
-      (otp) => otp['id'] == id,
-      orElse: () => <String, String>{'label': '未知令牌'},
-    )['label'];
+    final token = _otpList
+        .map((item) => item.token)
+        .where((item) => item.id == id)
+        .firstOrNull;
+    final tokenName = token?.label ?? context.l10n.unknownOtpAccount;
 
-    // 显示确认对话框
-    final bool confirmed =
-        await showDialog(
+    final confirmed =
+        await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-            title: Text('删除确认'),
-            content: Text('确定要删除"$tokenName"的OTP令牌吗？\n\n此操作无法撤销。'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(
-                  '取消',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+          builder: (dialogContext) {
+            final l10n = dialogContext.l10n;
+            return AlertDialog(
+              title: Text(l10n.otpDeleteTitle),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.otpDeleteConfirmation(tokenName)),
+                  const SizedBox(height: 16),
+                  Text(l10n.actionCannotBeUndone),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: Text(l10n.cancel),
                 ),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: Text('删除'),
-              ),
-            ],
-          ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  child: Text(l10n.delete),
+                ),
+              ],
+            );
+          },
         ) ??
-        false; // 如果对话框被取消，返回false
-
-    // 如果用户确认删除，执行删除操作
-    if (confirmed) {
-      try {
-        // 从安全存储中删除
-        await OtpHelper.deleteToken(id);
-
-        // 更新UI
-        setState(() {
-          _otpList.removeWhere((otp) => otp['id'] == id);
-        });
-
-        // 显示成功消息
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('已删除"$tokenName"的OTP令牌'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('删除OTP令牌失败: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  // 清理密钥，去除空格和特殊字符
-  String _cleanSecret(String secret) {
-    if (secret.isEmpty) {
-      return '';
-    }
-
-    // 移除所有空格和可能的分隔符
-    String cleaned = secret.replaceAll(RegExp(r'\s|-|='), '');
-
-    // 只保留有效的Base32字符：A-Z和2-7
-    cleaned = cleaned.replaceAll(RegExp(r'[^A-Za-z2-7]'), '').toUpperCase();
-
-    // 打印清理前后的密钥（不显示全部，防止泄露）
-    if (cleaned.length > 4) {
-      if (kDebugMode) {
-        print(
-          '密钥清理: ${secret.substring(0, 2)}*** => ${cleaned.substring(0, 2)}***',
-        );
-      }
-    }
-
-    return cleaned;
-  }
-
-  // 生成OTP代码
-  String _generateOtpCode(String secret) {
-    if (secret.isEmpty) {
-      return 'ERROR';
-    }
+        false;
+    if (!mounted || !confirmed) return;
 
     try {
-      // 确保密钥是有效的Base32格式
-      final cleanedSecret = _cleanSecret(secret);
+      await (widget.deleteToken ?? OtpHelper.deleteToken)(id);
+      if (!mounted) return;
+      setState(() => _otpList.removeWhere((item) => item.token.id == id));
+      _showMessage(context.l10n.otpDeleted(tokenName));
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage(context.l10n.otpDeleteFailed, isError: true);
+    }
+  }
 
-      // 如果清理后的密钥为空，则返回错误
-      if (cleanedSecret.isEmpty) {
-        return 'ERROR';
-      }
-      // 使用原始密钥和两种处理方法尝试生成
-      try {
-        // 1. 尝试直接使用清理后的密钥
-        // 获取当前时间戳（重要：不能缓存，每次都要重新获取）
-        int currentTimestamp = DateTime.now().millisecondsSinceEpoch;
-
-        String code = OTP.generateTOTPCodeString(
-          cleanedSecret,
-          currentTimestamp, // 使用最新的时间戳
-          length: 6,
-          interval: 30,
-          algorithm: Algorithm.SHA1,
-          isGoogle: true,
-        );
-
-        return code;
-      } catch (e) {
-        return 'ERROR';
-      }
-    } catch (e) {
-      return 'ERROR';
+  Future<void> _copyOtpCode(String code) async {
+    try {
+      await Clipboard.setData(ClipboardData(text: code));
+      if (!mounted) return;
+      _showMessage(context.l10n.otpCodeCopied);
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage(context.l10n.otpCopyFailed, isError: true);
     }
   }
 
   void _showAddOtpDialog() {
-    showDialog(
+    final l10n = context.l10n;
+    showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          '添加新的OTP令牌',
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-        ),
-        content: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _labelController,
-                decoration: InputDecoration(
-                  labelText: '账户名称',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '请输入账户名称';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _secretController,
-                decoration: InputDecoration(
-                  labelText: '密钥',
-                  border: OutlineInputBorder(),
-                  helperText: '输入服务提供商给的密钥',
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      Icons.qr_code_scanner,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    onPressed: () async {
-                      Navigator.of(context).pop(); // 关闭当前对话框
-                      await _scanQrCode();
-                    },
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.addOtp),
+        content: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _labelController,
+                  decoration: InputDecoration(
+                    labelText: l10n.accountName,
+                    border: const OutlineInputBorder(),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n.accountNameRequired;
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '请输入密钥';
-                  }
-                  // 基础验证，确保是有效的Base32字符
-                  final cleanedValue = _cleanSecret(value);
-                  if (cleanedValue.isEmpty) {
-                    return '请输入有效的密钥（A-Z, 2-7）';
-                  }
-
-                  // 长度验证，Base32密钥通常至少有16个字符
-                  if (cleanedValue.length < 8) {
-                    return '密钥太短，请检查是否完整';
-                  }
-
-                  return null;
-                },
-              ),
-            ],
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _secretController,
+                  decoration: InputDecoration(
+                    labelText: l10n.secretKey,
+                    border: const OutlineInputBorder(),
+                    helperText: l10n.secretKeyHelper,
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.qr_code_scanner),
+                      tooltip: l10n.scanQrCode,
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        _scanQrCode();
+                      },
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n.secretKeyRequired;
+                    }
+                    final cleanedValue = cleanOtpSecret(value);
+                    if (cleanedValue.isEmpty) return l10n.secretKeyInvalid;
+                    if (cleanedValue.length < 8) return l10n.secretKeyTooShort;
+                    return null;
+                  },
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              '取消',
-              style: TextStyle(color: Theme.of(context).colorScheme.primary),
-            ),
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.cancel),
           ),
-          ElevatedButton(onPressed: _addOtp, child: Text('添加')),
+          ElevatedButton(onPressed: _addOtp, child: Text(l10n.addOtp)),
         ],
       ),
     );
   }
 
+  Future<Map<String, String>?> _openQrScanner(BuildContext context) {
+    return Navigator.of(context).push<Map<String, String>>(
+      MaterialPageRoute(builder: (_) => const QrScannerPage()),
+    );
+  }
+
   Future<void> _scanQrCode() async {
     try {
-      final result = await Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (context) => const QrScannerPage()));
+      final result = await (widget.scanQrCode ?? _openQrScanner)(context);
+      if (!mounted || result == null) return;
 
-      if (result != null && result is Map<dynamic, dynamic>) {
-        final String label = result['label']?.toString() ?? '';
-        final String secret = result['secret']?.toString() ?? '';
-
-        setState(() {
-          _labelController.text = label;
-          _secretController.text = secret;
-        });
-
-        // 重新打开添加对话框
-        _showAddOtpDialog();
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('扫描二维码出错: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _labelController.text = result['label'] ?? '';
+      _secretController.text = result['secret'] ?? '';
+      _showAddOtpDialog();
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage(context.l10n.otpScanFailed, isError: true);
     }
+  }
+
+  void _showMessage(
+    String message, {
+    bool isError = false,
+    bool isWarning = false,
+  }) {
+    if (!mounted) return;
+    final colorScheme = Theme.of(context).colorScheme;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError
+            ? colorScheme.error
+            : isWarning
+            ? Colors.orange
+            : colorScheme.primary,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'OTP双因素认证',
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-        ),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: Text(l10n.oneTimePassword), elevation: 0),
       body: Column(
         children: [
-          // 添加30秒倒计时进度条
-          LinearProgressIndicator(
-            value: _secondsRemaining / 30,
-            color: _secondsRemaining <= 5
-                ? Colors.red
-                : Theme.of(context).colorScheme.primary,
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.primary.withOpacity(0.2),
-            minHeight: 4,
+          Semantics(
+            label: l10n.otpRefreshCountdown,
+            value: l10n.secondsRemaining(_secondsRemaining),
+            child: LinearProgressIndicator(
+              value: _secondsRemaining / 30,
+              color: _secondsRemaining <= 5
+                  ? Colors.red
+                  : Theme.of(context).colorScheme.primary,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.primary.withOpacity(0.2),
+              minHeight: 4,
+            ),
           ),
           Expanded(
             child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : _otpList.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.security,
-                          size: 72,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primary.withOpacity(0.5),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          '暂无OTP令牌',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '点击下方按钮添加双因素认证令牌',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : SlidableAutoCloseBehavior(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _otpList.length,
-                      itemBuilder: (context, index) {
-                        final otp = _otpList[index];
-                        return Slidable(
-                          key: Key(otp['id']),
-                          endActionPane: ActionPane(
-                            motion: const DrawerMotion(),
-                            extentRatio: 0.25, // 删除按钮占1/4
-                            children: [
-                              CustomSlidableAction(
-                                onPressed: (context) async {
-                                  await _deleteOtp(otp['id']);
-                                },
-                                // backgroundColor: Colors.red,
-                                foregroundColor: Colors.white,
-                                child: Container(
-                                  height: double.infinity,
-                                  margin: const EdgeInsets.only(
-                                    top: 0,
-                                    bottom: 16,
-                                    left: 0,
-                                    right: 0,
-                                  ),
-                                  padding: const EdgeInsets.only(
-                                    top: 0,
-                                    bottom: 0,
-                                    left: 10,
-                                    right: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.delete,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        '删除',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          child: Card(
-                            color: Theme.of(context).colorScheme.surface,
-                            elevation: 2,
-                            margin: const EdgeInsets.only(bottom: 16),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // 左侧标签
-                                  Expanded(
-                                    child: Text(
-                                      otp['label'],
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurface,
-                                      ),
-                                    ),
-                                  ),
-                                  // 右侧验证码和复制按钮
-                                  Row(
-                                    children: [
-                                      Text(
-                                        otp['code'],
-                                        style: TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 2,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.copy,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                        ),
-                                        onPressed: () {
-                                          Clipboard.setData(
-                                            ClipboardData(text: otp['code']),
-                                          );
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text('验证码已复制到剪贴板'),
-                                              backgroundColor: Theme.of(
-                                                context,
-                                              ).colorScheme.primary,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                ? _buildEmptyState(context)
+                : _buildOtpList(context),
           ),
         ],
       ),
       floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          FloatingActionButton(
+          FloatingActionButton.small(
             heroTag: 'scan_qr',
             onPressed: _scanQrCode,
-            mini: true,
+            tooltip: l10n.scanQrCode,
             backgroundColor: Theme.of(context).colorScheme.secondary,
             foregroundColor: Theme.of(context).colorScheme.onSecondary,
-            child: Icon(Icons.qr_code_scanner),
+            child: const Icon(Icons.qr_code_scanner),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'add_otp',
+            onPressed: _showAddOtpDialog,
+            icon: const Icon(Icons.add),
+            label: Text(l10n.addOtp),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    final l10n = context.l10n;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.security,
+              size: 72,
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.noOtpAccounts,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.noOtpAccountsDescription,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOtpList(BuildContext context) {
+    final l10n = context.l10n;
+    return SlidableAutoCloseBehavior(
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _otpList.length,
+        itemBuilder: (context, index) {
+          final item = _otpList[index];
+          return Slidable(
+            key: ValueKey(item.token.id),
+            endActionPane: ActionPane(
+              motion: const DrawerMotion(),
+              extentRatio: 0.25,
+              children: [
+                CustomSlidableAction(
+                  onPressed: (_) => _deleteOtp(item.token.id),
+                  foregroundColor: Colors.white,
+                  child: Container(
+                    height: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.delete, color: Colors.white, size: 24),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.delete,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            child: Card(
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.token.label,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      item.code,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy),
+                      tooltip: l10n.copyOtpCode,
+                      color: Theme.of(context).colorScheme.primary,
+                      onPressed: () => _copyOtpCode(item.code),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
