@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../helpers/auth_helper.dart';
+import '../helpers/language_model.dart';
 import '../helpers/local_vault_deletion_service.dart';
 import '../helpers/theme_settings.dart';
+import '../l10n/l10n.dart';
 import '../widgets/delete_local_vault_dialog.dart';
 import 'change_master_password_page.dart';
 import 'backup_restore_page.dart';
@@ -128,13 +130,26 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  Future<void> _setLanguageMode(AppLanguageMode mode) async {
+    try {
+      await context.read<LanguageModel>().setMode(mode);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.languageChangeFailed)),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeModel = Provider.of<ThemeModel>(context);
+    final languageModel = context.watch<LanguageModel>();
     final errorColor = Theme.of(context).colorScheme.error;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('设置')),
+      appBar: AppBar(title: Text(context.l10n.settings)),
       body: ListView(
         children: [
           // 用户信息
@@ -276,7 +291,42 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const Divider(height: 1),
 
-          // 关于
+          Padding(
+            key: const ValueKey('language-section-title'),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              context.l10n.language,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SegmentedButton<AppLanguageMode>(
+                segments: [
+                  ButtonSegment(
+                    value: AppLanguageMode.system,
+                    label: Text(context.l10n.languageSystem),
+                  ),
+                  ButtonSegment(
+                    value: AppLanguageMode.zh,
+                    label: Text(context.l10n.languageChinese),
+                  ),
+                  ButtonSegment(
+                    value: AppLanguageMode.en,
+                    label: Text(context.l10n.languageEnglish),
+                  ),
+                ],
+                selected: {languageModel.mode},
+                onSelectionChanged: (selection) {
+                  _setLanguageMode(selection.first);
+                },
+              ),
+            ),
+          ),
+          const Divider(height: 1),
+
           // 主题设置
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -294,9 +344,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('使用系统 Material You 颜色'),
+                      const Expanded(child: Text('使用系统 Material You 颜色')),
                       Switch(
                         value: themeModel.useSystem,
                         onChanged: (v) async =>

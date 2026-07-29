@@ -25,4 +25,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageEnglish => 'English';
+
+  @override
+  String get languageChangeFailed =>
+      'Could not save language setting. Please try again.';
 }

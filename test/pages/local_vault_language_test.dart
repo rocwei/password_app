@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:password_manager/helpers/language_model.dart';
 import 'package:password_manager/helpers/local_vault_deletion_service.dart';
 import 'package:password_manager/helpers/theme_settings.dart';
+import 'package:password_manager/l10n/app_localizations.dart';
 import 'package:password_manager/pages/login_page.dart';
 import 'package:password_manager/pages/register_page.dart';
 import 'package:password_manager/pages/secure_storage_cleanup_page.dart';
@@ -22,9 +24,16 @@ void main() {
     Future<LocalVaultDeletionResult> Function(String)? deleteLocalVault,
     Future<void> Function()? cleanupSecureStorage,
   }) {
-    return ChangeNotifierProvider(
-      create: (_) => ThemeModel(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeModel()),
+        ChangeNotifierProvider(
+          create: (_) => LanguageModel(writeMode: (_) async {}),
+        ),
+      ],
       child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: ThemeData(
           colorScheme: const ColorScheme.light(error: dangerColor),
         ),
@@ -102,13 +111,21 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> scrollToLockButton(WidgetTester tester) async {
+    await tester.scrollUntilVisible(
+      find.text('锁定密码库'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('设置页显示本地密码库操作且不再显示登出', (tester) async {
     await tester.pumpWidget(buildSettingsPage());
     await tester.pumpAndSettle();
     await scrollToDangerZone(tester);
 
     expect(find.text('删除本地密码库'), findsOneWidget);
-    expect(find.text('锁定密码库'), findsOneWidget);
     expect(find.text('登出'), findsNothing);
 
     final deleteTile = tester.widget<ListTile>(
@@ -120,6 +137,9 @@ void main() {
     expect(deleteIcon.icon, Icons.delete_forever);
     expect(deleteIcon.color, dangerColor);
     expect(deleteTitle.style?.color, dangerColor);
+
+    await scrollToLockButton(tester);
+    expect(find.text('锁定密码库'), findsOneWidget);
   });
 
   testWidgets('点击删除本地密码库打开主密码验证步骤', (tester) async {
@@ -141,7 +161,7 @@ void main() {
   testWidgets('锁定密码库使用本地密码库文案', (tester) async {
     await tester.pumpWidget(buildSettingsPage());
     await tester.pumpAndSettle();
-    await scrollToDangerZone(tester);
+    await scrollToLockButton(tester);
 
     await tester.tap(find.text('锁定密码库'));
     await tester.pumpAndSettle();

@@ -6,35 +6,46 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'helpers/auth_helper.dart';
-import 'helpers/theme_settings.dart';
 import 'helpers/file_intent_helper.dart';
+import 'helpers/language_model.dart';
+import 'helpers/theme_settings.dart';
+import 'l10n/app_localizations.dart';
+import 'l10n/l10n.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
 import 'pages/secure_storage_cleanup_page.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 初始化文件 Intent 监听，用于接收外部应用传入的 .passbackup 文件
   FileIntentHelper().init();
 
+  final languageModel = LanguageModel();
+  await languageModel.load();
+
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeModel()..load(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeModel()..load()),
+        ChangeNotifierProvider.value(value: languageModel),
+      ],
       child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.home = const SplashScreen()});
+
+  final Widget home;
 
   @override
   Widget build(BuildContext context) {
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-        return Consumer<ThemeModel>(
-          builder: (context, model, child) {
+        return Consumer2<ThemeModel, LanguageModel>(
+          builder: (context, model, languageModel, child) {
             // 如果启用系统 Material You 且动态色可用，则使用系统配色
             if (model.useSystem &&
                 (lightDynamic != null || darkDynamic != null)) {
@@ -52,8 +63,8 @@ class MyApp extends StatelessWidget {
                     brightness: Brightness.dark,
                   );
 
-              return MaterialApp(
-                title: '密盾安存',
+              return _buildMaterialApp(
+                languageModel: languageModel,
                 theme: ThemeData(
                   colorScheme: lightScheme,
                   useMaterial3: true,
@@ -113,7 +124,6 @@ class MyApp extends StatelessWidget {
                   ),
                 ),
                 themeMode: ThemeMode.system,
-                home: const SplashScreen(),
               );
             } else {
               // 使用自定义主题方案
@@ -182,15 +192,34 @@ class MyApp extends StatelessWidget {
                 ),
               );
 
-              return MaterialApp(
-                title: '密盾安存',
+              return _buildMaterialApp(
+                languageModel: languageModel,
                 theme: themeData,
-                home: const SplashScreen(),
               );
             }
           },
         );
       },
+    );
+  }
+
+  MaterialApp _buildMaterialApp({
+    required LanguageModel languageModel,
+    required ThemeData theme,
+    ThemeData? darkTheme,
+    ThemeMode? themeMode,
+  }) {
+    return MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: languageModel.locale,
+      localeListResolutionCallback: (locales, supportedLocales) =>
+          LanguageModel.resolveSystemLocale(locales),
+      onGenerateTitle: (context) => context.l10n.appName,
+      theme: theme,
+      darkTheme: darkTheme,
+      themeMode: themeMode,
+      home: home,
     );
   }
 }

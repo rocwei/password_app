@@ -133,6 +133,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'English'**
   String get languageEnglish;
+
+  /// Message shown when saving the selected language fails
+  ///
+  /// In zh, this message translates to:
+  /// **'无法保存语言设置，请重试'**
+  String get languageChangeFailed;
 }
 
 class _AppLocalizationsDelegate

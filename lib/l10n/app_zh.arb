@@ -23,5 +23,9 @@
   "languageEnglish": "English",
   "@languageEnglish": {
     "description": "English language option"
+  },
+  "languageChangeFailed": "无法保存语言设置，请重试",
+  "@languageChangeFailed": {
+    "description": "Message shown when saving the selected language fails"
   }
 }

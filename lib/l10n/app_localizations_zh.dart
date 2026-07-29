@@ -25,4 +25,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get languageEnglish => 'English';
+
+  @override
+  String get languageChangeFailed => '无法保存语言设置，请重试';
 }
