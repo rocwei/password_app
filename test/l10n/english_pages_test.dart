@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:password_manager/helpers/auth_helper.dart';
 import 'package:password_manager/helpers/language_model.dart';
 import 'package:password_manager/helpers/theme_settings.dart';
 import 'package:password_manager/l10n/app_localizations.dart';
@@ -14,6 +15,10 @@ import 'package:password_manager/pages/password_vault_page.dart';
 import 'package:provider/provider.dart';
 
 void main() {
+  setUp(() {
+    AuthHelper().logout();
+  });
+
   Widget buildLocalizedPage(Widget home, {Locale locale = const Locale('en')}) {
     return MultiProvider(
       providers: [
@@ -101,12 +106,23 @@ void main() {
   testWidgets('English category page safely shows the original missing query', (
     tester,
   ) async {
-    const query = 'not-found-原样';
+    const query = '  not-found-原样  ';
     const categoryName = '客户-A';
+    final entry = PasswordEntry(
+      id: 5,
+      userId: 1,
+      title: 'GitHub / 工作',
+      username: 'user@example.com',
+      encryptedPassword: 'ciphertext',
+    );
 
     await tester.pumpWidget(
       buildLocalizedPage(
-        const CategoryEntriesPage(categoryId: 7, categoryName: categoryName),
+        CategoryEntriesPage(
+          categoryId: 7,
+          categoryName: categoryName,
+          loadEntries: () async => [entry],
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -114,13 +130,44 @@ void main() {
     await tester.pump();
 
     expect(find.text(categoryName), findsOneWidget);
+    expect(find.text(entry.title), findsNothing);
     expect(find.text('No results for "$query"'), findsOneWidget);
     expect(find.byTooltip('Clear search'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.tap(find.byTooltip('Clear search'));
     await tester.pump();
-    expect(find.text('No passwords in this category'), findsOneWidget);
+    expect(find.text(entry.title), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('category search trims outer spaces before matching', (
+    tester,
+  ) async {
+    const query = '  GitHub / 工作  ';
+    final entry = PasswordEntry(
+      id: 5,
+      userId: 1,
+      title: 'GitHub / 工作',
+      username: 'user@example.com',
+      encryptedPassword: 'ciphertext',
+    );
+
+    await tester.pumpWidget(
+      buildLocalizedPage(
+        CategoryEntriesPage(
+          categoryId: 7,
+          categoryName: 'Work',
+          loadEntries: () async => [entry],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), query);
+    await tester.pump();
+
+    expect(find.text(entry.title), findsOneWidget);
+    expect(find.textContaining('No results for'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -278,11 +325,8 @@ void main() {
       );
       expect(find.textContaining('Created:'), findsOneWidget);
       expect(find.textContaining('Updated:'), findsOneWidget);
-      expect(find.byTooltip('Show password'), findsOneWidget);
-      await tester.tap(find.byTooltip('Show password'));
-      await tester.pump();
-      expect(find.byTooltip('Hide password'), findsOneWidget);
       expect(find.text('secret-value'), findsOneWidget);
+      expect(find.byTooltip('Delete'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
@@ -322,16 +366,59 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('English save failure is generic and hides exception details', (
+  testWidgets('locked editing cannot save through the entry user id', (
     tester,
   ) async {
+    var saveCalls = 0;
+    final entry = PasswordEntry(
+      id: 5,
+      userId: 99,
+      title: 'Visible title',
+      username: 'visible-user',
+      encryptedPassword: 'ciphertext',
+    );
+
+    await tester.pumpWidget(
+      buildLocalizedPage(
+        PasswordDetailPage(
+          entry: entry,
+          loadCategories: () async => [],
+          decryptPassword: (_) => 'visible-password',
+          encryptPassword: (value) => value,
+          saveEntry: (_) async => saveCalls++,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Update Password'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Update Password'));
+    await tester.pumpAndSettle();
+
+    expect(saveCalls, 0);
+    expect(
+      find.text('Could not save the password. Please try again.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('injected unlocked user can save a password entry', (
+    tester,
+  ) async {
+    PasswordEntry? savedEntry;
+
     await tester.pumpWidget(
       buildLocalizedPage(
         PasswordDetailPage(
           currentUserId: () => 1,
           loadCategories: () async => [],
-          encryptPassword: (value) => value,
-          saveEntry: (_) async => throw StateError('database-save-secret'),
+          encryptPassword: (value) => 'encrypted:$value',
+          saveEntry: (entry) async => savedEntry = entry,
         ),
       ),
     );
@@ -349,11 +436,9 @@ void main() {
     await tester.tap(find.text('Save Password'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('Could not save the password. Please try again.'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('database-save-secret'), findsNothing);
+    expect(savedEntry?.userId, 1);
+    expect(savedEntry?.title, 'Visible title');
+    expect(savedEntry?.encryptedPassword, 'encrypted:visible-password');
     expect(tester.takeException(), isNull);
   });
 
@@ -373,6 +458,14 @@ void main() {
       expect(find.text('Notes'), findsOneWidget);
       expect(find.text('Category'), findsOneWidget);
       expect(find.text('Default Category'), findsOneWidget);
+      final passwordField = tester.widget<TextField>(
+        find.byType(TextField).at(2),
+      );
+      expect(passwordField.maxLines, 5);
+      expect(passwordField.minLines, 2);
+      expect(passwordField.obscureText, isFalse);
+      expect(find.byTooltip('Show password'), findsNothing);
+      expect(find.byTooltip('Hide password'), findsNothing);
 
       await tester.enterText(find.byType(TextFormField).first, entryTitle);
       expect(find.text(entryTitle), findsOneWidget);
@@ -392,38 +485,19 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-    'English edit category preserves its name and localizes actions',
-    (tester) async {
-      const categoryName = '客户/Work';
-      await tester.pumpWidget(
-        buildLocalizedPage(
-          AddCategoryPage(
-            category: Category(id: 7, userId: 1, name: categoryName),
-            categoryNameExists: (_, _) async => false,
-            saveCategory: (category) async => category,
-          ),
-        ),
-      );
-
-      expect(find.text('Edit Category'), findsOneWidget);
-      expect(find.text(categoryName), findsOneWidget);
-      expect(find.text('Update Category'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets('English duplicate category message preserves typed user data', (
+  testWidgets('English category save failure hides exception details', (
     tester,
   ) async {
     const categoryName = '客户/Work';
+    var saveCalls = 0;
     await tester.pumpWidget(
       buildLocalizedPage(
         AddCategoryPage(
           currentUserId: () => 1,
-          categoryNameExists: (_, _) async => true,
-          saveCategory: (_) async =>
-              throw StateError('must-not-save-duplicate'),
+          saveCategory: (_) async {
+            saveCalls++;
+            throw StateError('category-save-secret');
+          },
         ),
       ),
     );
@@ -432,12 +506,13 @@ void main() {
     await tester.tap(find.text('Save Category'));
     await tester.pumpAndSettle();
 
+    expect(saveCalls, 1);
     expect(find.text(categoryName), findsOneWidget);
     expect(
-      find.text('A category with this name already exists.'),
+      find.text('Could not save the category. Please try again.'),
       findsOneWidget,
     );
-    expect(find.textContaining('must-not-save-duplicate'), findsNothing);
+    expect(find.textContaining('category-save-secret'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

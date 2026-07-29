@@ -297,22 +297,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryNameRequired => '请输入分类名称';
 
   @override
-  String get categoryNameDuplicate => '已存在同名分类';
-
-  @override
   String get saveCategory => '保存分类';
-
-  @override
-  String get updateCategory => '更新分类';
 
   @override
   String categoryCreated(String categoryName) {
     return '分类“$categoryName”已创建';
-  }
-
-  @override
-  String categoryUpdated(String categoryName) {
-    return '分类“$categoryName”已更新';
   }
 
   @override
@@ -455,12 +444,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get newCategoryOption => '新建分类...';
-
-  @override
-  String get showPassword => '显示密码';
-
-  @override
-  String get hidePassword => '隐藏密码';
 
   @override
   String get copyPassword => '复制密码';

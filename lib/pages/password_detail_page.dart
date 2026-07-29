@@ -24,7 +24,6 @@ class PasswordDetailPage extends StatefulWidget {
     this.decryptPassword,
     this.encryptPassword,
     this.saveEntry,
-    this.deleteEntry,
   });
 
   final int? Function()? currentUserId;
@@ -32,7 +31,6 @@ class PasswordDetailPage extends StatefulWidget {
   final String Function(String encryptedPassword)? decryptPassword;
   final String Function(String plainPassword)? encryptPassword;
   final Future<void> Function(PasswordEntry entry)? saveEntry;
-  final Future<void> Function(PasswordEntry entry)? deleteEntry;
 
   @override
   State<PasswordDetailPage> createState() => _PasswordDetailPageState();
@@ -47,7 +45,6 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
   final _noteController = TextEditingController();
 
   bool _isLoading = false;
-  bool _obscurePassword = true;
   bool get _isEditing => widget.entry != null;
 
   // 分类相关
@@ -151,10 +148,9 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
     });
 
     try {
-      final userId =
-          widget.currentUserId?.call() ??
-          widget.entry?.userId ??
-          AuthHelper().getCurrentUserId();
+      final userId = widget.currentUserId == null
+          ? AuthHelper().getCurrentUserId()
+          : widget.currentUserId!();
       if (userId == null) {
         throw StateError('Vault is locked');
       }
@@ -242,63 +238,6 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
     }
   }
 
-  Future<void> _deleteEntry() async {
-    final entry = widget.entry;
-    if (entry == null) return;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.confirmDelete),
-        content: Text(context.l10n.deletePasswordConfirmation(entry.title)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: Text(context.l10n.delete),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !mounted) return;
-
-    setState(() => _isLoading = true);
-    try {
-      if (widget.deleteEntry != null) {
-        await widget.deleteEntry!(entry);
-      } else {
-        await DatabaseHelper().deletePasswordEntry(entry.id!);
-      }
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.passwordDeleted),
-          backgroundColor: Theme.of(context).colorScheme.secondary,
-        ),
-      );
-      Navigator.of(context).pop(true);
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.passwordDeleteFailed),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
   void _copyToClipboard(String text, String fieldName) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -324,12 +263,6 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
               onPressed: () =>
                   _copyToClipboard(_passwordController.text, l10n.password),
               tooltip: l10n.copyPassword,
-            ),
-          if (_isEditing)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: _isLoading ? null : _deleteEntry,
-              tooltip: l10n.delete,
             ),
           IconButton(
             icon: const Icon(Icons.save),
@@ -427,9 +360,9 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _passwordController,
-              maxLines: 1,
+              maxLines: 5,
+              minLines: 2,
               expands: false,
-              obscureText: _obscurePassword,
               decoration: InputDecoration(
                 labelText: l10n.passwordRequiredLabel,
                 // border: const OutlineInputBorder(),
@@ -450,31 +383,11 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                   ),
                 ),
                 prefixIcon: const Icon(Icons.lock),
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.copy),
-                      onPressed: () => _copyToClipboard(
-                        _passwordController.text,
-                        l10n.password,
-                      ),
-                      tooltip: l10n.copyField(l10n.password),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      tooltip: _obscurePassword
-                          ? l10n.showPassword
-                          : l10n.hidePassword,
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
-                    ),
-                  ],
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.copy),
+                  onPressed: () =>
+                      _copyToClipboard(_passwordController.text, l10n.password),
+                  tooltip: l10n.copyField(l10n.password),
                 ),
               ),
               validator: (value) {

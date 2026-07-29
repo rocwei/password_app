@@ -317,23 +317,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryNameRequired => 'Enter a category name.';
 
   @override
-  String get categoryNameDuplicate =>
-      'A category with this name already exists.';
-
-  @override
   String get saveCategory => 'Save Category';
-
-  @override
-  String get updateCategory => 'Update Category';
 
   @override
   String categoryCreated(String categoryName) {
     return 'Category \"$categoryName\" created.';
-  }
-
-  @override
-  String categoryUpdated(String categoryName) {
-    return 'Category \"$categoryName\" updated.';
   }
 
   @override
@@ -484,12 +472,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newCategoryOption => 'New category...';
-
-  @override
-  String get showPassword => 'Show password';
-
-  @override
-  String get hidePassword => 'Hide password';
 
   @override
   String get copyPassword => 'Copy password';

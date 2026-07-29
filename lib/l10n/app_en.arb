@@ -386,31 +386,13 @@
   "@categoryNameRequired": {
     "description": "Validation message when the category name is empty"
   },
-  "categoryNameDuplicate": "A category with this name already exists.",
-  "@categoryNameDuplicate": {
-    "description": "Validation message when a category name is already in use"
-  },
   "saveCategory": "Save Category",
   "@saveCategory": {
     "description": "Action that saves a new category"
   },
-  "updateCategory": "Update Category",
-  "@updateCategory": {
-    "description": "Action that saves changes to a category"
-  },
   "categoryCreated": "Category \"{categoryName}\" created.",
   "@categoryCreated": {
     "description": "Success message after creating a category",
-    "placeholders": {
-      "categoryName": {
-        "type": "String",
-        "example": "Work"
-      }
-    }
-  },
-  "categoryUpdated": "Category \"{categoryName}\" updated.",
-  "@categoryUpdated": {
-    "description": "Success message after updating a category",
     "placeholders": {
       "categoryName": {
         "type": "String",
@@ -615,14 +597,6 @@
   "newCategoryOption": "New category...",
   "@newCategoryOption": {
     "description": "Dropdown option that opens the new category page"
-  },
-  "showPassword": "Show password",
-  "@showPassword": {
-    "description": "Tooltip for revealing a password field"
-  },
-  "hidePassword": "Hide password",
-  "@hidePassword": {
-    "description": "Tooltip for obscuring a password field"
   },
   "copyPassword": "Copy password",
   "@copyPassword": {

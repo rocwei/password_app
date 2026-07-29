@@ -614,35 +614,17 @@ abstract class AppLocalizations {
   /// **'请输入分类名称'**
   String get categoryNameRequired;
 
-  /// Validation message when a category name is already in use
-  ///
-  /// In zh, this message translates to:
-  /// **'已存在同名分类'**
-  String get categoryNameDuplicate;
-
   /// Action that saves a new category
   ///
   /// In zh, this message translates to:
   /// **'保存分类'**
   String get saveCategory;
 
-  /// Action that saves changes to a category
-  ///
-  /// In zh, this message translates to:
-  /// **'更新分类'**
-  String get updateCategory;
-
   /// Success message after creating a category
   ///
   /// In zh, this message translates to:
   /// **'分类“{categoryName}”已创建'**
   String categoryCreated(String categoryName);
-
-  /// Success message after updating a category
-  ///
-  /// In zh, this message translates to:
-  /// **'分类“{categoryName}”已更新'**
-  String categoryUpdated(String categoryName);
 
   /// Generic error shown when a category cannot be created or updated
   ///
@@ -895,18 +877,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'新建分类...'**
   String get newCategoryOption;
-
-  /// Tooltip for revealing a password field
-  ///
-  /// In zh, this message translates to:
-  /// **'显示密码'**
-  String get showPassword;
-
-  /// Tooltip for obscuring a password field
-  ///
-  /// In zh, this message translates to:
-  /// **'隐藏密码'**
-  String get hidePassword;
 
   /// Tooltip for copying a password
   ///

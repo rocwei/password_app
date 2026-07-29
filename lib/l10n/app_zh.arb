@@ -386,31 +386,13 @@
   "@categoryNameRequired": {
     "description": "Validation message when the category name is empty"
   },
-  "categoryNameDuplicate": "已存在同名分类",
-  "@categoryNameDuplicate": {
-    "description": "Validation message when a category name is already in use"
-  },
   "saveCategory": "保存分类",
   "@saveCategory": {
     "description": "Action that saves a new category"
   },
-  "updateCategory": "更新分类",
-  "@updateCategory": {
-    "description": "Action that saves changes to a category"
-  },
   "categoryCreated": "分类“{categoryName}”已创建",
   "@categoryCreated": {
     "description": "Success message after creating a category",
-    "placeholders": {
-      "categoryName": {
-        "type": "String",
-        "example": "工作"
-      }
-    }
-  },
-  "categoryUpdated": "分类“{categoryName}”已更新",
-  "@categoryUpdated": {
-    "description": "Success message after updating a category",
     "placeholders": {
       "categoryName": {
         "type": "String",
@@ -615,14 +597,6 @@
   "newCategoryOption": "新建分类...",
   "@newCategoryOption": {
     "description": "Dropdown option that opens the new category page"
-  },
-  "showPassword": "显示密码",
-  "@showPassword": {
-    "description": "Tooltip for revealing a password field"
-  },
-  "hidePassword": "隐藏密码",
-  "@hidePassword": {
-    "description": "Tooltip for obscuring a password field"
   },
   "copyPassword": "复制密码",
   "@copyPassword": {

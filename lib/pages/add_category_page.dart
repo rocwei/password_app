@@ -6,18 +6,9 @@ import '../l10n/l10n.dart';
 
 /// 新建分类页面
 class AddCategoryPage extends StatefulWidget {
-  const AddCategoryPage({
-    super.key,
-    this.category,
-    this.currentUserId,
-    this.categoryNameExists,
-    this.saveCategory,
-  });
+  const AddCategoryPage({super.key, this.currentUserId, this.saveCategory});
 
-  final Category? category;
   final int? Function()? currentUserId;
-  final Future<bool> Function(String name, int? excludingCategoryId)?
-  categoryNameExists;
   final Future<Category> Function(Category category)? saveCategory;
 
   @override
@@ -28,13 +19,6 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   bool _isLoading = false;
-  bool get _isEditing => widget.category != null;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController.text = widget.category?.name ?? '';
-  }
 
   @override
   void dispose() {
@@ -48,51 +32,28 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     setState(() => _isLoading = true);
 
     try {
-      final userId =
-          widget.currentUserId?.call() ??
-          widget.category?.userId ??
-          AuthHelper().getCurrentUserId();
+      final userId = widget.currentUserId == null
+          ? AuthHelper().getCurrentUserId()
+          : widget.currentUserId!();
       if (userId == null) throw StateError('Vault is locked');
 
       final name = _nameController.text.trim();
-      final isDuplicate =
-          await (widget.categoryNameExists ?? _categoryNameExists)(
-            name,
-            widget.category?.id,
-          );
-      if (!mounted) return;
-      if (isDuplicate) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.categoryNameDuplicate),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-        return;
-      }
-
       final now = DateTime.now();
       final category = Category(
-        id: widget.category?.id,
         userId: userId,
         name: name,
-        icon: widget.category?.icon,
-        createdAt: widget.category?.createdAt ?? now,
+        createdAt: now,
         updatedAt: now,
       );
 
-      final savedCategory = await (widget.saveCategory ?? _persistCategory)(
+      final savedCategory = await (widget.saveCategory ?? _insertCategory)(
         category,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              _isEditing
-                  ? context.l10n.categoryUpdated(savedCategory.name)
-                  : context.l10n.categoryCreated(savedCategory.name),
-            ),
+            content: Text(context.l10n.categoryCreated(savedCategory.name)),
             backgroundColor: Theme.of(context).colorScheme.secondary,
           ),
         );
@@ -112,31 +73,8 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     }
   }
 
-  Future<bool> _categoryNameExists(
-    String name,
-    int? excludingCategoryId,
-  ) async {
-    final userId =
-        widget.currentUserId?.call() ??
-        widget.category?.userId ??
-        AuthHelper().getCurrentUserId();
-    if (userId == null) return false;
-    final categories = await DatabaseHelper().getCategories(userId);
-    final normalizedName = name.toLowerCase();
-    return categories.any(
-      (category) =>
-          category.id != excludingCategoryId &&
-          category.name.trim().toLowerCase() == normalizedName,
-    );
-  }
-
-  Future<Category> _persistCategory(Category category) async {
-    final dbHelper = DatabaseHelper();
-    if (_isEditing) {
-      await dbHelper.updateCategory(category);
-      return category;
-    }
-    final id = await dbHelper.insertCategory(category);
+  Future<Category> _insertCategory(Category category) async {
+    final id = await DatabaseHelper().insertCategory(category);
     return category.copyWith(id: id);
   }
 
@@ -146,7 +84,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? l10n.editCategory : l10n.addCategory),
+        title: Text(l10n.addCategory),
         elevation: 0,
         actions: [
           IconButton(
@@ -204,7 +142,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                 child: _isLoading
                     ? const CircularProgressIndicator()
                     : Text(
-                        _isEditing ? l10n.updateCategory : l10n.saveCategory,
+                        l10n.saveCategory,
                         style: const TextStyle(fontSize: 16),
                       ),
               ),
