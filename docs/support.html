@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>密盾安存支持</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --text: #182033;
+      --muted: #667085;
+      --line: #d9dee7;
+      --accent: #2357a6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 18px 56px;
+    }
+
+    header, section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    h1 {
+      font-size: 30px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 14px;
+    }
+
+    h3 {
+      font-size: 16px;
+      margin-top: 16px;
+    }
+
+    p {
+      margin: 8px 0 0;
+    }
+
+    ul {
+      margin: 8px 0 0 20px;
+      padding: 0;
+    }
+
+    li + li {
+      margin-top: 6px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fbfcfe;
+    }
+
+    @media (max-width: 720px) {
+      main {
+        padding: 16px 10px 36px;
+      }
+
+      header, section {
+        padding: 18px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>密盾安存支持</h1>
+      <p class="muted">本页面用于 App Store 支持 URL。提交前请将联系邮箱替换为真实邮箱，并把本页面部署到公开可访问的网址。</p>
+    </header>
+
+    <section>
+      <h2>联系我们</h2>
+      <p>如果您在使用密盾安存时遇到问题，请发送邮件至：</p>
+      <p><a href="mailto:support@example.com">support@example.com</a></p>
+      <p class="muted">建议在邮件中附上：设备型号、iOS 版本、App 版本、问题发生步骤和截图。请不要在邮件中发送主密码、真实密码或未加密备份文件。</p>
+    </section>
+
+    <section>
+      <h2>常见问题</h2>
+      <div class="grid">
+        <div class="box">
+          <h3>忘记主密码怎么办？</h3>
+          <p>主密码用于保护本地密码库。开发者无法读取或重置您的主密码。如果忘记主密码，可能无法恢复已保存的数据。</p>
+        </div>
+        <div class="box">
+          <h3>数据会上传到服务器吗？</h3>
+          <p>当前版本不提供云账号系统、开发者服务器或云同步。设置主密码只是在本机保护并解锁本地密码库，密码库数据不会上传到开发者服务器。</p>
+        </div>
+        <div class="box">
+          <h3>如何删除本地密码库？</h3>
+          <p>前往“设置 &gt; 数据管理 &gt; 删除本地密码库”，先验证当前主密码，再确认永久删除。应用会删除本机密码、分类、OTP、主密码验证数据、生物识别密钥和主题偏好，且无法恢复。</p>
+          <p>此前主动导出并保存在 App 外部的 <code>.passbackup</code> 文件不会自动删除。如需一并删除，请前往文件 App、网盘、邮件或其他实际保存位置手动删除。</p>
+        </div>
+        <div class="box">
+          <h3>如何迁移到新设备？</h3>
+          <p>在旧设备中创建加密备份文件，把文件保存到可信位置，然后在新设备中导入该备份。恢复时需要输入创建备份时使用的主密码。</p>
+        </div>
+        <div class="box">
+          <h3>为什么需要相机权限？</h3>
+          <p>相机权限仅用于扫描 OTP 二维码，帮助您添加双因素认证条目。</p>
+        </div>
+        <div class="box">
+          <h3>为什么需要 Face ID 或 Touch ID？</h3>
+          <p>生物识别用于本机快速解锁。原始生物识别数据由 iOS 管理，应用不会读取或保存这些信息。</p>
+        </div>
+        <div class="box">
+          <h3>备份文件安全吗？</h3>
+          <p>备份文件会加密导出。请妥善保存备份文件和主密码，不要把备份文件发送给不可信对象。</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>隐私政策</h2>
+      <p>请阅读 <a href="./privacy_policy.html">密盾安存隐私政策</a> 了解数据处理和权限使用方式。</p>
+    </section>
+  </main>
+</body>
+</html>

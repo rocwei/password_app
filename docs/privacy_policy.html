@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>密盾安存隐私政策</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --text: #182033;
+      --muted: #667085;
+      --line: #d9dee7;
+      --accent: #2357a6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.7;
+    }
+
+    main {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 32px 18px 56px;
+    }
+
+    article {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 28px;
+    }
+
+    h1, h2 {
+      line-height: 1.3;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 30px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+
+    p {
+      margin: 10px 0 0;
+    }
+
+    ul {
+      margin: 10px 0 0 20px;
+      padding: 0;
+    }
+
+    li + li {
+      margin-top: 6px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .meta {
+      margin-top: 8px;
+      color: var(--muted);
+    }
+
+    .notice {
+      margin-top: 18px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+      background: #eef5ff;
+    }
+
+    @media (max-width: 560px) {
+      main {
+        padding: 16px 10px 36px;
+      }
+
+      article {
+        padding: 18px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <article>
+      <h1>密盾安存隐私政策</h1>
+      <p class="meta">生效日期：2026 年 7 月 29 日</p>
+      <p class="meta">适用范围：密盾安存 iOS 应用</p>
+
+      <div class="notice">
+        <p>密盾安存是一款本地密码管理应用。我们不会运营用于接收用户密码、OTP 密钥或备份内容的服务器，也不会主动收集、上传、出售或共享您的密码库数据。</p>
+      </div>
+
+      <h2>1. 我们处理哪些数据</h2>
+      <p>密盾安存的核心数据由您在设备上创建和管理，包括：</p>
+      <ul>
+        <li>密码条目：标题、用户名、密码、网站、备注和分类。</li>
+        <li>OTP 双因素认证信息：服务名称、账号、密钥和动态验证码生成所需参数。</li>
+        <li>本地设置：主题、生物识别解锁开关、应用使用偏好。</li>
+        <li>备份文件：由您主动创建、保存、分享或导入的加密 <code>.passbackup</code> 文件。</li>
+      </ul>
+      <p>这些数据默认保存在您的设备本地。应用不会将上述数据发送到开发者服务器。</p>
+
+      <h2>2. 本地存储与加密</h2>
+      <p>密盾安存使用主密码保护您的密码库。敏感数据会在写入本地数据库前进行加密。主密码用于派生加密密钥，应用不会以明文形式保存您的主密码。</p>
+      <p>如果您忘记主密码，开发者无法替您恢复密码库内容。请妥善记住主密码，并安全保存备份文件。</p>
+      <p>设置主密码仅用于保护并解锁当前设备上的本地密码库，不会创建云端账号或服务器账号。密盾安存没有云账号系统。</p>
+
+      <h2>3. 删除本地数据</h2>
+      <p>您可以在应用内前往“设置 &gt; 数据管理 &gt; 删除本地密码库”，先验证当前主密码，再确认永久删除。</p>
+      <p>确认后，应用会删除本机保存的密码、分类、OTP、主密码验证数据、生物识别密钥和主题偏好。删除操作不可恢复。</p>
+      <p>您主动导出并保存在 App 外部的加密 <code>.passbackup</code> 文件不会被应用自动删除。如需删除这些备份，请前往文件 App、网盘、邮件、聊天工具或其他实际保存位置自行删除。</p>
+
+      <h2>4. 权限使用说明</h2>
+      <p>应用可能根据您使用的功能请求以下系统权限：</p>
+      <ul>
+        <li>相机权限：仅用于扫描 OTP 二维码，帮助您添加双因素认证条目。</li>
+        <li>Face ID 或 Touch ID：仅用于在本机完成身份验证并快速解锁应用。生物识别数据由 iOS 系统管理，密盾安存不会读取或保存您的原始生物识别信息。</li>
+        <li>照片权限：用于保存二维码图片或相关图片内容，只有在您主动使用相关功能时才会触发。</li>
+        <li>文件访问和系统分享：用于导入、导出或分享加密备份文件。您选择的分享目标可能由第三方应用或服务处理，请自行确认接收方和保存位置的安全性。</li>
+      </ul>
+
+      <h2>5. 我们不收集的数据</h2>
+      <p>在当前版本中，密盾安存不收集以下数据：</p>
+      <ul>
+        <li>不会收集或上传您的密码、OTP 密钥、备份内容或主密码。</li>
+        <li>不会收集广告标识符或用于跨 App 追踪的标识符。</li>
+        <li>不会使用第三方广告 SDK。</li>
+        <li>不会建立用户账号，也不会要求登录云端服务。</li>
+      </ul>
+
+      <h2>6. 备份与第三方服务</h2>
+      <p>您可以主动导出加密备份文件，并通过系统分享面板保存到微信、邮件、网盘、文件 App 或其他位置。密盾安存无法控制第三方应用或云服务对文件的处理方式。请只把备份文件保存到可信位置，并妥善保管对应主密码。</p>
+
+      <h2>7. 儿童隐私</h2>
+      <p>密盾安存面向需要管理个人账号凭据的普通用户。应用不面向儿童收集个人信息，也不会主动收集儿童数据。</p>
+
+      <h2>8. 政策变更</h2>
+      <p>如果未来版本加入云同步、账号系统、统计分析、崩溃日志或其他会改变数据处理方式的功能，我们会更新本隐私政策，并在必要时更新 App Store 的隐私信息。</p>
+
+      <h2>9. 联系我们</h2>
+      <p>如您对本隐私政策或密盾安存的数据处理方式有疑问，请通过以下邮箱联系：</p>
+      <p><a href="mailto:support@example.com">support@example.com</a></p>
+      <p class="meta">提交 App Store 前，请将此邮箱替换为真实可收信的支持邮箱。</p>
+    </article>
+  </main>
+</body>
+</html>
