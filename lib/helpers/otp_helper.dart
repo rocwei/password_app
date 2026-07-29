@@ -51,7 +51,7 @@ class OtpHelper {
           try {
             final Map<String, dynamic> tokenData = jsonDecode(tokenJson);
             final OtpToken token = OtpToken.fromJson(tokenData);
-            
+
             // 将令牌添加到列表中（使用时会解密）
             tokens.add(token);
           } catch (e) {
@@ -74,26 +74,26 @@ class OtpHelper {
 
   // 加密OTP密钥
   static String encryptSecret(String plainSecret) {
-    // 检查是否已登录
+    // 检查密码库是否已解锁
     if (!AuthHelper().isLoggedIn) {
-      throw Exception('用户未登录，无法加密OTP密钥');
+      throw Exception('密码库尚未解锁，无法加密OTP密钥');
     }
-    
+
     // 使用EncryptionHelper加密密钥
     return EncryptionHelper().encryptString(plainSecret);
   }
-  
+
   // 解密OTP密钥
   static String decryptSecret(String encryptedSecret) {
-    // 检查是否已登录
+    // 检查密码库是否已解锁
     if (!AuthHelper().isLoggedIn) {
-      throw Exception('用户未登录，无法解密OTP密钥');
+      throw Exception('密码库尚未解锁，无法解密OTP密钥');
     }
-    
+
     // 使用EncryptionHelper解密密钥
     return EncryptionHelper().decryptString(encryptedSecret);
   }
-  
+
   // 获取令牌的解密后的密钥
   static String getDecryptedSecret(OtpToken token) {
     return decryptSecret(token.secret);
@@ -125,20 +125,20 @@ class OtpHelper {
       }
     }
   }
-  
+
   // 创建并保存新的OTP令牌（使用明文密钥，会自动加密）
-  static Future<void> createAndSaveToken(String id, String label, String plainSecret) async {
+  static Future<void> createAndSaveToken(
+    String id,
+    String label,
+    String plainSecret,
+  ) async {
     try {
       // 加密密钥
       final encryptedSecret = encryptSecret(plainSecret);
-      
+
       // 创建令牌对象
-      final token = OtpToken(
-        id: id,
-        label: label,
-        secret: encryptedSecret
-      );
-      
+      final token = OtpToken(id: id, label: label, secret: encryptedSecret);
+
       // 保存令牌
       await saveToken(token);
     } catch (e) {
@@ -192,19 +192,21 @@ class OtpHelper {
       }
     }
   }
-  
+
   // 导出所有OTP令牌数据（用于备份）
   static Future<List<Map<String, dynamic>>> exportTokens() async {
     final tokens = await getAllTokens();
     return tokens.map((token) => token.toJson()).toList();
   }
-  
+
   // 从备份数据恢复OTP令牌
-  static Future<void> importTokens(List<Map<String, dynamic>> tokensData) async {
+  static Future<void> importTokens(
+    List<Map<String, dynamic>> tokensData,
+  ) async {
     try {
       // 先清空现有令牌
       await clearAllTokens();
-      
+
       // 导入新令牌
       for (final tokenData in tokensData) {
         final token = OtpToken.fromJson(tokenData);

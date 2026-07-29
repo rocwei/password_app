@@ -29,7 +29,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
 
     try {
       final userId = AuthHelper().getCurrentUserId();
-      if (userId == null) throw Exception('用户未登录');
+      if (userId == null) throw Exception('密码库尚未解锁');
 
       final now = DateTime.now();
       final category = Category(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -35,6 +36,45 @@ void main() {
       ),
     );
   }
+
+  testWidgets('设置主密码页只使用本地密码库文案', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: RegisterPage()));
+
+    expect(find.text('设置主密码'), findsOneWidget);
+    expect(find.text('创建本地密码库'), findsOneWidget);
+    expect(find.textContaining('账户'), findsNothing);
+    expect(find.textContaining('注册'), findsNothing);
+    expect(find.textContaining('登录'), findsNothing);
+  });
+
+  testWidgets('解锁页不提供注册页面切换入口', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: LoginPage()));
+    await tester.pump();
+
+    expect(find.text('解锁'), findsNWidgets(2));
+    expect(find.textContaining('没有账户'), findsNothing);
+    expect(find.textContaining('点击注册'), findsNothing);
+  });
+
+  test('认证相关源文件不再包含旧的在线账号提示', () {
+    const paths = [
+      'lib/pages/register_page.dart',
+      'lib/pages/login_page.dart',
+      'lib/helpers/auth_helper.dart',
+      'lib/helpers/otp_helper.dart',
+      'lib/pages/add_category_page.dart',
+      'lib/pages/password_detail_page.dart',
+      'lib/pages/backup_restore_page.dart',
+    ];
+    const obsoleteMessages = ['注册失败', '登录失败', '用户未登录', '请先使用主密码登录'];
+
+    for (final path in paths) {
+      final source = File(path).readAsStringSync();
+      for (final message in obsoleteMessages) {
+        expect(source, isNot(contains(message)), reason: '$path 仍包含“$message”');
+      }
+    }
+  });
 
   Future<void> scrollToDangerZone(WidgetTester tester) async {
     await tester.scrollUntilVisible(

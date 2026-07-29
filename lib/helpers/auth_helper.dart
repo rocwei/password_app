@@ -61,7 +61,7 @@ class AuthHelper {
 
       return false;
     } catch (e) {
-      // print('注册失败: $e');
+      // print('设置失败: $e');
       Get.snackbar("生物识别认证错误", e.toString());
       return false;
     }
@@ -106,8 +106,8 @@ class AuthHelper {
 
       return false;
     } catch (e) {
-      // print('注册失败: $e');
-      Get.snackbar("注册失败", e.toString());
+      // print('设置失败: $e');
+      Get.snackbar("设置失败", e.toString());
       return false;
     }
   }
@@ -147,8 +147,8 @@ class AuthHelper {
 
       return true;
     } catch (e) {
-      // print('登录失败: $e');
-      Get.snackbar("登录失败", e.toString());
+      // print('解锁失败: $e');
+      Get.snackbar("解锁失败", e.toString());
       return false;
     }
   }
@@ -188,8 +188,8 @@ class AuthHelper {
 
       return true;
     } catch (e) {
-      // print('登录失败: $e');
-      Get.snackbar("登录失败", e.toString());
+      // print('解锁失败: $e');
+      Get.snackbar("解锁失败", e.toString());
       return false;
     }
   }
@@ -266,20 +266,24 @@ class AuthHelper {
 
         await dbHelper.updatePasswordEntry(updatedEntry);
       }
-      
+
       // 重新加密OTP令牌
       try {
         // 获取当前所有OTP令牌
         final otpTokens = await OtpHelper.getAllTokens();
-        
+
         // 解密并重新加密每个令牌
         for (final token in otpTokens) {
           try {
             // 解密密钥 (使用旧的加密密钥)
             final plainSecret = OtpHelper.decryptSecret(token.secret);
-            
+
             // 创建带有相同ID和标签，但使用新的加密密钥加密的令牌
-            await OtpHelper.createAndSaveToken(token.id, token.label, plainSecret);
+            await OtpHelper.createAndSaveToken(
+              token.id,
+              token.label,
+              plainSecret,
+            );
           } catch (e) {
             // 记录错误，但不中断流程
             // print('重新加密OTP令牌失败：${token.id} - $e');
@@ -328,7 +332,7 @@ class AuthHelper {
   // 注意：此方法需要主密码，所以在备份/恢复时需要用户重新输入主密码
   String? getBackupKey(String masterPassword) {
     if (!isLoggedIn || _currentUser == null) return null;
-    
+
     // 使用固定salt和主密码生成备份密钥，确保跨平台一致性
     return EncryptionHelper.deriveBackupKey(masterPassword);
   }
@@ -391,8 +395,8 @@ class AuthHelper {
         key: 'encryption_key_${user.id}',
       );
       if (storedKey == null || storedKey.isEmpty) {
-        // print('未找到生物识别密钥，请先使用主密码登录并在设置中开启生物识别。');
-        Get.snackbar("生物识别", "未找到生物识别密钥，请先使用主密码登录并在设置中开启生物识别。");
+        // print('未找到生物识别密钥，请先使用主密码解锁并在设置中开启生物识别。');
+        Get.snackbar("生物识别", "未找到生物识别密钥，请先使用主密码解锁并在设置中开启生物识别。");
         return false;
       }
 
@@ -403,8 +407,8 @@ class AuthHelper {
 
       return true;
     } catch (e) {
-      // print('生物识别登录失败: $e');
-      Get.snackbar("生物识别登录失败", e.toString());
+      // print('生物识别解锁失败: $e');
+      Get.snackbar("生物识别解锁失败", e.toString());
       return false;
     }
   }

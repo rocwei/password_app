@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../helpers/auth_helper.dart';
-import 'login_page.dart';
 import 'home_page.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -51,7 +50,7 @@ class _RegisterPageState extends State<RegisterPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('注册失败，用户名可能已存在'),
+              content: Text('设置失败，本机已存在密码库'),
               backgroundColor: Colors.red,
             ),
           );
@@ -60,7 +59,7 @@ class _RegisterPageState extends State<RegisterPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('注册失败: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('设置失败: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -75,7 +74,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('创建主账户')),
+      appBar: AppBar(title: const Text('设置主密码')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -175,20 +174,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   onPressed: _isLoading ? null : _register,
                   child: _isLoading
                       ? const CircularProgressIndicator()
-                      : const Text('创建账户', style: TextStyle(fontSize: 16)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                  );
-                },
-                // ignore: sort_child_properties_last
-                child: const Text('已有账户？点击登录'),
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.primary,
+                      : const Text('创建本地密码库', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],

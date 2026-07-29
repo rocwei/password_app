@@ -122,7 +122,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
     try {
       final userId = AuthHelper().getCurrentUserId();
       if (userId == null) {
-        throw Exception('用户未登录');
+        throw Exception('密码库尚未解锁');
       }
 
       // 加密密码
@@ -516,10 +516,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
           hint: const Text('选择分类'),
           items: [
             // 默认分类
-            const DropdownMenuItem<int?>(
-              value: null,
-              child: Text('默认分类'),
-            ),
+            const DropdownMenuItem<int?>(value: null, child: Text('默认分类')),
             // 用户自定义分类
             ..._categories.map((category) {
               return DropdownMenuItem<int?>(
@@ -534,7 +531,10 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                 children: [
                   Icon(Icons.add, size: 18),
                   SizedBox(width: 8),
-                  Text('新建分类...', style: TextStyle(fontStyle: FontStyle.italic)),
+                  Text(
+                    '新建分类...',
+                    style: TextStyle(fontStyle: FontStyle.italic),
+                  ),
                 ],
               ),
             ),

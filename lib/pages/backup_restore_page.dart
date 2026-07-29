@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:share_plus/share_plus.dart';
@@ -73,9 +73,9 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
     });
 
     try {
-      // 2. 校验用户登录状态
+      // 2. 校验密码库解锁状态
       final userId = AuthHelper().getCurrentUserId();
-      if (userId == null) throw Exception('用户未登录');
+      if (userId == null) throw Exception('密码库尚未解锁');
 
       // 3. 使用主密码派生备份密钥
       final backupKey = AuthHelper().getBackupKey(masterPassword);
@@ -97,9 +97,9 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         // 再用备份密钥加密  跨设备兼容
         final backupEncryptedPassword =
             EncryptionHelper.encryptPasswordWithBackupKey(
-          plainPassword,
-          backupKey,
-        );
+              plainPassword,
+              backupKey,
+            );
         final reEncryptedEntry = Map<String, dynamic>.from(entry);
         reEncryptedEntry['password'] = backupEncryptedPassword;
         reEncryptedEntries.add(reEncryptedEntry);
@@ -316,8 +316,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
     final masterPassword = await showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (context) =>
-          const _MasterPasswordDialog(isForRestore: true),
+      builder: (context) => const _MasterPasswordDialog(isForRestore: true),
     );
     if (masterPassword == null || masterPassword.trim().isEmpty) return;
 
@@ -327,9 +326,9 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
     });
 
     try {
-      // 3. 校验登录状态
+      // 3. 校验密码库解锁状态
       final userId = AuthHelper().getCurrentUserId();
-      if (userId == null) throw Exception('用户未登录');
+      if (userId == null) throw Exception('密码库尚未解锁');
 
       // 4. 读取备份文件内容
       final backupFile = File(filePath);
@@ -395,8 +394,11 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          icon: const Icon(Icons.warning_amber_rounded,
-              color: Colors.red, size: 48),
+          icon: const Icon(
+            Icons.warning_amber_rounded,
+            color: Colors.red,
+            size: 48,
+          ),
           title: const Text('确认恢复'),
           content: Text(restoreInfoText),
           actions: [
@@ -406,9 +408,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.red,
-              ),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
               child: const Text('确认恢复'),
             ),
           ],
@@ -455,14 +455,14 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
       for (final entryData in entries) {
         try {
           // 用备份密钥解密  明文
-          final plainPassword =
-              EncryptionHelper.decryptPasswordWithBackupKey(
+          final plainPassword = EncryptionHelper.decryptPasswordWithBackupKey(
             entryData['password'],
             backupKey,
           );
           // 用当前设备密钥重新加密
-          final deviceEncryptedPassword =
-              EncryptionHelper().encryptString(plainPassword);
+          final deviceEncryptedPassword = EncryptionHelper().encryptString(
+            plainPassword,
+          );
 
           // 映射分类ID
           int? newCategoryId;
@@ -562,13 +562,16 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         children: [
           Icon(icon, size: 18, color: Colors.grey),
           const SizedBox(width: 8),
-          Text('$label: ',
-              style:
-                  const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+          Text(
+            '$label: ',
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+          ),
           Expanded(
-            child: Text(value,
-                style: const TextStyle(fontSize: 14),
-                overflow: TextOverflow.ellipsis),
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -609,8 +612,11 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        icon: const Icon(Icons.warning_amber_rounded,
-            color: Colors.orange, size: 40),
+        icon: const Icon(
+          Icons.warning_amber_rounded,
+          color: Colors.orange,
+          size: 40,
+        ),
         title: Text(title),
         content: Text(content),
         actions: [
@@ -649,15 +655,13 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.shield,
-                        color: colorScheme.onPrimaryContainer),
+                    Icon(Icons.shield, color: colorScheme.onPrimaryContainer),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         '备份文件已使用 AES-256 加密，可安全存储或分享。\n'
                         '恢复时需要输入备份时使用的主密码。',
-                        style: TextStyle(
-                            color: colorScheme.onPrimaryContainer),
+                        style: TextStyle(color: colorScheme.onPrimaryContainer),
                       ),
                     ),
                   ],
@@ -681,22 +685,32 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                             color: Colors.green.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.backup,
-                              color: Colors.green, size: 28),
+                          child: const Icon(
+                            Icons.backup,
+                            color: Colors.green,
+                            size: 28,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('创建备份',
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold)),
+                              Text(
+                                '创建备份',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               SizedBox(height: 2),
-                              Text('生成加密 .passbackup 文件',
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 13)),
+                              Text(
+                                '生成加密 .passbackup 文件',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -717,8 +731,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                         style: FilledButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                       ),
                     ),
@@ -743,22 +756,32 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                             color: Colors.orange.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.restore,
-                              color: Colors.orange, size: 28),
+                          child: const Icon(
+                            Icons.restore,
+                            color: Colors.orange,
+                            size: 28,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('恢复备份',
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold)),
+                              Text(
+                                '恢复备份',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               SizedBox(height: 2),
-                              Text('从 .passbackup 文件恢复',
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 13)),
+                              Text(
+                                '从 .passbackup 文件恢复',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -780,8 +803,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                         style: FilledButton.styleFrom(
                           backgroundColor: Colors.orange,
                           foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                       ),
                     ),
@@ -806,22 +828,24 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                             color: Colors.blue.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.help_outline,
-                              color: Colors.blue, size: 28),
+                          child: const Icon(
+                            Icons.help_outline,
+                            color: Colors.blue,
+                            size: 28,
+                          ),
                         ),
                         const SizedBox(width: 12),
-                        const Text('使用帮助',
-                            style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold)),
+                        const Text(
+                          '使用帮助',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildHelpItem(
-                      '1',
-                      '备份',
-                      '点击「创建备份文件」 输入主密码  通过分享发送到安全位置',
-                    ),
+                    _buildHelpItem('1', '备份', '点击「创建备份文件」 输入主密码  通过分享发送到安全位置'),
                     _buildHelpItem(
                       '2',
                       '恢复',
@@ -842,16 +866,20 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                       child: const Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.warning_amber_rounded,
-                              color: Colors.red, size: 18),
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.red,
+                            size: 18,
+                          ),
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               '请牢记备份密码！忘记密码将无法恢复数据。',
                               style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500),
+                                color: Colors.red,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
@@ -871,9 +899,10 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                     const CircularProgressIndicator(),
                     if (_statusMessage.isNotEmpty) ...[
                       const SizedBox(height: 12),
-                      Text(_statusMessage,
-                          style:
-                              const TextStyle(color: Colors.grey)),
+                      Text(
+                        _statusMessage,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
                     ],
                   ],
                 ),
@@ -901,23 +930,33 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
               color: Colors.blue.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: Text(step,
-                style: const TextStyle(
-                    color: Colors.blue,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13)),
+            child: Text(
+              step,
+              style: const TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 2),
-                Text(desc,
-                    style: const TextStyle(
-                        color: Colors.grey, fontSize: 13, height: 1.4)),
+                Text(
+                  desc,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
               ],
             ),
           ),
@@ -937,8 +976,7 @@ class _MasterPasswordDialog extends StatefulWidget {
   const _MasterPasswordDialog({this.isForRestore = false});
 
   @override
-  State<_MasterPasswordDialog> createState() =>
-      _MasterPasswordDialogState();
+  State<_MasterPasswordDialog> createState() => _MasterPasswordDialogState();
 }
 
 class _MasterPasswordDialogState extends State<_MasterPasswordDialog> {
@@ -954,17 +992,12 @@ class _MasterPasswordDialogState extends State<_MasterPasswordDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(
-          widget.isForRestore ? '输入备份密码以恢复' : '输入主密码以创建备份'),
+      title: Text(widget.isForRestore ? '输入备份密码以恢复' : '输入主密码以创建备份'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.isForRestore
-                ? '请输入创建备份时使用的主密码：'
-                : '请输入您的主密码以生成备份密钥：',
-          ),
+          Text(widget.isForRestore ? '请输入创建备份时使用的主密码：' : '请输入您的主密码以生成备份密钥：'),
           const SizedBox(height: 16),
           TextField(
             controller: _controller,
@@ -974,11 +1007,10 @@ class _MasterPasswordDialogState extends State<_MasterPasswordDialog> {
               border: const OutlineInputBorder(),
               labelText: '主密码',
               suffixIcon: IconButton(
-                icon: Icon(_obscureText
-                    ? Icons.visibility
-                    : Icons.visibility_off),
-                onPressed: () =>
-                    setState(() => _obscureText = !_obscureText),
+                icon: Icon(
+                  _obscureText ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: () => setState(() => _obscureText = !_obscureText),
               ),
             ),
             onSubmitted: (_) => _submit(),
@@ -997,10 +1029,7 @@ class _MasterPasswordDialogState extends State<_MasterPasswordDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('取消'),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('确认'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('确认')),
       ],
     );
   }

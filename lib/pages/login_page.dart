@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../helpers/auth_helper.dart';
 import '../helpers/file_intent_helper.dart';
-import 'register_page.dart';
 import 'home_page.dart';
 import 'backup_restore_page.dart';
 
@@ -38,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
         _isBiometricAvailable = isAvailable;
         _biometricDisplayName = displayName;
       });
-      
+
       // 如果生物识别可用，自动弹出生物识别
       if (isAvailable) {
         _loginWithBiometric();
@@ -78,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       if (mounted) {
-        Get.snackbar("登录失败", '$_biometricDisplayName登录失败: $e');
+        Get.snackbar("解锁失败", '$_biometricDisplayName解锁失败: $e');
       }
     } finally {
       if (mounted) {
@@ -112,7 +111,7 @@ class _LoginPageState extends State<LoginPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('登录失败，请检查密码'),
+              content: Text('解锁失败，请检查主密码'),
               backgroundColor: Colors.red,
             ),
           );
@@ -121,7 +120,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('登录失败: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('解锁失败: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -133,7 +132,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  /// 登录成功后的导航：如果有待恢复的备份文件，直接进入备份恢复页
+  /// 解锁成功后的导航：如果有待恢复的备份文件，直接进入备份恢复页
   void _navigateAfterLogin() {
     final pendingFile = FileIntentHelper().consumePendingFilePath();
     if (pendingFile != null) {
@@ -145,9 +144,8 @@ class _LoginPageState extends State<LoginPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => BackupRestorePage(
-              initialFilePath: pendingFile,
-            ),
+            builder: (context) =>
+                BackupRestorePage(initialFilePath: pendingFile),
           ),
         );
       });
@@ -161,6 +159,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('解锁')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -232,7 +231,7 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: _isLoading ? null : _login,
                       child: _isLoading
                           ? const CircularProgressIndicator()
-                          : const Text('登录', style: TextStyle(fontSize: 16)),
+                          : const Text('解锁', style: TextStyle(fontSize: 16)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -260,7 +259,7 @@ class _LoginPageState extends State<LoginPage> {
                           size: 24,
                         ),
                         label: Text(
-                          '使用$_biometricDisplayName登录',
+                          '使用$_biometricDisplayName解锁',
                           style: const TextStyle(fontSize: 16),
                         ),
                         style: OutlinedButton.styleFrom(),
@@ -268,19 +267,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 16),
                   ],
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (context) => const RegisterPage(),
-                        ),
-                      );
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: Theme.of(context).colorScheme.primary,
-                    ),
-                    child: const Text('没有账户？点击注册'),
-                  ),
                 ],
               ),
             ),
