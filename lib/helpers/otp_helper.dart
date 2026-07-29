@@ -22,11 +22,18 @@ class OtpToken {
 
   // 从JSON转换为OtpToken对象
   factory OtpToken.fromJson(Map<String, dynamic> json) {
-    return OtpToken(
-      id: json['id'].toString(),
-      label: json['label'].toString(),
-      secret: json['secret'].toString(),
-    );
+    final id = json['id'];
+    final label = json['label'];
+    final secret = json['secret'];
+    if (id is! String ||
+        id.isEmpty ||
+        label is! String ||
+        label.isEmpty ||
+        secret is! String ||
+        secret.isEmpty) {
+      throw const FormatException('Invalid OTP token fields');
+    }
+    return OtpToken(id: id, label: label, secret: secret);
   }
 
   // 将OtpToken对象转换为JSON
@@ -49,27 +56,29 @@ class OtpHelper {
         return [];
       }
 
-      final List<dynamic> ids = jsonDecode(idsJson);
+      final decodedIds = jsonDecode(idsJson);
+      if (decodedIds is! List<dynamic>) {
+        throw const FormatException('Invalid OTP token index');
+      }
       final List<OtpToken> tokens = [];
 
-      for (final id in ids) {
-        final tokenJson = await _storage.read(
-          key: _otpTokensPrefix + id.toString(),
-        );
-        if (tokenJson != null) {
-          try {
-            final Map<String, dynamic> tokenData = jsonDecode(tokenJson);
-            final OtpToken token = OtpToken.fromJson(tokenData);
-
-            // 将令牌添加到列表中（使用时会解密）
-            tokens.add(token);
-          } catch (e) {
-            // 跳过无效的令牌
-            if (kDebugMode) {
-              print('跳过无效令牌: $e');
-            }
-          }
+      for (final id in decodedIds) {
+        if (id is! String || id.isEmpty) {
+          throw const FormatException('Invalid OTP token ID');
         }
+        final tokenJson = await _storage.read(key: _otpTokensPrefix + id);
+        if (tokenJson == null || tokenJson.isEmpty) {
+          throw const FormatException('Missing OTP token record');
+        }
+        final decodedToken = jsonDecode(tokenJson);
+        if (decodedToken is! Map<String, dynamic>) {
+          throw const FormatException('Invalid OTP token record');
+        }
+        final token = OtpToken.fromJson(decodedToken);
+        if (token.id != id) {
+          throw const FormatException('OTP token ID mismatch');
+        }
+        tokens.add(token);
       }
 
       return tokens;

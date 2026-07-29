@@ -5,7 +5,13 @@ import '../l10n/l10n.dart';
 
 typedef QrScannerBuilder = Widget Function(BuildContext context);
 
-enum OtpUriParseError { malformed, notOtpAuth, missingSecret, invalidSecret }
+enum OtpUriParseError {
+  malformed,
+  notOtpAuth,
+  unsupportedType,
+  missingSecret,
+  invalidSecret,
+}
 
 class OtpUriData {
   const OtpUriData({
@@ -40,6 +46,9 @@ OtpUriParseResult parseOtpUri(String rawValue) {
     }
     if (otpUri.scheme != 'otpauth') {
       return const OtpUriParseResult.failure(OtpUriParseError.notOtpAuth);
+    }
+    if (otpUri.host.toLowerCase() != 'totp') {
+      return const OtpUriParseResult.failure(OtpUriParseError.unsupportedType);
     }
 
     final rawSecret = otpUri.queryParameters['secret'];
@@ -155,7 +164,8 @@ class _QrScannerPageState extends State<QrScannerPage> {
       OtpUriParseError.missingSecret => l10n.otpQrMissingSecret,
       OtpUriParseError.invalidSecret => l10n.otpQrInvalidSecret,
       OtpUriParseError.malformed ||
-      OtpUriParseError.notOtpAuth => l10n.invalidOtpQrCode,
+      OtpUriParseError.notOtpAuth ||
+      OtpUriParseError.unsupportedType => l10n.invalidOtpQrCode,
     };
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

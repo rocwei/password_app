@@ -63,6 +63,7 @@ class _OtpPageState extends State<OtpPage> {
   late final Timer _timer;
   int _secondsRemaining = 30;
   bool _isLoading = true;
+  bool _hasLoadError = false;
 
   @override
   void initState() {
@@ -83,7 +84,10 @@ class _OtpPageState extends State<OtpPage> {
 
   Future<void> _loadOtpTokens() async {
     if (mounted) {
-      setState(() => _isLoading = true);
+      setState(() {
+        _isLoading = true;
+        _hasLoadError = false;
+      });
     }
 
     try {
@@ -95,14 +99,14 @@ class _OtpPageState extends State<OtpPage> {
           return _OtpItem(token: token, code: result.code ?? '------');
         }).toList();
         _isLoading = false;
+        _hasLoadError = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _otpList = [];
+        _hasLoadError = true;
       });
-      _showMessage(context.l10n.otpLoadFailed, isError: true);
     }
   }
 
@@ -374,7 +378,17 @@ class _OtpPageState extends State<OtpPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.oneTimePassword), elevation: 0),
+      appBar: AppBar(
+        title: Text(l10n.oneTimePassword),
+        elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: _isLoading ? null : _loadOtpTokens,
+            icon: const Icon(Icons.refresh),
+            tooltip: l10n.retry,
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Semantics(
@@ -391,13 +405,7 @@ class _OtpPageState extends State<OtpPage> {
               minHeight: 4,
             ),
           ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _otpList.isEmpty
-                ? _buildEmptyState(context)
-                : _buildOtpList(context),
-          ),
+          Expanded(child: _buildContent(context)),
         ],
       ),
       floatingActionButton: Column(
@@ -420,6 +428,77 @@ class _OtpPageState extends State<OtpPage> {
             label: Text(l10n.addOtp),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    if (_isLoading && _otpList.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_hasLoadError && _otpList.isEmpty) {
+      return _buildLoadError(context);
+    }
+    if (_hasLoadError) {
+      return Column(
+        children: [
+          _buildLoadErrorBanner(context),
+          Expanded(child: _buildOtpList(context)),
+        ],
+      );
+    }
+    if (_otpList.isEmpty) return _buildEmptyState(context);
+    return _buildOtpList(context);
+  }
+
+  Widget _buildLoadError(BuildContext context) {
+    final l10n = context.l10n;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 56, color: colorScheme.error),
+            const SizedBox(height: 16),
+            Text(
+              l10n.otpLoadFailed,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _loadOtpTokens,
+              icon: const Icon(Icons.refresh),
+              label: Text(l10n.retry),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorBanner(BuildContext context) {
+    final l10n = context.l10n;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: colorScheme.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline, color: colorScheme.onErrorContainer),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                l10n.otpLoadFailed,
+                style: TextStyle(color: colorScheme.onErrorContainer),
+              ),
+            ),
+            TextButton(onPressed: _loadOtpTokens, child: Text(l10n.retry)),
+          ],
+        ),
       ),
     );
   }

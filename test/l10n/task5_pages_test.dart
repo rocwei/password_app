@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,7 @@ import 'package:password_manager/helpers/otp_helper.dart';
 import 'package:password_manager/l10n/app_localizations.dart';
 import 'package:password_manager/pages/generate_password_page.dart';
 import 'package:password_manager/pages/otp_page.dart';
+import 'package:password_manager/pages/password_detail_page.dart';
 
 void main() {
   setUp(() {
@@ -54,27 +56,89 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-    'password generator keeps actions reachable at 320x568 and text scale 2',
-    (tester) async {
-      tester.view.physicalSize = const Size(320, 568);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets('password generator controls work at 320x568 and text scale 2', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final copiedPasswords = <String>[];
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedPasswords.add(
+          (call.arguments as Map<Object?, Object?>)['text'] as String,
+        );
+      }
+      return null;
+    });
+    addTearDown(
+      () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
+    );
 
-      await tester.pumpWidget(
-        buildLocalizedPage(const GeneratePasswordPage(), textScaleFactor: 2),
-      );
+    await tester.pumpWidget(
+      buildLocalizedPage(const GeneratePasswordPage(), textScaleFactor: 2),
+    );
 
-      expect(find.text('Regenerate'), findsOneWidget);
-      expect(find.text('Save to Vault'), findsOneWidget);
-      expect(
-        tester.getBottomLeft(find.text('Save to Vault')).dy,
-        lessThan(568),
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
+    final verticalScrollables = find.byWidgetPredicate(
+      (widget) =>
+          widget is Scrollable && widget.axisDirection == AxisDirection.down,
+    );
+    final excludeSimilar = find.text('Exclude similar characters (il1Lo0O)');
+    await tester.scrollUntilVisible(
+      excludeSimilar,
+      160,
+      scrollable: verticalScrollables.last,
+    );
+    await tester.tap(excludeSimilar);
+    await tester.pump();
+    expect(
+      tester
+          .widget<CheckboxListTile>(
+            find.widgetWithText(
+              CheckboxListTile,
+              'Exclude similar characters (il1Lo0O)',
+            ),
+          )
+          .value,
+      isFalse,
+    );
+
+    final copyButton = find.byTooltip('Copy password');
+    await tester.scrollUntilVisible(
+      copyButton,
+      100,
+      scrollable: verticalScrollables.first,
+    );
+    await tester.tap(copyButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(copiedPasswords.single, isNotEmpty);
+
+    ScaffoldMessenger.of(
+      tester.element(find.byType(GeneratePasswordPage)),
+    ).clearSnackBars();
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Regenerate'));
+    await tester.pump();
+    await tester.tap(copyButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(copiedPasswords, hasLength(2));
+    expect(copiedPasswords.last, isNot(copiedPasswords.first));
+
+    ScaffoldMessenger.of(
+      tester.element(find.byType(GeneratePasswordPage)),
+    ).clearSnackBars();
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save to Vault'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PasswordDetailPage), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'password generator handles every character type being disabled',
@@ -277,8 +341,49 @@ void main() {
     );
     expect(find.textContaining('FormatException'), findsNothing);
     expect(find.textContaining('invalid-json'), findsNothing);
+    expect(find.text('No OTP accounts yet'), findsNothing);
+    expect(find.text('Retry'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'OTP refresh failure preserves existing accounts and shows error',
+    (tester) async {
+      const label = 'Existing / 原样';
+      final token = OtpToken(
+        id: 'existing',
+        label: label,
+        secret: 'JBSWY3DPEHPK3PXP',
+      );
+      var loadCount = 0;
+
+      await tester.pumpWidget(
+        buildLocalizedPage(
+          OtpPage(
+            loadTokens: () async {
+              loadCount++;
+              if (loadCount == 1) return [token];
+              throw const OtpStorageException(OtpStorageOperation.load);
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.text(label), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Retry'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text(label), findsOneWidget);
+      expect(
+        find.text('Could not load OTP accounts. Please try again.'),
+        findsOneWidget,
+      );
+      expect(find.text('No OTP accounts yet'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'Chinese task pages localize UI and preserve OTP label and code',

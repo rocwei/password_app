@@ -27,6 +27,15 @@ void main() {
     expect(result.data?.secret, 'JBSWY3DPEHPK3PXP');
   });
 
+  test('accepts TOTP authority case-insensitively', () {
+    final result = parseOtpUri(
+      'otpauth://TOTP/Account?secret=JBSWY3DPEHPK3PXP',
+    );
+
+    expect(result.error, isNull);
+    expect(result.data?.path, 'Account');
+  });
+
   test('rejects a non-otpauth URI', () {
     final result = parseOtpUri(
       'https://example.com/totp/Account?secret=JBSWY3DPEHPK3PXP',
@@ -34,6 +43,25 @@ void main() {
 
     expect(result.data, isNull);
     expect(result.error, OtpUriParseError.notOtpAuth);
+  });
+
+  test('rejects an HOTP URI as an unsupported OTP type', () {
+    final result = parseOtpUri(
+      'otpauth://hotp/Account'
+      '?secret=JBSWY3DPEHPK3PXP&counter=1',
+    );
+
+    expect(result.data, isNull);
+    expect(result.error, OtpUriParseError.unsupportedType);
+  });
+
+  test('rejects an unknown OTP URI authority', () {
+    final result = parseOtpUri(
+      'otpauth://steam/Account?secret=JBSWY3DPEHPK3PXP',
+    );
+
+    expect(result.data, isNull);
+    expect(result.error, OtpUriParseError.unsupportedType);
   });
 
   test('rejects an OTP URI without a secret', () {
