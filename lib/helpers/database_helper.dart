@@ -176,6 +176,36 @@ class DatabaseHelper {
     );
   }
 
+  Future<void> updateMasterPasswordDataAtomically(
+    User user,
+    List<PasswordEntry> entries,
+  ) async {
+    final db = await database;
+    await db.transaction((transaction) async {
+      final updatedUsers = await transaction.update(
+        'users',
+        user.toMap(),
+        where: 'id = ?',
+        whereArgs: [user.id],
+      );
+      if (updatedUsers != 1) {
+        throw StateError('Local vault user was not updated');
+      }
+
+      for (final entry in entries) {
+        final updatedEntries = await transaction.update(
+          'password_entries',
+          entry.toMap(),
+          where: 'id = ?',
+          whereArgs: [entry.id],
+        );
+        if (updatedEntries != 1) {
+          throw StateError('Local vault entry was not updated');
+        }
+      }
+    });
+  }
+
   // 密码条目相关操作
   Future<int> insertPasswordEntry(PasswordEntry entry) async {
     final db = await database;

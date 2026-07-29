@@ -130,24 +130,34 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _toggleBiometric(bool value) async {
+    final previousValue = _biometricEnabled;
     setState(() => _loadingBio = true);
-    bool ok = false;
-    if (value) {
-      ok =
-          await (widget.enableBiometric ??
-              _authHelper.enableBiometricForCurrentUser)();
-    } else {
-      ok =
-          await (widget.disableBiometric ??
-              _authHelper.disableBiometricForCurrentUser)();
-    }
-    if (mounted) {
+    try {
+      final ok = value
+          ? await (widget.enableBiometric ??
+                _authHelper.enableBiometricForCurrentUser)()
+          : await (widget.disableBiometric ??
+                _authHelper.disableBiometricForCurrentUser)();
+      if (!mounted) {
+        return;
+      }
       setState(() {
-        _biometricEnabled = ok ? value : _biometricEnabled;
+        _biometricEnabled = ok ? value : previousValue;
         _loadingBio = false;
       });
-    }
-    if (!ok && mounted) {
+      if (!ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.biometricSettingsUpdateFailed)),
+        );
+      }
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _biometricEnabled = previousValue;
+        _loadingBio = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.biometricSettingsUpdateFailed)),
       );

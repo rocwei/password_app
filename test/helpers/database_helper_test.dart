@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:password_manager/helpers/database_helper.dart';
+import 'package:password_manager/models/password_entry.dart';
+import 'package:password_manager/models/user.dart';
 import 'package:sqflite/sqflite.dart';
 
 const _sqfliteChannel = MethodChannel('com.tekartik.sqflite');
@@ -106,5 +108,89 @@ void main() {
     final database = await reopenedDatabase;
     expect(database.isOpen, isTrue);
     expect(lifecycle, ['close', 'delete', 'open']);
+  });
+
+  test('master password data rolls back when an entry update misses', () async {
+    await databaseHelper.database;
+    var persistedUserPassword = 'old-hash';
+    var persistedEntries = <int, String>{11: 'old-one', 12: 'old-two'};
+    String? userSnapshot;
+    Map<int, String>? entriesSnapshot;
+    var updateCall = 0;
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(_sqfliteChannel, (call) async {
+          switch (call.method) {
+            case 'execute':
+              final sql = (call.arguments as Map)['sql'] as String;
+              if (sql.startsWith('BEGIN')) {
+                lifecycle.add('begin');
+                userSnapshot = persistedUserPassword;
+                entriesSnapshot = Map<int, String>.from(persistedEntries);
+                return <String, Object?>{'transactionId': 99};
+              }
+              if (sql == 'ROLLBACK') {
+                lifecycle.add('rollback');
+                persistedUserPassword = userSnapshot!;
+                persistedEntries = entriesSnapshot!;
+              } else if (sql == 'COMMIT') {
+                lifecycle.add('commit');
+              }
+              return <String, Object?>{};
+            case 'update':
+              updateCall++;
+              final arguments = call.arguments as Map;
+              final sql = arguments['sql'] as String;
+              if (updateCall == 1) {
+                expect(sql, contains('UPDATE users'));
+                expect(arguments['arguments'], contains('new-hash'));
+                persistedUserPassword = 'new-hash';
+                return 1;
+              }
+              if (updateCall == 2) {
+                expect(sql, contains('UPDATE password_entries'));
+                expect(arguments['arguments'], contains('new-one'));
+                persistedEntries[11] = 'new-one';
+                return 1;
+              }
+              return 0;
+            case 'closeDatabase':
+              return null;
+          }
+          throw StateError('Unexpected sqflite call: ${call.method}');
+        });
+
+    final user = User(
+      id: 7,
+      username: 'user',
+      masterPasswordHash: 'new-hash',
+      salt: 'new-salt',
+    );
+    final entries = [
+      PasswordEntry(
+        id: 11,
+        userId: 7,
+        title: 'One',
+        username: 'one',
+        encryptedPassword: 'new-one',
+      ),
+      PasswordEntry(
+        id: 12,
+        userId: 7,
+        title: 'Two',
+        username: 'two',
+        encryptedPassword: 'new-two',
+      ),
+    ];
+
+    await expectLater(
+      databaseHelper.updateMasterPasswordDataAtomically(user, entries),
+      throwsStateError,
+    );
+
+    expect(persistedUserPassword, 'old-hash');
+    expect(persistedEntries, {11: 'old-one', 12: 'old-two'});
+    expect(lifecycle, contains('rollback'));
+    expect(lifecycle, isNot(contains('commit')));
   });
 }
