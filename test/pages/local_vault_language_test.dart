@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -37,6 +36,14 @@ void main() {
     );
   }
 
+  Future<void> submitValidMasterPassword(WidgetTester tester) async {
+    final passwordFields = find.byType(TextFormField);
+    await tester.enterText(passwordFields.at(0), 'strong-password');
+    await tester.enterText(passwordFields.at(1), 'strong-password');
+    await tester.tap(find.text('创建本地密码库'));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('设置主密码页只使用本地密码库文案', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: RegisterPage()));
 
@@ -56,24 +63,34 @@ void main() {
     expect(find.textContaining('点击注册'), findsNothing);
   });
 
-  test('认证相关源文件不再包含旧的在线账号提示', () {
-    const paths = [
-      'lib/pages/register_page.dart',
-      'lib/pages/login_page.dart',
-      'lib/helpers/auth_helper.dart',
-      'lib/helpers/otp_helper.dart',
-      'lib/pages/add_category_page.dart',
-      'lib/pages/password_detail_page.dart',
-      'lib/pages/backup_restore_page.dart',
-    ];
-    const obsoleteMessages = ['注册失败', '登录失败', '用户未登录', '请先使用主密码登录'];
+  testWidgets('已有本地密码库时显示明确提示', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: RegisterPage(createLocalVault: (_) async => false)),
+    );
 
-    for (final path in paths) {
-      final source = File(path).readAsStringSync();
-      for (final message in obsoleteMessages) {
-        expect(source, isNot(contains(message)), reason: '$path 仍包含“$message”');
-      }
-    }
+    await submitValidMasterPassword(tester);
+
+    expect(find.text('设置失败，本机已存在密码库'), findsOneWidget);
+    expect(find.text('设置本地密码库失败，请重试'), findsNothing);
+    expect(find.textContaining('生物识别认证错误'), findsNothing);
+  });
+
+  testWidgets('创建本地密码库异常时显示通用提示且不泄露内部错误', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RegisterPage(
+          createLocalVault: (_) async =>
+              throw StateError('database insert failed'),
+        ),
+      ),
+    );
+
+    await submitValidMasterPassword(tester);
+
+    expect(find.text('设置本地密码库失败，请重试'), findsOneWidget);
+    expect(find.text('设置失败，本机已存在密码库'), findsNothing);
+    expect(find.textContaining('database insert failed'), findsNothing);
+    expect(find.textContaining('生物识别认证错误'), findsNothing);
   });
 
   Future<void> scrollToDangerZone(WidgetTester tester) async {

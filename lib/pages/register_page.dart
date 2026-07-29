@@ -3,7 +3,9 @@ import '../helpers/auth_helper.dart';
 import 'home_page.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  const RegisterPage({super.key, this.createLocalVault});
+
+  final Future<bool> Function(String)? createLocalVault;
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -35,10 +37,9 @@ class _RegisterPageState extends State<RegisterPage> {
     });
 
     try {
-      final authHelper = AuthHelper();
-      final success = await authHelper.registerSingleUser(
-        _passwordController.text,
-      );
+      final createLocalVault =
+          widget.createLocalVault ?? AuthHelper().registerSingleUser;
+      final success = await createLocalVault(_passwordController.text);
 
       if (success) {
         if (mounted) {
@@ -56,10 +57,13 @@ class _RegisterPageState extends State<RegisterPage> {
           );
         }
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('设置失败: $e'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('设置本地密码库失败，请重试'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {

@@ -24,47 +24,40 @@ class AuthHelper {
 
   // 单用户注册（不需要用户名，自动使用"user"作为用户名）
   Future<bool> registerSingleUser(String masterPassword) async {
-    try {
-      final dbHelper = DatabaseHelper();
+    final dbHelper = DatabaseHelper();
 
-      // 检查是否已有用户注册
-      final hasExistingUsers = await dbHelper.hasUsers();
-      if (hasExistingUsers) {
-        return false; // 已有用户注册，单用户模式下不允许再注册
-      }
-
-      // 生成盐
-      final salt = EncryptionHelper.generateSalt();
-
-      // 哈希主密码用于验证
-      final hashedPassword = EncryptionHelper.hashMasterPassword(
-        masterPassword,
-        salt,
-      );
-
-      // 创建用户（使用固定用户名"user"）
-      final user = User(
-        username: "user",
-        masterPasswordHash: hashedPassword,
-        salt: salt,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      // 保存到数据库
-      final userId = await dbHelper.insertUser(user);
-
-      if (userId > 0) {
-        // 自动登录
-        return await loginSingleUser(masterPassword);
-      }
-
-      return false;
-    } catch (e) {
-      // print('设置失败: $e');
-      Get.snackbar("生物识别认证错误", e.toString());
+    // false 只表示本机已经存在密码库。
+    final hasExistingUsers = await dbHelper.hasUsers();
+    if (hasExistingUsers) {
       return false;
     }
+
+    final salt = EncryptionHelper.generateSalt();
+
+    final hashedPassword = EncryptionHelper.hashMasterPassword(
+      masterPassword,
+      salt,
+    );
+
+    final user = User(
+      username: "user",
+      masterPasswordHash: hashedPassword,
+      salt: salt,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+
+    final userId = await dbHelper.insertUser(user);
+    if (userId <= 0) {
+      throw StateError('Failed to insert local vault user');
+    }
+
+    final unlocked = await _unlockSingleUser(masterPassword);
+    if (!unlocked) {
+      throw StateError('Failed to unlock newly created local vault');
+    }
+
+    return true;
   }
 
   // 注册新用户
@@ -115,42 +108,36 @@ class AuthHelper {
   // 单用户登录（不需要用户名）
   Future<bool> loginSingleUser(String masterPassword) async {
     try {
-      final dbHelper = DatabaseHelper();
-
-      // 获取第一个（唯一）用户
-      final user = await dbHelper.getFirstUser();
-      if (user == null) {
-        return false; // 没有用户
-      }
-
-      // 验证密码
-      final hashedPassword = EncryptionHelper.hashMasterPassword(
-        masterPassword,
-        user.salt,
-      );
-      if (hashedPassword != user.masterPasswordHash) {
-        return false; // 密码错误
-      }
-
-      // 派生加密密钥
-      final encryptionKey = EncryptionHelper.deriveKey(
-        masterPassword,
-        user.salt,
-      );
-
-      // 设置当前用户和加密密钥
-      _currentUser = user;
-      _encryptionKey = encryptionKey;
-
-      // 初始化加密器
-      EncryptionHelper().setEncryptionKey(encryptionKey);
-
-      return true;
+      return await _unlockSingleUser(masterPassword);
     } catch (e) {
       // print('解锁失败: $e');
       Get.snackbar("解锁失败", e.toString());
       return false;
     }
+  }
+
+  Future<bool> _unlockSingleUser(String masterPassword) async {
+    final dbHelper = DatabaseHelper();
+    final user = await dbHelper.getFirstUser();
+    if (user == null) {
+      return false;
+    }
+
+    final hashedPassword = EncryptionHelper.hashMasterPassword(
+      masterPassword,
+      user.salt,
+    );
+    if (hashedPassword != user.masterPasswordHash) {
+      return false;
+    }
+
+    final encryptionKey = EncryptionHelper.deriveKey(masterPassword, user.salt);
+
+    _currentUser = user;
+    _encryptionKey = encryptionKey;
+    EncryptionHelper().setEncryptionKey(encryptionKey);
+
+    return true;
   }
 
   // 用户登录
