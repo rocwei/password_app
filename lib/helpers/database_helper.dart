@@ -111,7 +111,8 @@ class DatabaseHelper {
 
       // 为密码条目表添加 category_id 字段
       await db.execute(
-          'ALTER TABLE password_entries ADD COLUMN category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL');
+        'ALTER TABLE password_entries ADD COLUMN category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL',
+      );
     }
   }
 
@@ -196,7 +197,9 @@ class DatabaseHelper {
   }
 
   Future<List<PasswordEntry>> getPasswordEntriesByCategory(
-      int userId, int? categoryId) async {
+    int userId,
+    int? categoryId,
+  ) async {
     final db = await database;
     final List<Map<String, dynamic>> maps;
 
@@ -225,12 +228,15 @@ class DatabaseHelper {
   /// 获取每个分类下的密码条目数量
   Future<Map<int?, int>> getPasswordCountByCategory(int userId) async {
     final db = await database;
-    final List<Map<String, dynamic>> result = await db.rawQuery('''
+    final List<Map<String, dynamic>> result = await db.rawQuery(
+      '''
       SELECT category_id, COUNT(*) as count 
       FROM password_entries 
       WHERE user_id = ? 
       GROUP BY category_id
-    ''', [userId]);
+    ''',
+      [userId],
+    );
 
     final Map<int?, int> countMap = {};
     for (final row in result) {
@@ -357,11 +363,7 @@ class DatabaseHelper {
   /// 删除分类
   Future<int> deleteCategory(int id) async {
     final db = await database;
-    return await db.delete(
-      'categories',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('categories', where: 'id = ?', whereArgs: [id]);
   }
 
   /// 导出分类
@@ -377,11 +379,7 @@ class DatabaseHelper {
   /// 清除用户所有分类
   Future<void> clearCategories(int userId) async {
     final db = await database;
-    await db.delete(
-      'categories',
-      where: 'user_id = ?',
-      whereArgs: [userId],
-    );
+    await db.delete('categories', where: 'user_id = ?', whereArgs: [userId]);
   }
 
   Future<void> deleteAllLocalData() {
