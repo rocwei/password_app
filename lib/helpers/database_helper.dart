@@ -6,6 +6,54 @@ import '../models/user.dart';
 import '../models/password_entry.dart';
 import '../models/category.dart';
 
+class BackupCategoryRecord {
+  const BackupCategoryRecord({
+    required this.sourceId,
+    required this.name,
+    required this.createdAt,
+    required this.updatedAt,
+    this.icon,
+  });
+
+  final int sourceId;
+  final String name;
+  final String? icon;
+  final String? createdAt;
+  final String updatedAt;
+}
+
+class BackupPasswordRecord {
+  const BackupPasswordRecord({
+    required this.sourceCategoryId,
+    required this.title,
+    required this.username,
+    required this.encryptedPassword,
+    required this.createdAt,
+    required this.updatedAt,
+    this.website,
+    this.note,
+  });
+
+  final int? sourceCategoryId;
+  final String title;
+  final String username;
+  final String encryptedPassword;
+  final String? website;
+  final String? note;
+  final String? createdAt;
+  final String updatedAt;
+}
+
+class BackupDatabaseRestoreResult {
+  const BackupDatabaseRestoreResult({
+    required this.passwordEntryCount,
+    required this.categoryCount,
+  });
+
+  final int passwordEntryCount;
+  final int categoryCount;
+}
+
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   factory DatabaseHelper() => _instance;
@@ -328,6 +376,75 @@ class DatabaseHelper {
       where: 'user_id = ?',
       whereArgs: [userId],
     );
+  }
+
+  Future<BackupDatabaseRestoreResult> replaceBackupDataAtomically({
+    required int userId,
+    required List<BackupCategoryRecord> categories,
+    required List<BackupPasswordRecord> entries,
+    required Future<void> Function() beforeCommit,
+  }) async {
+    final db = await database;
+    return db.transaction((transaction) async {
+      await transaction.delete(
+        'password_entries',
+        where: 'user_id = ?',
+        whereArgs: [userId],
+      );
+      await transaction.delete(
+        'categories',
+        where: 'user_id = ?',
+        whereArgs: [userId],
+      );
+
+      final categoryIdMapping = <int, int>{};
+      for (final category in categories) {
+        if (categoryIdMapping.containsKey(category.sourceId)) {
+          throw const FormatException('Duplicate backup category ID');
+        }
+        final newId = await transaction.insert('categories', {
+          'user_id': userId,
+          'name': category.name,
+          'icon': category.icon,
+          'created_at': category.createdAt,
+          'updated_at': category.updatedAt,
+        });
+        if (newId <= 0) {
+          throw StateError('Backup category was not inserted');
+        }
+        categoryIdMapping[category.sourceId] = newId;
+      }
+
+      for (final entry in entries) {
+        final sourceCategoryId = entry.sourceCategoryId;
+        final newCategoryId = sourceCategoryId == null
+            ? null
+            : categoryIdMapping[sourceCategoryId];
+        if (sourceCategoryId != null && newCategoryId == null) {
+          throw const FormatException('Unknown backup category reference');
+        }
+        final newId = await transaction.insert('password_entries', {
+          'user_id': userId,
+          'category_id': newCategoryId,
+          'title': entry.title,
+          'username': entry.username,
+          'password': entry.encryptedPassword,
+          'website': entry.website,
+          'note': entry.note,
+          'created_at': entry.createdAt,
+          'updated_at': entry.updatedAt,
+        });
+        if (newId <= 0) {
+          throw StateError('Backup password entry was not inserted');
+        }
+      }
+
+      await beforeCommit();
+      return BackupDatabaseRestoreResult(
+        passwordEntryCount: entries.length,
+        categoryCount: categories.length,
+      );
+    });
   }
 
   // ==================== 分类相关操作 ====================

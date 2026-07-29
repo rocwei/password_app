@@ -5,12 +5,16 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:file_picker/file_picker.dart';
+import '../helpers/backup_restore_service.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/auth_helper.dart';
 import '../helpers/encryption_helper.dart';
 import '../helpers/otp_helper.dart';
 import '../l10n/l10n.dart';
 import 'home_page.dart';
+
+export '../helpers/backup_restore_service.dart'
+    show BackupRestorePlan, BackupRestoreResult;
 
 /// ============================================================
 /// 备份与恢复页面  文件备份方案
@@ -32,40 +36,6 @@ class BackupFileSelection {
 
   final String? path;
   final String name;
-}
-
-class BackupRestorePlan {
-  const BackupRestorePlan({
-    required this.fileName,
-    required this.userId,
-    required this.backupKey,
-    required this.entries,
-    required this.categories,
-    required this.otpTokens,
-  });
-
-  final String fileName;
-  final int userId;
-  final String backupKey;
-  final List<Map<String, dynamic>> entries;
-  final List<Map<String, dynamic>> categories;
-  final List<Map<String, dynamic>> otpTokens;
-
-  int get passwordEntryCount => entries.length;
-  int get categoryCount => categories.length;
-  int get otpCount => otpTokens.length;
-}
-
-class BackupRestoreResult {
-  const BackupRestoreResult({
-    required this.restoredPasswordEntryCount,
-    required this.restoredCategoryCount,
-    required this.restoredOtpCount,
-  });
-
-  final int restoredPasswordEntryCount;
-  final int restoredCategoryCount;
-  final int restoredOtpCount;
 }
 
 class BackupCreationResult {
@@ -118,6 +88,8 @@ class BackupRestorePage extends StatefulWidget {
 }
 
 class _BackupRestorePageState extends State<BackupRestorePage> {
+  final BackupRestoreService _restoreService = BackupRestoreService();
+
   /// 是否正在执行异步操作（备份/恢复）
   bool _isLoading = false;
 
@@ -548,13 +520,15 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
         ? _backupMaps(jsonData['otp_tokens'])
         : <Map<String, dynamic>>[];
 
-    return BackupRestorePlan(
-      fileName: fileName,
-      userId: userId,
-      backupKey: backupKey,
-      entries: entries,
-      categories: categories,
-      otpTokens: otpTokens,
+    return _restoreService.validatePlan(
+      BackupRestorePlan(
+        fileName: fileName,
+        userId: userId,
+        backupKey: backupKey,
+        entries: entries,
+        categories: categories,
+        otpTokens: otpTokens,
+      ),
     );
   }
 
@@ -571,76 +545,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
   }
 
   Future<BackupRestoreResult> _applyBackupPlan(BackupRestorePlan plan) async {
-    final dbHelper = DatabaseHelper();
-    await dbHelper.clearPasswordEntries(plan.userId);
-    await dbHelper.clearCategories(plan.userId);
-
-    final categoryIdMapping = <int, int>{};
-    for (final categoryData in plan.categories) {
-      try {
-        final oldId = categoryData['id'] as int;
-        final categoryMap = {
-          'user_id': plan.userId,
-          'name': categoryData['name'],
-          'icon': categoryData['icon'],
-          'created_at': categoryData['created_at'],
-          'updated_at': DateTime.now().toIso8601String(),
-        };
-        final newId = await dbHelper.database.then(
-          (db) => db.insert('categories', categoryMap),
-        );
-        categoryIdMapping[oldId] = newId;
-      } catch (_) {
-        // A malformed category does not block valid password records.
-      }
-    }
-
-    var restoredPasswordEntryCount = 0;
-    for (final entryData in plan.entries) {
-      try {
-        final plainPassword = EncryptionHelper.decryptPasswordWithBackupKey(
-          entryData['password'],
-          plan.backupKey,
-        );
-        final deviceEncryptedPassword = EncryptionHelper().encryptString(
-          plainPassword,
-        );
-
-        int? newCategoryId;
-        if (entryData['category_id'] != null) {
-          final oldCategoryId = entryData['category_id'] as int;
-          newCategoryId = categoryIdMapping[oldCategoryId];
-        }
-
-        final entry = {
-          'user_id': plan.userId,
-          'category_id': newCategoryId,
-          'title': entryData['title'],
-          'username': entryData['username'],
-          'password': deviceEncryptedPassword,
-          'website': entryData['website'],
-          'note': entryData['note'],
-          'created_at': entryData['created_at'],
-          'updated_at': DateTime.now().toIso8601String(),
-        };
-        await dbHelper.database.then(
-          (db) => db.insert('password_entries', entry),
-        );
-        restoredPasswordEntryCount++;
-      } catch (_) {
-        throw const FormatException('Invalid password entry in backup');
-      }
-    }
-
-    if (plan.otpTokens.isNotEmpty) {
-      await OtpHelper.importTokens(plan.otpTokens);
-    }
-
-    return BackupRestoreResult(
-      restoredPasswordEntryCount: restoredPasswordEntryCount,
-      restoredCategoryCount: categoryIdMapping.length,
-      restoredOtpCount: plan.otpTokens.length,
-    );
+    return _restoreService.applyPlan(plan);
   }
 
   Future<bool?> _confirmRestore(BackupRestorePlan plan) {

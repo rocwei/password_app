@@ -193,4 +193,98 @@ void main() {
     expect(lifecycle, contains('rollback'));
     expect(lifecycle, isNot(contains('commit')));
   });
+
+  test(
+    'backup replacement rolls back database writes when OTP import fails',
+    () async {
+      await databaseHelper.database;
+      var persistedCategories = <String>['old-category'];
+      var persistedEntries = <String>['old-entry'];
+      List<String>? categorySnapshot;
+      List<String>? entrySnapshot;
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(_sqfliteChannel, (call) async {
+            switch (call.method) {
+              case 'execute':
+                final sql = (call.arguments as Map)['sql'] as String;
+                if (sql.startsWith('BEGIN')) {
+                  lifecycle.add('begin');
+                  categorySnapshot = List<String>.of(persistedCategories);
+                  entrySnapshot = List<String>.of(persistedEntries);
+                  return <String, Object?>{'transactionId': 101};
+                }
+                if (sql == 'ROLLBACK') {
+                  lifecycle.add('rollback');
+                  persistedCategories = categorySnapshot!;
+                  persistedEntries = entrySnapshot!;
+                } else if (sql == 'COMMIT') {
+                  lifecycle.add('commit');
+                }
+                return <String, Object?>{};
+              case 'update':
+                final arguments = call.arguments as Map;
+                final sql = arguments['sql'] as String;
+                if (sql.startsWith('DELETE')) {
+                  if (sql.contains('password_entries')) {
+                    persistedEntries.clear();
+                  } else if (sql.contains('categories')) {
+                    persistedCategories.clear();
+                  }
+                  return 1;
+                }
+                throw StateError('Unexpected update: $sql');
+              case 'insert':
+                final arguments = call.arguments as Map;
+                final sql = arguments['sql'] as String;
+                final values = arguments['arguments'] as List<Object?>;
+                if (sql.contains('categories')) {
+                  persistedCategories.add(values[1]! as String);
+                  return 91;
+                }
+                if (sql.contains('password_entries')) {
+                  persistedEntries.add(values[2]! as String);
+                  return 92;
+                }
+                throw StateError('Unexpected insert: $sql');
+              case 'closeDatabase':
+                return null;
+            }
+            throw StateError('Unexpected sqflite call: ${call.method}');
+          });
+
+      await expectLater(
+        databaseHelper.replaceBackupDataAtomically(
+          userId: 7,
+          categories: const [
+            BackupCategoryRecord(
+              sourceId: 9,
+              name: 'new-category',
+              createdAt: '2026-07-29T09:00:00.000',
+              updatedAt: '2026-07-29T10:00:00.000',
+            ),
+          ],
+          entries: const [
+            BackupPasswordRecord(
+              sourceCategoryId: 9,
+              title: 'new-entry',
+              username: 'new-user',
+              encryptedPassword: 'new-password',
+              createdAt: '2026-07-29T09:00:00.000',
+              updatedAt: '2026-07-29T10:00:00.000',
+            ),
+          ],
+          beforeCommit: () async {
+            throw StateError('controlled OTP import failure');
+          },
+        ),
+        throwsStateError,
+      );
+
+      expect(persistedCategories, ['old-category']);
+      expect(persistedEntries, ['old-entry']);
+      expect(lifecycle, contains('rollback'));
+      expect(lifecycle, isNot(contains('commit')));
+    },
+  );
 }
