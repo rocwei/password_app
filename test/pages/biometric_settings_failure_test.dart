@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:password_manager/helpers/language_model.dart';
 import 'package:password_manager/helpers/theme_settings.dart';
 import 'package:password_manager/l10n/app_localizations.dart';
+import 'package:password_manager/pages/change_master_password_page.dart';
 import 'package:password_manager/pages/settings_page.dart';
 import 'package:provider/provider.dart';
 
@@ -129,5 +130,36 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('internal enable details'), findsNothing);
+  });
+
+  testWidgets('returning from master password change reloads biometric state', (
+    tester,
+  ) async {
+    var loadCalls = 0;
+    await tester.pumpWidget(
+      buildPage(
+        loadBiometricEnabled: () async {
+          loadCalls++;
+          return loadCalls == 1;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(loadCalls, 1);
+    expect(tester.widget<Switch>(biometricSwitch()).value, isTrue);
+
+    await tester.ensureVisible(find.text('修改主密码'));
+    await tester.tap(find.text('修改主密码'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ChangeMasterPasswordPage), findsOneWidget);
+
+    Navigator.of(tester.element(find.byType(ChangeMasterPasswordPage))).pop();
+    await tester.pumpAndSettle();
+
+    expect(loadCalls, 2);
+    await tester.drag(find.byType(ListView), const Offset(0, 400));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Switch>(biometricSwitch()).value, isFalse);
   });
 }

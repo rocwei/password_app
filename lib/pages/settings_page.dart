@@ -285,12 +285,16 @@ class _SettingsPageState extends State<SettingsPage> {
             title: const Text('修改主密码'),
             subtitle: const Text('更改您的主密码'),
             trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              Navigator.of(context).push(
+            onTap: () async {
+              await Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => const ChangeMasterPasswordPage(),
                 ),
               );
+              if (!mounted) {
+                return;
+              }
+              await _loadBiometricEnabled();
             },
           ),
           const Divider(height: 1),
