@@ -31,7 +31,7 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: locale,
-        home: Scaffold(body: home),
+        home: home,
       ),
     );
   }
@@ -126,6 +126,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+
+    expect(find.byType(Scaffold), findsOneWidget);
     await tester.enterText(find.byType(TextField), query);
     await tester.pump();
 
