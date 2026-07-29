@@ -1,0 +1,27 @@
+{
+  "@@locale": "zh",
+  "appName": "密盾安存",
+  "@appName": {
+    "description": "Application display title inside Flutter"
+  },
+  "settings": "设置",
+  "@settings": {
+    "description": "Settings page title"
+  },
+  "language": "语言",
+  "@language": {
+    "description": "Language settings section title"
+  },
+  "languageSystem": "跟随系统",
+  "@languageSystem": {
+    "description": "Follow system language option"
+  },
+  "languageChinese": "中文",
+  "@languageChinese": {
+    "description": "Chinese language option"
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "English language option"
+  }
+}

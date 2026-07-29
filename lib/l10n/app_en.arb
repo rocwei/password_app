@@ -1,0 +1,27 @@
+{
+  "@@locale": "en",
+  "appName": "Secure Vault",
+  "@appName": {
+    "description": "Application display title inside Flutter"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings page title"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Language settings section title"
+  },
+  "languageSystem": "System",
+  "@languageSystem": {
+    "description": "Follow system language option"
+  },
+  "languageChinese": "中文",
+  "@languageChinese": {
+    "description": "Chinese language option"
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "English language option"
+  }
+}
