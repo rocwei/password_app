@@ -236,6 +236,12 @@ abstract class AppLocalizations {
   /// **'Face ID'**
   String get biometricFaceId;
 
+  /// Display name for face authentication on non-Apple platforms
+  ///
+  /// In zh, this message translates to:
+  /// **'面部识别'**
+  String get biometricFaceRecognition;
+
   /// Apple Touch ID brand name
   ///
   /// In zh, this message translates to:
@@ -337,6 +343,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'更新生物识别设置失败，请重试'**
   String get biometricSettingsUpdateFailed;
+
+  /// Message shown when the current biometric setting cannot be read
+  ///
+  /// In zh, this message translates to:
+  /// **'读取生物识别设置失败，请重试'**
+  String get biometricSettingsReadFailed;
 
   /// Settings action that starts permanent local vault deletion
   ///
@@ -457,6 +469,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'正在删除本地密码库'**
   String get deletingLocalVault;
+
+  /// Recovery guidance after a master password change only partially updates security data
+  ///
+  /// In zh, this message translates to:
+  /// **'主密码已更改，请使用新密码；部分安全数据更新未完成。请重新解锁后检查 OTP，并重新启用生物识别。'**
+  String get masterPasswordChangedWithRecoveryRequired;
 
   /// Settings page title
   ///

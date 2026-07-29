@@ -18,10 +18,16 @@ class SettingsPage extends StatefulWidget {
     super.key,
     this.deleteLocalVault,
     this.cleanupSecureStorage,
+    this.loadBiometricEnabled,
+    this.enableBiometric,
+    this.disableBiometric,
   });
 
   final Future<LocalVaultDeletionResult> Function(String)? deleteLocalVault;
   final Future<void> Function()? cleanupSecureStorage;
+  final Future<bool> Function()? loadBiometricEnabled;
+  final Future<bool> Function()? enableBiometric;
+  final Future<bool> Function()? disableBiometric;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -99,12 +105,27 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadBiometricEnabled() async {
-    final enabled = await _authHelper.isBiometricEnabledForCurrentUser();
-    if (mounted) {
+    try {
+      final enabled =
+          await (widget.loadBiometricEnabled ??
+              _authHelper.isBiometricEnabledForCurrentUser)();
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _biometricEnabled = enabled;
         _loadingBio = false;
       });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loadingBio = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.biometricSettingsReadFailed)),
+      );
     }
   }
 
@@ -112,9 +133,13 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _loadingBio = true);
     bool ok = false;
     if (value) {
-      ok = await _authHelper.enableBiometricForCurrentUser();
+      ok =
+          await (widget.enableBiometric ??
+              _authHelper.enableBiometricForCurrentUser)();
     } else {
-      ok = await _authHelper.disableBiometricForCurrentUser();
+      ok =
+          await (widget.disableBiometric ??
+              _authHelper.disableBiometricForCurrentUser)();
     }
     if (mounted) {
       setState(() {

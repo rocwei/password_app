@@ -163,13 +163,15 @@ class _LoginPageState extends State<LoginPage> {
 
   String _biometricDisplayName(BuildContext context) {
     final l10n = context.l10n;
+    final isApplePlatform =
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
     if (_availableBiometrics.contains(BiometricType.face)) {
-      return l10n.biometricFaceId;
+      return isApplePlatform
+          ? l10n.biometricFaceId
+          : l10n.biometricFaceRecognition;
     }
     if (_availableBiometrics.contains(BiometricType.fingerprint)) {
-      final isApplePlatform =
-          defaultTargetPlatform == TargetPlatform.iOS ||
-          defaultTargetPlatform == TargetPlatform.macOS;
       return isApplePlatform
           ? l10n.biometricTouchId
           : l10n.biometricFingerprint;

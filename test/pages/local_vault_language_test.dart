@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -375,8 +376,10 @@ void main() {
   });
 
   testWidgets(
-    'English biometric unlock maps Face ID and passes a localized reason',
+    'iOS biometric unlock maps face to Face ID and passes a localized reason',
     (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
       String? receivedReason;
       await tester.pumpWidget(
         buildLocalizedPage(
@@ -399,8 +402,36 @@ void main() {
         find.text('Face ID verification failed. Please try again.'),
         findsOneWidget,
       );
+      debugDefaultTargetPlatformOverride = null;
     },
   );
+
+  testWidgets('Android biometric unlock maps face to Face recognition', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    String? receivedReason;
+
+    await tester.pumpWidget(
+      buildLocalizedPage(
+        LoginPage(
+          canLoginWithBiometric: () async => true,
+          getAvailableBiometrics: () async => const [BiometricType.face],
+          loginWithBiometric: (localizedReason) async {
+            receivedReason = localizedReason;
+            return false;
+          },
+        ),
+        locale: const Locale('en'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unlock with Face recognition'), findsOneWidget);
+    expect(receivedReason, 'Use Face recognition to unlock your local vault.');
+    debugDefaultTargetPlatformOverride = null;
+  });
 
   testWidgets('English unlock failures never expose injected exceptions', (
     tester,

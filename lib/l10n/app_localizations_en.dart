@@ -89,6 +89,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get biometricFaceId => 'Face ID';
 
   @override
+  String get biometricFaceRecognition => 'Face recognition';
+
+  @override
   String get biometricTouchId => 'Touch ID';
 
   @override
@@ -148,6 +151,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get biometricSettingsUpdateFailed =>
       'Could not update biometric settings. Please try again.';
+
+  @override
+  String get biometricSettingsReadFailed =>
+      'Could not read biometric settings. Please try again.';
 
   @override
   String get deleteLocalVault => 'Delete Local Vault';
@@ -215,6 +222,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deletingLocalVault => 'Deleting local vault';
+
+  @override
+  String get masterPasswordChangedWithRecoveryRequired =>
+      'Your master password was changed. Use the new password from now on. Some security data could not be updated. Unlock again, check your OTP tokens, and re-enable biometrics.';
 
   @override
   String get settings => 'Settings';

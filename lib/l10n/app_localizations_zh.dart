@@ -82,6 +82,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get biometricFaceId => 'Face ID';
 
   @override
+  String get biometricFaceRecognition => '面部识别';
+
+  @override
   String get biometricTouchId => 'Touch ID';
 
   @override
@@ -137,6 +140,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get biometricSettingsUpdateFailed => '更新生物识别设置失败，请重试';
+
+  @override
+  String get biometricSettingsReadFailed => '读取生物识别设置失败，请重试';
 
   @override
   String get deleteLocalVault => '删除本地密码库';
@@ -199,6 +205,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get deletingLocalVault => '正在删除本地密码库';
+
+  @override
+  String get masterPasswordChangedWithRecoveryRequired =>
+      '主密码已更改，请使用新密码；部分安全数据更新未完成。请重新解锁后检查 OTP，并重新启用生物识别。';
 
   @override
   String get settings => '设置';

@@ -34,42 +34,55 @@ class OtpHelper {
   // 获取所有保存的OTP令牌
   static Future<List<OtpToken>> getAllTokens() async {
     try {
-      final idsJson = await _storage.read(key: _otpTokenIdsKey);
-
-      if (idsJson == null || idsJson.isEmpty) {
-        return [];
-      }
-
-      final List<dynamic> ids = jsonDecode(idsJson);
-      final List<OtpToken> tokens = [];
-
-      for (final id in ids) {
-        final tokenJson = await _storage.read(
-          key: _otpTokensPrefix + id.toString(),
-        );
-        if (tokenJson != null) {
-          try {
-            final Map<String, dynamic> tokenData = jsonDecode(tokenJson);
-            final OtpToken token = OtpToken.fromJson(tokenData);
-
-            // 将令牌添加到列表中（使用时会解密）
-            tokens.add(token);
-          } catch (e) {
-            // 跳过无效的令牌
-            if (kDebugMode) {
-              print('跳过无效令牌: $e');
-            }
-          }
-        }
-      }
-
-      return tokens;
+      return await _readAllTokens(skipInvalidTokens: true);
     } catch (e) {
       if (kDebugMode) {
         print('获取令牌出错: $e');
       }
       return [];
     }
+  }
+
+  static Future<List<OtpToken>> getAllTokensOrThrow() {
+    return _readAllTokens(skipInvalidTokens: false);
+  }
+
+  static Future<List<OtpToken>> _readAllTokens({
+    required bool skipInvalidTokens,
+  }) async {
+    final idsJson = await _storage.read(key: _otpTokenIdsKey);
+
+    if (idsJson == null || idsJson.isEmpty) {
+      return [];
+    }
+
+    final List<dynamic> ids = jsonDecode(idsJson);
+    final List<OtpToken> tokens = [];
+
+    for (final id in ids) {
+      final tokenJson = await _storage.read(
+        key: _otpTokensPrefix + id.toString(),
+      );
+      if (tokenJson == null) {
+        if (!skipInvalidTokens) {
+          throw StateError('OTP token data is missing');
+        }
+        continue;
+      }
+      try {
+        final Map<String, dynamic> tokenData = jsonDecode(tokenJson);
+        tokens.add(OtpToken.fromJson(tokenData));
+      } catch (error) {
+        if (!skipInvalidTokens) {
+          rethrow;
+        }
+        if (kDebugMode) {
+          print('跳过无效令牌: $error');
+        }
+      }
+    }
+
+    return tokens;
   }
 
   // 加密OTP密钥
@@ -102,27 +115,29 @@ class OtpHelper {
   // 保存OTP令牌
   static Future<void> saveToken(OtpToken token) async {
     try {
-      // 保存令牌数据 (令牌中的secret应该已经加密)
-      final tokenJson = jsonEncode(token.toJson());
-      await _storage.write(key: _otpTokensPrefix + token.id, value: tokenJson);
-
-      // 更新ID列表
-      final idsJson = await _storage.read(key: _otpTokenIdsKey);
-      List<String> ids = [];
-
-      if (idsJson != null && idsJson.isNotEmpty) {
-        final List<dynamic> idsList = jsonDecode(idsJson);
-        ids = idsList.map((id) => id.toString()).toList();
-      }
-
-      if (!ids.contains(token.id)) {
-        ids.add(token.id);
-        await _storage.write(key: _otpTokenIdsKey, value: jsonEncode(ids));
-      }
+      await _saveTokenOrThrow(token);
     } catch (e) {
       if (kDebugMode) {
         print('保存令牌出错: $e');
       }
+    }
+  }
+
+  static Future<void> _saveTokenOrThrow(OtpToken token) async {
+    final tokenJson = jsonEncode(token.toJson());
+    await _storage.write(key: _otpTokensPrefix + token.id, value: tokenJson);
+
+    final idsJson = await _storage.read(key: _otpTokenIdsKey);
+    var ids = <String>[];
+
+    if (idsJson != null && idsJson.isNotEmpty) {
+      final List<dynamic> idsList = jsonDecode(idsJson);
+      ids = idsList.map((id) => id.toString()).toList();
+    }
+
+    if (!ids.contains(token.id)) {
+      ids.add(token.id);
+      await _storage.write(key: _otpTokenIdsKey, value: jsonEncode(ids));
     }
   }
 
@@ -140,7 +155,7 @@ class OtpHelper {
       final token = OtpToken(id: id, label: label, secret: encryptedSecret);
 
       // 保存令牌
-      await saveToken(token);
+      await _saveTokenOrThrow(token);
     } catch (e) {
       if (kDebugMode) {
         print('创建令牌出错: $e');

@@ -104,6 +104,10 @@
   "@biometricFaceId": {
     "description": "Apple Face ID brand name"
   },
+  "biometricFaceRecognition": "面部识别",
+  "@biometricFaceRecognition": {
+    "description": "Display name for face authentication on non-Apple platforms"
+  },
   "biometricTouchId": "Touch ID",
   "@biometricTouchId": {
     "description": "Apple Touch ID brand name"
@@ -190,6 +194,10 @@
   "@biometricSettingsUpdateFailed": {
     "description": "Message shown when biometric settings cannot be changed"
   },
+  "biometricSettingsReadFailed": "读取生物识别设置失败，请重试",
+  "@biometricSettingsReadFailed": {
+    "description": "Message shown when the current biometric setting cannot be read"
+  },
   "deleteLocalVault": "删除本地密码库",
   "@deleteLocalVault": {
     "description": "Settings action that starts permanent local vault deletion"
@@ -269,6 +277,10 @@
   "deletingLocalVault": "正在删除本地密码库",
   "@deletingLocalVault": {
     "description": "Accessibility progress label while permanent local vault deletion is running"
+  },
+  "masterPasswordChangedWithRecoveryRequired": "主密码已更改，请使用新密码；部分安全数据更新未完成。请重新解锁后检查 OTP，并重新启用生物识别。",
+  "@masterPasswordChangedWithRecoveryRequired": {
+    "description": "Recovery guidance after a master password change only partially updates security data"
   },
   "settings": "设置",
   "@settings": {

@@ -1,12 +1,48 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 
+import '../models/password_entry.dart';
 import '../models/user.dart';
 import 'database_helper.dart';
 import 'encryption_helper.dart';
 import 'biometric_helper.dart';
 import 'local_vault_deletion_service.dart';
 import 'otp_helper.dart';
+
+enum MasterPasswordChangeResult {
+  success,
+  incorrectPassword,
+  failed,
+  changedWithRecoveryRequired,
+}
+
+class MasterPasswordChangeOperations {
+  const MasterPasswordChangeOperations({
+    required this.getPasswordEntries,
+    required this.decryptPassword,
+    required this.getOtpTokens,
+    required this.decryptOtpSecret,
+    required this.updateUser,
+    required this.setEncryptionKey,
+    required this.encryptPassword,
+    required this.updatePasswordEntry,
+    required this.saveOtpSecret,
+    required this.writeBiometricKey,
+  });
+
+  final Future<List<PasswordEntry>> Function(int userId) getPasswordEntries;
+  final String Function(String encryptedPassword) decryptPassword;
+  final Future<List<OtpToken>> Function() getOtpTokens;
+  final String Function(String encryptedSecret) decryptOtpSecret;
+  final Future<void> Function(User user) updateUser;
+  final void Function(String encryptionKey) setEncryptionKey;
+  final String Function(String plainPassword) encryptPassword;
+  final Future<void> Function(PasswordEntry entry) updatePasswordEntry;
+  final Future<void> Function(String id, String label, String plainSecret)
+  saveOtpSecret;
+  final Future<void> Function(int userId, String encryptionKey)
+  writeBiometricKey;
+}
 
 class AuthHelper {
   static final AuthHelper _instance = AuthHelper._internal();
@@ -29,6 +65,17 @@ class AuthHelper {
        _insertUserForRegistration = insertUser,
        _deriveKeyForRegistration = deriveKey,
        _setEncryptionKeyForRegistration = setEncryptionKey;
+
+  AuthHelper.forMasterPasswordChangeTesting({
+    required User currentUser,
+    required String encryptionKey,
+  }) : _hasUsersForRegistration = (() async => false),
+       _insertUserForRegistration = ((_) async => 0),
+       _deriveKeyForRegistration = ((_, _) => encryptionKey),
+       _setEncryptionKeyForRegistration = ((_) {}) {
+    _currentUser = currentUser;
+    _encryptionKey = encryptionKey;
+  }
 
   final Future<bool> Function() _hasUsersForRegistration;
   final Future<int> Function(User) _insertUserForRegistration;
@@ -200,115 +247,132 @@ class AuthHelper {
   }
 
   // 更改主密码
-  Future<bool> changeMasterPassword(
+  Future<MasterPasswordChangeResult> changeMasterPassword(
     String oldPassword,
-    String newPassword,
-  ) async {
-    if (!isLoggedIn) return false;
+    String newPassword, {
+    MasterPasswordChangeOperations? operations,
+  }) async {
+    if (!isLoggedIn || _currentUser?.id == null) {
+      return MasterPasswordChangeResult.failed;
+    }
 
+    final currentUser = _currentUser!;
     try {
-      final dbHelper = DatabaseHelper();
-
-      // 验证旧密码
       final hashedOldPassword = EncryptionHelper.hashMasterPassword(
         oldPassword,
-        _currentUser!.salt,
+        currentUser.salt,
       );
-      if (hashedOldPassword != _currentUser!.masterPasswordHash) {
-        return false; // 旧密码错误
+      if (hashedOldPassword != currentUser.masterPasswordHash) {
+        return MasterPasswordChangeResult.incorrectPassword;
       }
 
-      // 获取所有密码条目
-      final entries = await dbHelper.getPasswordEntries(_currentUser!.id!);
-
-      // 用旧密钥解密所有密码
-      final decryptedPasswords = <int, String>{};
+      final changeOperations =
+          operations ?? _buildMasterPasswordChangeOperations();
+      final entries = await changeOperations.getPasswordEntries(
+        currentUser.id!,
+      );
+      final decryptedPasswords = <PasswordEntry, String>{};
       for (final entry in entries) {
-        try {
-          final decryptedPassword = EncryptionHelper().decryptString(
-            entry.encryptedPassword,
-          );
-          decryptedPasswords[entry.id!] = decryptedPassword;
-        } catch (_) {
-          return false;
-        }
+        decryptedPasswords[entry] = changeOperations.decryptPassword(
+          entry.encryptedPassword,
+        );
       }
 
-      // 生成新的盐和哈希密码
+      // OTP 必须在全局加密器切换到新密钥前全部用旧密钥解密。
+      final otpTokens = await changeOperations.getOtpTokens();
+      final decryptedOtpSecrets = <String>[];
+      for (final token in otpTokens) {
+        decryptedOtpSecrets.add(
+          changeOperations.decryptOtpSecret(token.secret),
+        );
+      }
+
       final newSalt = EncryptionHelper.generateSalt();
       final newHashedPassword = EncryptionHelper.hashMasterPassword(
         newPassword,
         newSalt,
       );
-
-      // 派生新的加密密钥
       final newEncryptionKey = EncryptionHelper.deriveKey(newPassword, newSalt);
-
-      // 更新用户信息
-      final updatedUser = _currentUser!.copyWith(
+      final updatedUser = currentUser.copyWith(
         masterPasswordHash: newHashedPassword,
         salt: newSalt,
         updatedAt: DateTime.now(),
       );
 
-      await dbHelper.updateUser(updatedUser);
-
-      // 用新密钥重新加密所有密码
-      EncryptionHelper().setEncryptionKey(newEncryptionKey);
-
-      for (final entry in entries) {
-        final originalPassword = decryptedPasswords[entry.id!]!;
-        final newEncryptedPassword = EncryptionHelper().encryptString(
-          originalPassword,
-        );
-
-        final updatedEntry = entry.copyWith(
-          encryptedPassword: newEncryptedPassword,
-          updatedAt: DateTime.now(),
-        );
-
-        await dbHelper.updatePasswordEntry(updatedEntry);
+      try {
+        await changeOperations.updateUser(updatedUser);
+      } catch (_) {
+        return MasterPasswordChangeResult.failed;
       }
 
-      // 重新加密OTP令牌
-      try {
-        // 获取当前所有OTP令牌
-        final otpTokens = await OtpHelper.getAllTokens();
-
-        // 解密并重新加密每个令牌
-        for (final token in otpTokens) {
-          try {
-            // 解密密钥 (使用旧的加密密钥)
-            final plainSecret = OtpHelper.decryptSecret(token.secret);
-
-            // 创建带有相同ID和标签，但使用新的加密密钥加密的令牌
-            await OtpHelper.createAndSaveToken(
-              token.id,
-              token.label,
-              plainSecret,
-            );
-          } catch (_) {}
-        }
-      } catch (_) {}
-
-      // 更新当前用户和密钥
+      // 用户哈希已更新；从这里开始的失败都必须报告需要恢复。
       _currentUser = updatedUser;
       _encryptionKey = newEncryptionKey;
 
-      // 同步更新安全存储中的密钥，确保后续生物识别能解密
       try {
-        if (_currentUser?.id != null) {
-          await _secureStorage.write(
-            key: 'encryption_key_${_currentUser!.id}',
-            value: newEncryptionKey,
+        changeOperations.setEncryptionKey(newEncryptionKey);
+
+        for (final entry in entries) {
+          final updatedEntry = entry.copyWith(
+            encryptedPassword: changeOperations.encryptPassword(
+              decryptedPasswords[entry]!,
+            ),
+            updatedAt: DateTime.now(),
+          );
+          await changeOperations.updatePasswordEntry(updatedEntry);
+        }
+
+        for (var index = 0; index < otpTokens.length; index++) {
+          final token = otpTokens[index];
+          await changeOperations.saveOtpSecret(
+            token.id,
+            token.label,
+            decryptedOtpSecrets[index],
           );
         }
-      } catch (_) {}
 
-      return true;
+        await changeOperations.writeBiometricKey(
+          updatedUser.id!,
+          newEncryptionKey,
+        );
+        return MasterPasswordChangeResult.success;
+      } catch (_) {
+        return MasterPasswordChangeResult.changedWithRecoveryRequired;
+      }
     } catch (_) {
-      return false;
+      return MasterPasswordChangeResult.failed;
     }
+  }
+
+  MasterPasswordChangeOperations _buildMasterPasswordChangeOperations() {
+    final dbHelper = DatabaseHelper();
+    return MasterPasswordChangeOperations(
+      getPasswordEntries: dbHelper.getPasswordEntries,
+      decryptPassword: EncryptionHelper().decryptString,
+      getOtpTokens: OtpHelper.getAllTokensOrThrow,
+      decryptOtpSecret: OtpHelper.decryptSecret,
+      updateUser: (user) async {
+        final updatedRows = await dbHelper.updateUser(user);
+        if (updatedRows != 1) {
+          throw StateError('Local vault user was not updated');
+        }
+      },
+      setEncryptionKey: EncryptionHelper().setEncryptionKey,
+      encryptPassword: EncryptionHelper().encryptString,
+      updatePasswordEntry: (entry) async {
+        final updatedRows = await dbHelper.updatePasswordEntry(entry);
+        if (updatedRows != 1) {
+          throw StateError('Local vault entry was not updated');
+        }
+      },
+      saveOtpSecret: OtpHelper.createAndSaveToken,
+      writeBiometricKey: (userId, encryptionKey) {
+        return _secureStorage.write(
+          key: 'encryption_key_$userId',
+          value: encryptionKey,
+        );
+      },
+    );
   }
 
   // 检查是否有用户注册
@@ -467,14 +531,10 @@ class AuthHelper {
 
   // 当前登录用户是否启用了生物识别（仅在已登录时调用）
   Future<bool> isBiometricEnabledForCurrentUser() async {
-    try {
-      if (_currentUser?.id == null) return false;
-      final storedKey = await _secureStorage.read(
-        key: 'encryption_key_${_currentUser!.id}',
-      );
-      return storedKey != null && storedKey.isNotEmpty;
-    } catch (_) {
-      return false;
-    }
+    if (_currentUser?.id == null) return false;
+    final storedKey = await _secureStorage.read(
+      key: 'encryption_key_${_currentUser!.id}',
+    );
+    return storedKey != null && storedKey.isNotEmpty;
   }
 }

@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+
 import '../helpers/auth_helper.dart';
+import '../l10n/l10n.dart';
 
 class ChangeMasterPasswordPage extends StatefulWidget {
-  const ChangeMasterPasswordPage({super.key});
+  const ChangeMasterPasswordPage({super.key, this.changeMasterPassword});
+
+  final Future<MasterPasswordChangeResult> Function(
+    String oldPassword,
+    String newPassword,
+  )?
+  changeMasterPassword;
 
   @override
   State<ChangeMasterPasswordPage> createState() =>
@@ -33,19 +41,27 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
       return;
     }
 
+    final recoveryMessage =
+        context.l10n.masterPasswordChangedWithRecoveryRequired;
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final authHelper = AuthHelper();
-      final success = await authHelper.changeMasterPassword(
+      final changeMasterPassword =
+          widget.changeMasterPassword ?? AuthHelper().changeMasterPassword;
+      final result = await changeMasterPassword(
         _oldPasswordController.text,
         _newPasswordController.text,
       );
 
-      if (success) {
-        if (mounted) {
+      if (!mounted) {
+        return;
+      }
+
+      switch (result) {
+        case MasterPasswordChangeResult.success:
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('主密码已成功更改'),
@@ -53,21 +69,36 @@ class _ChangeMasterPasswordPageState extends State<ChangeMasterPasswordPage> {
             ),
           );
           Navigator.of(context).pop();
-        }
-      } else {
-        if (mounted) {
+        case MasterPasswordChangeResult.incorrectPassword:
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('更改失败，请检查旧密码是否正确'),
               backgroundColor: Colors.red,
             ),
           );
-        }
+        case MasterPasswordChangeResult.failed:
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('更改失败，请重试'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        case MasterPasswordChangeResult.changedWithRecoveryRequired:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(recoveryMessage),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 8),
+            ),
+          );
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('更改失败: $e'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('更改失败，请重试'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
