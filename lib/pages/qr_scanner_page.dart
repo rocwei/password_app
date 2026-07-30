@@ -161,13 +161,13 @@ class _QrScannerPageState extends State<QrScannerPage> {
     super.initState();
     _controller = widget.controller ?? MobileScannerController();
     _cameraErrorCode = widget.initialCameraErrorCode;
-    _controller.startArguments.addListener(_handleControllerReadyChanged);
+    _controller.addListener(_handleControllerReadyChanged);
     _scanStopwatch.start();
   }
 
   @override
   void dispose() {
-    _controller.startArguments.removeListener(_handleControllerReadyChanged);
+    _controller.removeListener(_handleControllerReadyChanged);
     _controller.dispose();
     super.dispose();
   }
@@ -235,7 +235,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
     return MobileScanner(
       controller: _controller,
       onDetect: _onDetect,
-      errorBuilder: (context, error, child) {
+      errorBuilder: (context, error) {
         _recordCameraError(error.errorCode);
         return QrScannerCameraError(errorCode: error.errorCode);
       },
@@ -268,7 +268,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
   bool get _cameraControlsEnabled {
     final isReady =
         widget.scannerBuilder != null ||
-        _controller.startArguments.value != null;
+        (_controller.value.isInitialized && _controller.value.isRunning);
     return isReady && _cameraErrorCode == null;
   }
 
@@ -282,10 +282,12 @@ class _QrScannerPageState extends State<QrScannerPage> {
         actions: [
           IconButton(
             icon: ValueListenableBuilder(
-              valueListenable: _controller.torchState,
+              valueListenable: _controller,
               builder: (context, state, child) {
                 return Icon(
-                  state == TorchState.on ? Icons.flash_on : Icons.flash_off,
+                  state.torchState == TorchState.on
+                      ? Icons.flash_on
+                      : Icons.flash_off,
                 );
               },
             ),
@@ -298,10 +300,10 @@ class _QrScannerPageState extends State<QrScannerPage> {
           ),
           IconButton(
             icon: ValueListenableBuilder(
-              valueListenable: _controller.cameraFacingState,
+              valueListenable: _controller,
               builder: (context, state, child) {
                 return Icon(
-                  state == CameraFacing.front
+                  state.cameraDirection == CameraFacing.front
                       ? Icons.camera_front
                       : Icons.camera_rear,
                 );
