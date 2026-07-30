@@ -18,6 +18,12 @@ void main() {
       infoPlist['CFBundleLocalizations'],
       containsAll(<String>['en', 'zh-Hans', 'zh-Hant']),
     );
+    expect(
+      infoPlist['NSPhotoLibraryUsageDescription'],
+      'Allow access to your photo library only when you choose a file from '
+      'the system picker. Secure Vault does not read or upload photos in the '
+      'background.',
+    );
   });
 
   test('iOS native Info.plist strings are valid and complete', () {
@@ -32,6 +38,10 @@ void main() {
           'Scan OTP QR codes to add authenticator accounts.',
       'NSFaceIDUsageDescription':
           'Use Face ID to unlock your local password vault.',
+      'NSPhotoLibraryUsageDescription':
+          'Allow access to your photo library only when you choose a file '
+          'from the system picker. Secure Vault does not read or upload '
+          'photos in the background.',
       'CFBundleTypeName': 'Secure Vault Backup',
       'UTTypeDescription': 'Secure Vault backup file',
     });
@@ -40,6 +50,8 @@ void main() {
       'CFBundleName': '密盾安存',
       'NSCameraUsageDescription': '用于扫描 OTP 二维码并添加验证器账户。',
       'NSFaceIDUsageDescription': '用于通过面容 ID 解锁本地密码库。',
+      'NSPhotoLibraryUsageDescription':
+          '仅在您主动通过系统选择器选取文件时访问照片库；密盾安存不会在后台读取或上传您的照片。',
       'CFBundleTypeName': '密盾安存备份',
       'UTTypeDescription': '密盾安存备份文件',
     });
@@ -48,6 +60,8 @@ void main() {
       'CFBundleName': '密盾安存',
       'NSCameraUsageDescription': '用於掃描 OTP 二維碼並新增驗證器帳戶。',
       'NSFaceIDUsageDescription': '用於透過 Face ID 解鎖本機密碼庫。',
+      'NSPhotoLibraryUsageDescription':
+          '僅在您主動透過系統選擇器選取檔案時存取照片圖庫；密盾安存不會在背景讀取或上傳您的照片。',
       'CFBundleTypeName': '密盾安存備份',
       'UTTypeDescription': '密盾安存備份檔案',
     });

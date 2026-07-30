@@ -2,5 +2,6 @@
 "CFBundleName" = "密盾安存";
 "NSCameraUsageDescription" = "用于扫描 OTP 二维码并添加验证器账户。";
 "NSFaceIDUsageDescription" = "用于通过面容 ID 解锁本地密码库。";
+"NSPhotoLibraryUsageDescription" = "仅在您主动通过系统选择器选取文件时访问照片库；密盾安存不会在后台读取或上传您的照片。";
 "CFBundleTypeName" = "密盾安存备份";
 "UTTypeDescription" = "密盾安存备份文件";
