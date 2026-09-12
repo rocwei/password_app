@@ -5,7 +5,7 @@
 - 文档日期：2026 年 9 月 12 日。
 - 本文记录已批准的功能契约与分层验证状态，不以构建通过或修复报告替代功能验收。
 - 构建：完整 iOS Release（无签名及开发签名）和 Android Debug 均通过；最终签名包已安装并启动于已配对的 iPhone 13，版本 1.0.1（5），启动后已检查进程仍在运行。安装未执行卸载或主动清除应用数据。
-- 自动化：`flutter analyze` 无问题；`flutter test` 共 198 项通过；原生加密测试及超过 2 GiB 文件的增量往返校验通过。具体覆盖与未覆盖范围见下表。
+- 自动化：`flutter analyze` 无问题；`flutter test` 共 201 项通过；新增 3 项原生生命周期测试通过。原生加密测试及超过 2 GiB 文件的增量往返校验通过。具体覆盖与未覆盖范围见下表。
 - 真机检查：全部待执行，尤其是至少 2 GB 视频的导入、播放、拖动进度和后台清理；没有真机通过结论。
 - 原生系统选择器、Face ID、播放器和文件保护的完整真机操作尚待用户验收；安装成功不是功能验收通过。
 - 文档静态检查、编译、单元测试、模拟器测试、实体 iPhone 验收及 App Store 审核是不同证据层，不能相互替代。
@@ -23,7 +23,20 @@
 
 ## 已报告结果与待核验项
 
-以下为 2026 年 9 月 12 日在当前 `main` 工作目录实际执行的结果；没有提交或推送代码，也没有提交 App Store 审核。
+以下为 2026 年 9 月 12 日在当前 `main` 工作目录实际执行的结果；不代表已提交 App Store 审核。
+
+### Face ID 与播放退出回归修复
+
+- 用户反馈：Face ID 通过后提示文件操作失败并再次要求主密码；打开视频后立即退回验证界面。
+- 原因一：`local_auth_darwin` 可以在 UIKit 仍为 inactive 时返回验证成功；原生 `open` 原先直接返回 busy。现在等待真实前台通知后完成打开；等待中进入后台或关闭会话会取消请求，返回前台不会自动放行旧验证。
+- 原因二：当前 Flutter iOS 引擎在原生全屏界面覆盖 Flutter 页面时也会发出 paused，并不一定代表应用进入后台。文件页现在依据原生锁定事件失效会话；主页的三分钟后台退出计时也改用真实 iOS 前后台事件，避免前台播放被退出。Android 保留原来的生命周期处理。
+- 安全边界不变：真正进入后台、设备保护数据不可用或显式锁定仍会停止播放、取消操作并使文件库验证失效；未修改视频加密格式、密钥或已有视频数据。
+- 修复前已复现失败：Flutter 播放测试捕获多余 close 调用；原生测试捕获 inactive 下过早返回 busy。修复后完整 Flutter 测试 201 项、原生 XCTest 3 项通过，静态检查无问题。
+- 原生回归覆盖：等待前台后打开；后台取消待完成的打开且不复活；inactive 不锁定而真实后台锁定。测试使用隔离临时目录和注入密钥，不接触真实视频库。
+- 测试代码：`test/pages/file_encryption_page_test.dart`、`test/l10n/english_pages_test.dart`、`ios/RunnerTests/RunnerTests.swift`。原生测试结果：`/tmp/video-vault-lifecycle-before.xcresult`（修复前失败）和 `/tmp/video-vault-lifecycle-final.xcresult`（修复后通过）；临时目录记录不是长期归档。
+- 修复版交付：iOS Release 开发签名构建及 `codesign --verify --deep --strict` 通过；2026-09-12 10:10（Asia/Shanghai）覆盖安装并启动于已配对的 iPhone 13，版本仍为 1.0.1（5），未卸载或主动清除应用数据。Android Debug 再次构建通过。
+- 修复包摘要：`build/ios/iphoneos/Runner.app/Runner` SHA-256 为 `bc6134ba97242adf351af4b491a9fa567959b6a54cbcfcbc9a0eebeef0c0b28e`；`build/app/outputs/flutter-apk/app-debug.apk` SHA-256 为 `fc5175234999c2e4ec76aaaf038f8d26654293d37f0febdf29971368b5602b1d`。
+- 真机复验仍待用户操作：Face ID 成功直接显示列表；点击视频后持续播放并超过三分钟；关闭播放后留在列表；实际切换后台或锁屏后返回要求重新验证。不能以自动化或安装成功代替这些结论。
 
 | 编号 | 项目 | 当前状态 | 证据边界 / 下一步 |
 | --- | --- | --- | --- |
@@ -70,8 +83,8 @@ flutter build apk --debug
 ```
 
 - 最终原生全套测试（含合成大文件）耗时 18.95 秒，整个测试进程 maximum RSS 为 92,553,216 字节，约 88.3 MiB；此数值来自开发 Mac，不是 iPhone 性能承诺。
-- iOS 产物：`build/ios/iphoneos/Runner.app`；Runner 可执行文件 SHA-256：`3bf59cdc12455e6af6ac803ba5aa04f864f313eea47aface80ae6eaa12c245d0`。
-- Android 产物：`build/app/outputs/flutter-apk/app-debug.apk`；SHA-256：`64b49bedac089b42d553ae20d4972e21bd42b0412f26c4232189f273b76b8a89`。
+- 首次功能安装的 iOS 产物：`build/ios/iphoneos/Runner.app`；当时 Runner 可执行文件 SHA-256：`3bf59cdc12455e6af6ac803ba5aa04f864f313eea47aface80ae6eaa12c245d0`。后续构建会覆盖该路径，此摘要不代表后续修复包。
+- 首次功能验证的 Android 产物：`build/app/outputs/flutter-apk/app-debug.apk`；当时 SHA-256：`64b49bedac089b42d553ae20d4972e21bd42b0412f26c4232189f273b76b8a89`。后续构建会覆盖该路径。
 - 现有工具链仍有 Swift Package Manager、UIScene 及 Android Gradle/Kotlin 未来兼容性提示，本次构建未因此失败；没有趁本功能改动升级工具链。
 
 ## Required Reason API 隐私清单
