@@ -360,7 +360,7 @@
   "@vault": {
     "description": "Password vault page title and bottom navigation label"
   },
-  "generatePasswordNavigationLabel": "Generate Password",
+  "generatePasswordNavigationLabel": "Generate",
   "@generatePasswordNavigationLabel": {
     "description": "Bottom navigation label for the password generator"
   },
@@ -1053,6 +1053,16 @@
     "description": "Settings description for backup and restore"
   },
   "themeSettings": "Theme",
+  "appearance": "General",
+  "@appearance": {"description": "General preferences section heading"},
+  "followSystemAppearance": "Follow system appearance",
+  "@followSystemAppearance": {"description": "Use the system light or dark appearance"},
+  "themeChangeFailed": "Could not save the theme. Please try again.",
+  "@themeChangeFailed": {"description": "Theme preference storage failure"},
+  "showPassword": "Show password",
+  "@showPassword": {"description": "Tooltip for revealing the password"},
+  "hidePassword": "Hide password",
+  "@hidePassword": {"description": "Tooltip for obscuring the password"},
   "@themeSettings": {
     "description": "Settings section title for theme controls"
   },
@@ -1068,7 +1078,7 @@
   "@themeYellowDark": {
     "description": "Name of the yellow and black theme"
   },
-  "themeBlueLight": "Blue & White",
+  "themeBlueLight": "Simple Light",
   "@themeBlueLight": {
     "description": "Name of the blue and white theme"
   },

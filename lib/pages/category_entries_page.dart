@@ -179,6 +179,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -186,38 +187,54 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
           widget.categoryId == null
               ? l10n.defaultCategory
               : widget.categoryName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
+        centerTitle: true,
         elevation: 0,
         actions: [
-          // 在分类列表页也支持新建分类
+          PopupMenuButton<VoidCallback>(
+            onSelected: (action) => action(),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: _navigateToAddCategory,
+                child: Text(l10n.addCategory),
+              ),
+            ],
+          ),
           IconButton(
-            icon: const Icon(Icons.create_new_folder),
-            tooltip: l10n.addCategory,
-            onPressed: _navigateToAddCategory,
+            icon: const Icon(Icons.add),
+            tooltip: l10n.addPassword,
+            onPressed: () => _navigateToDetail(),
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
             child: TextField(
               controller: _searchController,
+              style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 hintText: l10n.searchPasswordsHint,
+                filled: true,
+                fillColor: theme.cardColor,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color: const Color.fromARGB(255, 133, 88, 236),
-                    width: 1,
-                  ),
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide.none,
                 ),
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchController.text.isEmpty
@@ -234,44 +251,38 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
               onChanged: _filterEntries,
             ),
           ),
-        ),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _hasLoadError
-          ? _buildLoadError()
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                return RefreshIndicator(
-                  onRefresh: _loadEntries,
-                  child: _filteredEntries.isEmpty
-                      ? SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: constraints.maxHeight,
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _hasLoadError
+                ? _buildLoadError()
+                : LayoutBuilder(
+                    builder: (context, constraints) => RefreshIndicator(
+                      onRefresh: _loadEntries,
+                      child: _filteredEntries.isEmpty
+                          ? SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: constraints.maxHeight,
+                                ),
+                                child: _buildEmptyState(
+                                  isSearching: _searchController.text
+                                      .trim()
+                                      .isNotEmpty,
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemCount: _filteredEntries.length,
+                              itemBuilder: (context, index) =>
+                                  _buildEntryRow(_filteredEntries[index]),
                             ),
-                            child: _buildEmptyState(
-                              isSearching: _searchController.text
-                                  .trim()
-                                  .isNotEmpty,
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: _filteredEntries.length,
-                          itemBuilder: (context, index) {
-                            final entry = _filteredEntries[index];
-                            return _buildEntryCard(entry);
-                          },
-                        ),
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToDetail(),
-        tooltip: l10n.addPassword,
-        child: const Icon(Icons.add),
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }
@@ -310,7 +321,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
                 ? context.l10n.noResultsFor(_searchController.text)
                 : context.l10n.emptyCategory,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
@@ -337,57 +348,94 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
     );
   }
 
-  Widget _buildEntryCard(PasswordEntry entry) {
+  Widget _buildEntryRow(PasswordEntry entry) {
+    final theme = Theme.of(context);
+    const colors = [
+      Color(0xFF2782E8),
+      Color(0xFF16A66A),
+      Color(0xFF8A9197),
+      Color(0xFFD59424),
+    ];
+    final color =
+        colors[(entry.id ?? entry.title.length).abs() % colors.length];
     return Slidable(
       endActionPane: ActionPane(
         motion: const ScrollMotion(),
         children: [
           SlidableAction(
             onPressed: (context) => _navigateToDetail(entry: entry),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: theme.colorScheme.onPrimary,
             icon: Icons.edit,
             label: context.l10n.edit,
-            borderRadius: BorderRadius.circular(10),
           ),
-          const SizedBox(width: 8),
           SlidableAction(
             onPressed: (context) => _deleteEntry(entry),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            foregroundColor: Theme.of(context).colorScheme.onError,
+            backgroundColor: theme.colorScheme.error,
+            foregroundColor: theme.colorScheme.onError,
             icon: Icons.delete,
             label: context.l10n.delete,
-            borderRadius: BorderRadius.circular(10),
           ),
         ],
       ),
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        color: Theme.of(context).scaffoldBackgroundColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: Colors.blue.shade300, width: 1),
-        ),
-        elevation: 0.5,
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Theme.of(context).colorScheme.onPrimary,
-            child: Text(
-              entry.title.isNotEmpty ? entry.title[0].toUpperCase() : '?',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+      child: Material(
+        color: theme.cardColor,
+        child: Column(
+          children: [
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
+              minVerticalPadding: 8,
+              leading: Container(
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  entry.title.isNotEmpty
+                      ? entry.title.characters.first.toUpperCase()
+                      : '?',
+                  textScaler: TextScaler.noScaling,
+                  style: const TextStyle(fontSize: 16, color: Colors.white),
+                ),
+              ),
+              title: Text(
+                entry.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              subtitle: Text(
+                entry.username,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              trailing: Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              onTap: () => _navigateToDetail(entry: entry),
             ),
-          ),
-          title: Text(
-            entry.title,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [Text(context.l10n.usernameValue(entry.username))],
-          ),
-          trailing: const Icon(Icons.arrow_forward_ios),
-          onTap: () => _navigateToDetail(entry: entry),
+            Divider(
+              height: 1,
+              thickness: 0.5,
+              indent: 64,
+              color: theme.dividerColor,
+            ),
+          ],
         ),
       ),
     );

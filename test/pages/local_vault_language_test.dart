@@ -80,7 +80,7 @@ void main() {
     await tester.pumpWidget(buildLocalizedPage(const LoginPage()));
     await tester.pump();
 
-    expect(find.text('解锁'), findsNWidgets(2));
+    expect(find.text('解锁'), findsOneWidget);
     expect(find.textContaining('没有账户'), findsNothing);
     expect(find.textContaining('点击注册'), findsNothing);
   });
@@ -141,15 +141,10 @@ void main() {
     expect(find.text('删除本地密码库'), findsOneWidget);
     expect(find.text('登出'), findsNothing);
 
-    final deleteTile = tester.widget<ListTile>(
-      find.widgetWithText(ListTile, '删除本地密码库'),
+    final deleteButton = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, '删除本地密码库'),
     );
-    final deleteIcon = deleteTile.leading! as Icon;
-    final deleteTitle = deleteTile.title! as Text;
-
-    expect(deleteIcon.icon, Icons.delete_forever);
-    expect(deleteIcon.color, dangerColor);
-    expect(deleteTitle.style?.color, dangerColor);
+    expect(deleteButton.style?.foregroundColor?.resolve({}), dangerColor);
 
     await scrollToLockButton(tester);
     expect(find.text('锁定密码库'), findsOneWidget);
@@ -336,7 +331,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Unlock'), findsNWidgets(2));
+    expect(find.text('Unlock'), findsOneWidget);
     expect(find.text('解锁'), findsNothing);
   });
 
@@ -514,6 +509,8 @@ void main() {
       300,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(find.text('Delete Local Vault'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Delete Local Vault'));
     await tester.pumpAndSettle();
 
@@ -527,7 +524,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Biometric Unlock'), findsOneWidget);
-      expect(find.text('Unlock quickly with biometrics'), findsOneWidget);
+      expect(find.text('Unlock quickly with biometrics'), findsNothing);
 
       final biometricSwitch = find.descendant(
         of: find.widgetWithText(ListTile, 'Biometric Unlock'),

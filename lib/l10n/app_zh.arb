@@ -1053,6 +1053,16 @@
     "description": "Settings description for backup and restore"
   },
   "themeSettings": "主题设置",
+  "appearance": "通用",
+  "@appearance": {"description": "General preferences section heading"},
+  "followSystemAppearance": "跟随系统外观",
+  "@followSystemAppearance": {"description": "Use the system light or dark appearance"},
+  "themeChangeFailed": "无法保存主题设置，请重试",
+  "@themeChangeFailed": {"description": "Theme preference storage failure"},
+  "showPassword": "显示密码",
+  "@showPassword": {"description": "Tooltip for revealing the password"},
+  "hidePassword": "隐藏密码",
+  "@hidePassword": {"description": "Tooltip for obscuring the password"},
   "@themeSettings": {
     "description": "Settings section title for theme controls"
   },
@@ -1068,7 +1078,7 @@
   "@themeYellowDark": {
     "description": "Name of the yellow and black theme"
   },
-  "themeBlueLight": "蓝白简约",
+  "themeBlueLight": "简约浅色",
   "@themeBlueLight": {
     "description": "Name of the blue and white theme"
   },

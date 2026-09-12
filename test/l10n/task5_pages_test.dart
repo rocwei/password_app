@@ -50,7 +50,7 @@ void main() {
     expect(find.text('Include numbers (0-9)'), findsOneWidget);
     expect(find.text('Include special characters (!@#\$%^&*)'), findsOneWidget);
     expect(find.text('Exclude similar characters (il1Lo0O)'), findsOneWidget);
-    expect(find.text('Regenerate'), findsOneWidget);
+    expect(find.byTooltip('Regenerate'), findsOneWidget);
     expect(find.text('Save to Vault'), findsOneWidget);
     expect(find.byTooltip('Copy password'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -96,9 +96,9 @@ void main() {
     await tester.pump();
     expect(
       tester
-          .widget<CheckboxListTile>(
+          .widget<SwitchListTile>(
             find.widgetWithText(
-              CheckboxListTile,
+              SwitchListTile,
               'Exclude similar characters (il1Lo0O)',
             ),
           )
@@ -107,11 +107,8 @@ void main() {
     );
 
     final copyButton = find.byTooltip('Copy password');
-    await tester.scrollUntilVisible(
-      copyButton,
-      100,
-      scrollable: verticalScrollables.first,
-    );
+    await tester.ensureVisible(copyButton);
+    await tester.pump();
     await tester.tap(copyButton);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
@@ -121,7 +118,12 @@ void main() {
       tester.element(find.byType(GeneratePasswordPage)),
     ).clearSnackBars();
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Regenerate'));
+    final regenerateButton = find.byTooltip('Regenerate');
+    await tester.ensureVisible(regenerateButton);
+    await tester.pump();
+    await tester.tap(regenerateButton);
+    await tester.pump();
+    await tester.ensureVisible(copyButton);
     await tester.pump();
     await tester.tap(copyButton);
     await tester.pump();
@@ -133,7 +135,10 @@ void main() {
       tester.element(find.byType(GeneratePasswordPage)),
     ).clearSnackBars();
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Save to Vault'));
+    final saveButton = find.widgetWithText(ElevatedButton, 'Save to Vault');
+    await tester.ensureVisible(saveButton);
+    await tester.pump();
+    await tester.tap(saveButton);
     await tester.pumpAndSettle();
 
     expect(find.byType(PasswordDetailPage), findsOneWidget);
@@ -157,6 +162,8 @@ void main() {
       }
 
       expect(find.text('Select at least one character type.'), findsOneWidget);
+      await tester.ensureVisible(find.byTooltip('Copy password'));
+      await tester.pump();
       await tester.tap(find.byTooltip('Copy password'));
       await tester.pump();
       expect(find.text('Generate a password first.'), findsOneWidget);
@@ -175,7 +182,7 @@ void main() {
     expect(find.byType(Scaffold), findsOneWidget);
     expect(find.text('One-Time Password'), findsOneWidget);
     expect(find.text('No OTP accounts yet'), findsOneWidget);
-    expect(find.text('Add OTP'), findsOneWidget);
+    expect(find.byTooltip('Add OTP'), findsOneWidget);
     expect(find.byTooltip('Scan QR Code'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -196,7 +203,7 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.tap(find.text('Add OTP'));
+    await tester.tap(find.byTooltip('Add OTP'));
     await tester.pump();
 
     expect(find.text('Account name'), findsOneWidget);
@@ -233,7 +240,7 @@ void main() {
       buildLocalizedPage(OtpPage(loadTokens: () async => [token])),
     );
     await tester.pump();
-    await tester.tap(find.text('Add OTP'));
+    await tester.tap(find.byTooltip('Add OTP'));
     await tester.pump();
     await tester.enterText(find.byType(TextFormField).at(0), 'Duplicate');
     await tester.enterText(find.byType(TextFormField).at(1), token.secret);
@@ -266,7 +273,7 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.tap(find.text('Add OTP'));
+    await tester.tap(find.byTooltip('Add OTP'));
     await tester.pump();
     await tester.enterText(find.byType(TextFormField).at(0), 'Personal / 个人');
     await tester.enterText(
@@ -445,7 +452,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('一次性密码'), findsOneWidget);
-      expect(find.text('添加 OTP'), findsOneWidget);
+      expect(find.byTooltip('添加 OTP'), findsOneWidget);
       expect(find.text(label), findsOneWidget);
       expect(find.textContaining(RegExp(r'^\d{6}$')), findsOneWidget);
       expect(tester.takeException(), isNull);

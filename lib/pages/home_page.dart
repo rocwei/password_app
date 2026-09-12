@@ -115,48 +115,40 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _pages),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Theme.of(
-          context,
-        ).colorScheme.primary.withOpacity(0.7),
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.lock,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            label: l10n.vault,
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Theme.of(context).dividerColor, width: 0.5),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.generating_tokens,
-              color: Theme.of(context).colorScheme.primary,
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          type: BottomNavigationBarType.fixed,
+          showUnselectedLabels: true,
+          onTap: (index) => setState(() => _currentIndex = index),
+          items: [
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.lock_outline),
+              activeIcon: const Icon(Icons.lock),
+              label: l10n.vault,
             ),
-            label: l10n.generatePasswordNavigationLabel,
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.security,
-              color: Theme.of(context).colorScheme.primary,
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.key_outlined),
+              activeIcon: const Icon(Icons.key),
+              label: l10n.generatePasswordNavigationLabel,
             ),
-            label: l10n.otpNavigationLabel,
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.settings,
-              color: Theme.of(context).colorScheme.primary,
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.shield_outlined),
+              activeIcon: const Icon(Icons.shield),
+              label: l10n.otpNavigationLabel,
             ),
-            label: l10n.settings,
-          ),
-        ],
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.settings_outlined),
+              activeIcon: const Icon(Icons.settings),
+              label: l10n.settings,
+            ),
+          ],
+        ),
       ),
     );
   }

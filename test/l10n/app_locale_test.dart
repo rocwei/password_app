@@ -40,7 +40,7 @@ void main() {
   }
 
   Future<void> scrollToLanguageSection(WidgetTester tester) async {
-    final sectionTitle = find.byKey(const ValueKey('language-section-title'));
+    final sectionTitle = find.byKey(const ValueKey('settings-language-row'));
     final listScrollable = find.descendant(
       of: find.byType(ListView),
       matching: find.byType(Scrollable),
@@ -71,9 +71,15 @@ void main() {
   }
 
   Future<void> tapLanguageOption(WidgetTester tester, String label) async {
-    await tester.ensureVisible(find.text(label));
+    await tester.tap(find.byKey(const ValueKey('settings-language-row')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(label));
+    final choice = find.descendant(
+      of: find.byType(BottomSheet),
+      matching: find.text(label),
+    );
+    await tester.ensureVisible(choice);
+    await tester.pumpAndSettle();
+    await tester.tap(choice);
     await tester.pumpAndSettle();
   }
 
@@ -157,7 +163,7 @@ void main() {
 
     expect(find.text('设置'), findsOneWidget);
     expect(find.text('语言'), findsOneWidget);
-    expect(find.text('跟随系统'), findsOneWidget);
+    expect(find.text('中文'), findsOneWidget);
   });
 
   testWidgets('selecting English updates immediately and survives reload', (
@@ -271,7 +277,10 @@ void main() {
     await tester.pumpAndSettle();
     await scrollToLanguageSection(tester);
 
-    expect(find.byType(SegmentedButton<AppLanguageMode>), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('settings-language-row')));
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.text('English'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

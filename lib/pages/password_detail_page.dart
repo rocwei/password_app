@@ -45,6 +45,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
   final _noteController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
   bool get _isEditing => widget.entry != null;
 
   // 分类相关
@@ -251,282 +252,222 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? l10n.passwordDetails : l10n.addPassword),
+        centerTitle: true,
         elevation: 0,
-        actions: [
-          if (_isEditing)
-            IconButton(
-              icon: const Icon(Icons.copy),
-              onPressed: () =>
-                  _copyToClipboard(_passwordController.text, l10n.password),
-              tooltip: l10n.copyPassword,
-            ),
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _isLoading ? null : _saveEntry,
-            tooltip: l10n.save,
-          ),
-        ],
       ),
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            // 分类选择器
-            _buildCategorySelector(),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _titleController,
-              maxLines: 5, // 设为null表示无最大行数，高度完全自适应；也可设固定值如3/5
-              minLines: 1, // 初始最小行数，默认1行，和原输入框一致
-              expands: false, // 不扩展填满父容器
-              decoration: InputDecoration(
-                labelText: l10n.titleRequiredLabel,
-                prefixIcon: const Icon(Icons.title),
-                helperText: l10n.titleExample,
-                isDense: false,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 16,
-                ),
-                // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color: const Color.fromARGB(255, 133, 88, 236),
-                    width: 1,
-                  ),
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return l10n.titleRequired;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _usernameController,
-              maxLines: 5, // 设为null表示无最大行数，高度完全自适应；也可设固定值如3/5
-              minLines: 1, // 初始最小行数，默认1行，和原输入框一致
-              expands: false, // 不扩展填满父容器
-              decoration: InputDecoration(
-                labelText: l10n.usernameRequiredLabel,
-                // border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.person),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.copy),
-                  onPressed: () =>
-                      _copyToClipboard(_usernameController.text, l10n.username),
-                  tooltip: l10n.copyField(l10n.username),
-                ),
-                // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color: const Color.fromARGB(255, 133, 88, 236),
-                    width: 1,
-                  ),
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return l10n.usernameRequired;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _passwordController,
-              maxLines: 5,
-              minLines: 2,
-              expands: false,
-              decoration: InputDecoration(
-                labelText: l10n.passwordRequiredLabel,
-                // border: const OutlineInputBorder(),
-                // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color: const Color.fromARGB(255, 133, 88, 236),
-                    width: 1,
-                  ),
-                ),
-                prefixIcon: const Icon(Icons.lock),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.copy),
-                  onPressed: () =>
-                      _copyToClipboard(_passwordController.text, l10n.password),
-                  tooltip: l10n.copyField(l10n.password),
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return l10n.passwordRequired;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _websiteController,
-              maxLines: 5, // 设为null表示无最大行数，高度完全自适应；也可设固定值如3/5
-              minLines: 2, // 初始最小行数，默认1行，和原输入框一致
-              expands: false, // 不扩展填满父容器
-              decoration: InputDecoration(
-                labelText: l10n.website,
-                // border: const OutlineInputBorder(),
-                // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color: const Color.fromARGB(255, 133, 88, 236),
-                    width: 1,
-                  ),
-                ),
-                prefixIcon: const Icon(Icons.web),
-                suffixIcon: _websiteController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.copy),
-                        onPressed: () => _copyToClipboard(
-                          _websiteController.text,
-                          l10n.website,
-                        ),
-                        tooltip: l10n.copyField(l10n.website),
-                      )
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildCategorySelector(),
+              _buildField(
+                controller: _titleController,
+                label: l10n.titleRequiredLabel,
+                maxLines: 5,
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? l10n.titleRequired
                     : null,
-                helperText: l10n.websiteExample,
               ),
-              keyboardType: TextInputType.url,
-              onChanged: (value) {
-                setState(() {}); // 重新构建以显示/隐藏复制按钮
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _noteController,
-              maxLines: null, // 设为null表示无最大行数，高度完全自适应；也可设固定值如3/5
-              minLines: 5, // 初始最小行数，默认1行，和原输入框一致
-              expands: false, // 不扩展填满父容器
-              decoration: InputDecoration(
-                labelText: l10n.notes,
-                // border: const OutlineInputBorder(),
-                // 贴合之前的美化要求：10px圆角、无边框（轻阴影替代）
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color: const Color.fromARGB(255, 133, 88, 236),
-                    width: 1,
-                  ),
-                ),
-                prefixIcon: const Icon(Icons.note),
-                helperText: l10n.notesHelper,
+              const SizedBox(height: 10),
+              _buildField(
+                controller: _usernameController,
+                label: l10n.usernameRequiredLabel,
+                maxLines: 5,
+                suffix: _copyButton(_usernameController, l10n.username),
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? l10n.usernameRequired
+                    : null,
               ),
-              // maxLines: 3,
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 48,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _saveEntry,
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : Text(
-                        _isEditing ? l10n.updatePassword : l10n.savePassword,
-                        style: const TextStyle(fontSize: 16),
+              _buildField(
+                controller: _passwordController,
+                label: l10n.passwordRequiredLabel,
+                maxLines: _isPasswordVisible ? 5 : 1,
+                readOnly:
+                    !_isPasswordVisible &&
+                    _passwordController.text.contains('\n'),
+                obscureText: !_isPasswordVisible,
+                suffix: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: _isPasswordVisible
+                          ? l10n.hidePassword
+                          : l10n.showPassword,
+                      isSelected: _isPasswordVisible,
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
+                      onPressed: () => setState(
+                        () => _isPasswordVisible = !_isPasswordVisible,
+                      ),
+                    ),
+                    _copyButton(_passwordController, l10n.password),
+                  ],
+                ),
+                validator: (value) => value == null || value.isEmpty
+                    ? l10n.passwordRequired
+                    : null,
               ),
-            ),
-            if (_isEditing) ...[
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.info_outline, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (widget.entry!.createdAt != null)
-                          Text(
-                            l10n.createdAt(
-                              _formatDateTime(
-                                widget.entry!.createdAt!,
-                                Localizations.localeOf(context),
-                              ),
-                            ),
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                            ),
-                          ),
-                        if (widget.entry!.updatedAt != null)
-                          Text(
-                            l10n.updatedAt(
-                              _formatDateTime(
-                                widget.entry!.updatedAt!,
-                                Localizations.localeOf(context),
-                              ),
-                            ),
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                            ),
-                          ),
-                      ],
+              _buildField(
+                controller: _websiteController,
+                label: l10n.website,
+                maxLines: 5,
+                keyboardType: TextInputType.url,
+                suffix: _copyButton(_websiteController, l10n.website),
+              ),
+              const SizedBox(height: 10),
+              _buildField(
+                controller: _noteController,
+                label: l10n.notes,
+                minLines: 3,
+                maxLines: null,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(44),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    backgroundColor: theme.colorScheme.primary,
+                    disabledBackgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
                     ),
                   ),
-                ],
+                  onPressed: _isLoading ? null : _saveEntry,
+                  child: _isLoading
+                      ? SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        )
+                      : Text(
+                          _isEditing ? l10n.updatePassword : l10n.savePassword,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 15),
+                        ),
+                ),
               ),
+              if (_isEditing)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.entry!.createdAt != null)
+                        Text(
+                          l10n.createdAt(
+                            _formatDateTime(
+                              widget.entry!.createdAt!,
+                              Localizations.localeOf(context),
+                            ),
+                          ),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      if (widget.entry!.updatedAt != null)
+                        Text(
+                          l10n.updatedAt(
+                            _formatDateTime(
+                              widget.entry!.updatedAt!,
+                              Localizations.localeOf(context),
+                            ),
+                          ),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _copyButton(TextEditingController controller, String fieldName) {
+    return IconButton(
+      icon: const Icon(Icons.copy, size: 22),
+      onPressed: () => _copyToClipboard(controller.text, fieldName),
+      tooltip: context.l10n.copyField(fieldName),
+    );
+  }
+
+  InputDecoration _fieldDecoration(String label, {Widget? suffix}) {
+    return InputDecoration(
+      labelText: label,
+      floatingLabelBehavior: FloatingLabelBehavior.always,
+      labelStyle: TextStyle(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        fontSize: 13,
+      ),
+      filled: false,
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      errorBorder: InputBorder.none,
+      focusedErrorBorder: InputBorder.none,
+      errorMaxLines: 3,
+      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+      suffixIcon: suffix,
+    );
+  }
+
+  Widget _buildField({
+    required TextEditingController controller,
+    required String label,
+    int minLines = 1,
+    int? maxLines = 1,
+    bool obscureText = false,
+    bool readOnly = false,
+    TextInputType? keyboardType,
+    Widget? suffix,
+    String? Function(String?)? validator,
+  }) {
+    final theme = Theme.of(context);
+    return ColoredBox(
+      color: theme.cardColor,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          children: [
+            TextFormField(
+              controller: controller,
+              minLines: minLines,
+              maxLines: maxLines,
+              obscureText: obscureText,
+              readOnly: readOnly,
+              enableSuggestions: controller != _passwordController,
+              autocorrect: controller != _passwordController,
+              style: const TextStyle(fontSize: 15),
+              keyboardType: keyboardType,
+              decoration: _fieldDecoration(label, suffix: suffix),
+              validator: validator,
+            ),
+            Divider(height: 1, thickness: 0.5, color: theme.dividerColor),
           ],
         ),
       ),
@@ -541,76 +482,62 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
 
   /// 构建分类选择器
   Widget _buildCategorySelector() {
-    return InputDecorator(
-      decoration: InputDecoration(
-        labelText: context.l10n.category,
-        prefixIcon: const Icon(Icons.folder),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.blue.shade300, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color.fromARGB(255, 133, 88, 236),
-            width: 1,
-          ),
-        ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int?>(
-          value:
-              _selectedCategoryId == null ||
-                  _categories.any(
-                    (category) => category.id == _selectedCategoryId,
-                  )
-              ? _selectedCategoryId
-              : null,
-          isExpanded: true,
-          isDense: true,
-          hint: Text(context.l10n.selectCategory),
-          items: [
-            // 默认分类
-            DropdownMenuItem<int?>(
-              value: null,
-              child: Text(context.l10n.defaultCategory),
-            ),
-            // 用户自定义分类
-            ..._categories.map((category) {
-              return DropdownMenuItem<int?>(
-                value: category.id,
-                child: Text(category.name),
-              );
-            }),
-            // 新建分类选项
-            DropdownMenuItem<int?>(
-              value: -1, // 特殊值，表示新建分类
-              child: Row(
-                children: [
-                  const Icon(Icons.add, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    context.l10n.newCategoryOption,
-                    style: const TextStyle(fontStyle: FontStyle.italic),
-                  ),
-                ],
+    return ColoredBox(
+      color: Theme.of(context).cardColor,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: InputDecorator(
+          decoration: _fieldDecoration(context.l10n.category),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<int?>(
+              value:
+                  _selectedCategoryId == null ||
+                      _categories.any(
+                        (category) => category.id == _selectedCategoryId,
+                      )
+                  ? _selectedCategoryId
+                  : null,
+              isExpanded: true,
+              itemHeight: null,
+              icon: const Icon(Icons.chevron_right, size: 20),
+              hint: Text(
+                context.l10n.defaultCategory,
+                overflow: TextOverflow.ellipsis,
               ),
+              items: [
+                DropdownMenuItem<int?>(
+                  value: null,
+                  child: Text(
+                    context.l10n.defaultCategory,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                ..._categories.map(
+                  (category) => DropdownMenuItem<int?>(
+                    value: category.id,
+                    child: Text(category.name, overflow: TextOverflow.ellipsis),
+                  ),
+                ),
+                DropdownMenuItem<int?>(
+                  value: -1,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.add, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(context.l10n.newCategoryOption)),
+                    ],
+                  ),
+                ),
+              ],
+              onChanged: (value) {
+                if (value == -1) {
+                  _navigateToAddCategory();
+                } else {
+                  setState(() => _selectedCategoryId = value);
+                }
+              },
             ),
-          ],
-          onChanged: (value) {
-            if (value == -1) {
-              // 跳转到新建分类页面
-              _navigateToAddCategory();
-            } else {
-              setState(() {
-                _selectedCategoryId = value;
-              });
-            }
-          },
+          ),
         ),
       ),
     );

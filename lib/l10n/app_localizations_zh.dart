@@ -808,6 +808,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeSettings => '主题设置';
 
   @override
+  String get appearance => '通用';
+
+  @override
+  String get followSystemAppearance => '跟随系统外观';
+
+  @override
+  String get themeChangeFailed => '无法保存主题设置，请重试';
+
+  @override
+  String get showPassword => '显示密码';
+
+  @override
+  String get hidePassword => '隐藏密码';
+
+  @override
   String get useSystemMaterialYouColors => '使用系统 Material You 颜色';
 
   @override
@@ -817,7 +832,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeYellowDark => '黄黑经典';
 
   @override
-  String get themeBlueLight => '蓝白简约';
+  String get themeBlueLight => '简约浅色';
 
   @override
   String get darkBackground => '深色背景';

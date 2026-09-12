@@ -1544,6 +1544,36 @@ abstract class AppLocalizations {
   /// **'主题设置'**
   String get themeSettings;
 
+  /// General preferences section heading
+  ///
+  /// In zh, this message translates to:
+  /// **'通用'**
+  String get appearance;
+
+  /// Use the system light or dark appearance
+  ///
+  /// In zh, this message translates to:
+  /// **'跟随系统外观'**
+  String get followSystemAppearance;
+
+  /// Theme preference storage failure
+  ///
+  /// In zh, this message translates to:
+  /// **'无法保存主题设置，请重试'**
+  String get themeChangeFailed;
+
+  /// Tooltip for revealing the password
+  ///
+  /// In zh, this message translates to:
+  /// **'显示密码'**
+  String get showPassword;
+
+  /// Tooltip for obscuring the password
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏密码'**
+  String get hidePassword;
+
   /// Setting to use Material You system colors
   ///
   /// In zh, this message translates to:
@@ -1565,7 +1595,7 @@ abstract class AppLocalizations {
   /// Name of the blue and white theme
   ///
   /// In zh, this message translates to:
-  /// **'蓝白简约'**
+  /// **'简约浅色'**
   String get themeBlueLight;
 
   /// Description of a dark theme preview

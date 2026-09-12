@@ -192,296 +192,267 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeModel = Provider.of<ThemeModel>(context);
+    final themeModel = context.watch<ThemeModel>();
     final languageModel = context.watch<LanguageModel>();
-    final errorColor = Theme.of(context).colorScheme.error;
-
+    final l10n = context.l10n;
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.settings)),
+      appBar: AppBar(title: Text(l10n.settings)),
       body: ListView(
+        padding: const EdgeInsets.only(bottom: 16),
         children: [
-          // 安全设置
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              context.l10n.securitySettings,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                // color provided by theme
-              ),
-            ),
-          ),
+          _sectionTitle(l10n.securitySettings),
           ListTile(
-            leading: const Icon(Icons.fingerprint),
-            title: Text(context.l10n.biometricUnlock),
-            subtitle: Text(context.l10n.biometricUnlockDescription),
+            leading: Icon(Icons.fingerprint, color: colors.primary),
+            title: Text(l10n.biometricUnlock),
             trailing: _loadingBio
                 ? const SizedBox(
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Switch(
-                    value: _biometricEnabled,
-                    onChanged: (v) => _toggleBiometric(v),
-                  ),
+                : Switch(value: _biometricEnabled, onChanged: _toggleBiometric),
           ),
-          const Divider(height: 1),
+          _separator(),
           ListTile(
-            leading: const Icon(Icons.lock_reset),
-            title: Text(context.l10n.changeMasterPassword),
-            subtitle: Text(context.l10n.changeMasterPasswordDescription),
-            trailing: const Icon(Icons.arrow_forward_ios),
+            leading: const Icon(Icons.lock_outline),
+            title: Text(l10n.changeMasterPassword),
+            trailing: const Icon(Icons.chevron_right, size: 20),
             onTap: () async {
               await Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => const ChangeMasterPasswordPage(),
+                  builder: (_) => const ChangeMasterPasswordPage(),
                 ),
               );
-              if (!mounted) {
-                return;
-              }
-              await _refreshBiometricEnabled();
+              if (mounted) await _refreshBiometricEnabled();
             },
           ),
-          const Divider(height: 1),
-
-          // 数据管理
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              context.l10n.dataManagement,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          _sectionTitle(l10n.dataManagement),
+          ListTile(
+            leading: const Icon(Icons.cloud_outlined, color: Color(0xFF2782D7)),
+            title: Text(l10n.backupAndRestore),
+            trailing: const Icon(Icons.chevron_right, size: 20),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const BackupRestorePage()),
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.backup),
-            title: Text(context.l10n.backupAndRestore),
-            subtitle: Text(context.l10n.backupAndRestoreDescription),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const BackupRestorePage(),
-                ),
-              );
-            },
-          ),
-          const Divider(height: 1),
           if (VideoVaultService.supported) ...[
+            _separator(),
             ListTile(
-              leading: const Icon(Icons.enhanced_encryption_outlined),
-              title: Text(context.l10n.fileEncryption),
-              subtitle: Text(context.l10n.fileEncryptionDescription),
-              trailing: const Icon(Icons.arrow_forward_ios),
+              leading: const Icon(
+                Icons.enhanced_encryption_outlined,
+                color: Color(0xFFE89125),
+              ),
+              title: Text(l10n.fileEncryption),
+              trailing: const Icon(Icons.chevron_right, size: 20),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const FileEncryptionPage()),
               ),
             ),
-            const Divider(height: 1),
           ],
+          _sectionTitle(l10n.appearance),
+          _preferenceRow(
+            key: const ValueKey('settings-language-row'),
+            icon: Icons.language,
+            label: l10n.language,
+            value: _languageName(languageModel.mode),
+            onTap: _showLanguageOptions,
+          ),
+          _separator(),
+          _preferenceRow(
+            key: const ValueKey('settings-theme-row'),
+            icon: Icons.palette_outlined,
+            label: l10n.themeSettings,
+            value: themeModel.useSystem
+                ? l10n.languageSystem
+                : _themeName(context, themeModel.currentThemeType),
+            onTap: _showThemeOptions,
+          ),
+          _sectionTitle(l10n.about),
           ListTile(
-            leading: Icon(Icons.delete_forever, color: errorColor),
-            title: Text(
-              context.l10n.deleteLocalVault,
-              style: TextStyle(color: errorColor),
-            ),
-            subtitle: Text(context.l10n.deleteLocalVaultDescription),
-            onTap: _deleteLocalVault,
-          ),
-          const Divider(height: 1),
-
-          Padding(
-            key: const ValueKey('language-section-title'),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              context.l10n.language,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SegmentedButton<AppLanguageMode>(
-                segments: [
-                  ButtonSegment(
-                    value: AppLanguageMode.system,
-                    label: Text(context.l10n.languageSystem),
-                  ),
-                  ButtonSegment(
-                    value: AppLanguageMode.zh,
-                    label: Text(context.l10n.languageChinese),
-                  ),
-                  ButtonSegment(
-                    value: AppLanguageMode.en,
-                    label: Text(context.l10n.languageEnglish),
-                  ),
-                ],
-                selected: {languageModel.mode},
-                onSelectionChanged: (selection) {
-                  _setLanguageMode(selection.first);
-                },
+            leading: const Icon(Icons.info_outline),
+            title: Text(l10n.aboutApp),
+            trailing: const Icon(Icons.chevron_right, size: 20),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: widget.aboutPageBuilder ?? (_) => const AboutPage(),
               ),
             ),
           ),
-          const Divider(height: 1),
-
-          // 主题设置
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              context.l10n.themeSettings,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          const SizedBox(height: 8),
+          Material(
+            color: Theme.of(context).cardColor,
+            child: TextButton(
+              onPressed: _lockVault,
+              style: TextButton.styleFrom(foregroundColor: colors.onSurface),
+              child: Text(l10n.lockLocalVault, textAlign: TextAlign.center),
             ),
           ),
-          Card(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(context.l10n.useSystemMaterialYouColors),
-                      ),
-                      Switch(
-                        value: themeModel.useSystem,
-                        onChanged: (v) async =>
-                            await themeModel.setUseSystem(v),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(context.l10n.themePresets),
-                  const SizedBox(height: 12),
-                  for (ThemeType type in ThemeType.values)
-                    _buildThemeOption(context, themeModel, type),
-                ],
-              ),
+          const SizedBox(height: 8),
+          Material(
+            color: Theme.of(context).cardColor,
+            child: TextButton(
+              onPressed: _deleteLocalVault,
+              style: TextButton.styleFrom(foregroundColor: colors.error),
+              child: Text(l10n.deleteLocalVault, textAlign: TextAlign.center),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              context.l10n.about,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.info),
-            title: Text(context.l10n.aboutApp),
-            subtitle: Text(context.l10n.appInformationAndVersion),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder:
-                      widget.aboutPageBuilder ?? (context) => const AboutPage(),
-                ),
-              );
-            },
-          ),
-          const Divider(height: 1),
-
-          const SizedBox(height: 32),
-
-          // 锁定密码库按钮
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              height: 48,
-              child: ElevatedButton.icon(
-                onPressed: _lockVault,
-                icon: const Icon(Icons.lock),
-                label: Text(context.l10n.lockLocalVault),
-                style: ElevatedButton.styleFrom(),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 32),
         ],
       ),
     );
   }
 
-  Widget _buildThemeOption(
-    BuildContext context,
-    ThemeModel model,
-    ThemeType type,
-  ) {
-    final theme = ThemeModel.themeSchemes[type]!;
-    final isSelected = model.currentThemeType == type;
+  Widget _sectionTitle(String text) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+    child: Text(text, style: Theme.of(context).textTheme.bodySmall),
+  );
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () async {
-          await model.setThemeType(type);
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          decoration: BoxDecoration(
-            border: isSelected
-                ? Border.all(color: theme.seedColor, width: 2)
-                : Border.all(color: Colors.transparent),
-            borderRadius: BorderRadius.circular(8),
+  Widget _separator() => ColoredBox(
+    color: Theme.of(context).cardColor,
+    child: const Divider(indent: 52, height: 0.5),
+  );
+
+  Widget _preferenceRow({
+    required Key key,
+    required IconData icon,
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) => ListTile(
+    key: key,
+    leading: Icon(icon),
+    title: Row(
+      children: [
+        Expanded(child: Text(label)),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
-          padding: const EdgeInsets.all(8),
-          child: Row(
+        ),
+      ],
+    ),
+    trailing: const Icon(Icons.chevron_right, size: 20),
+    onTap: onTap,
+  );
+
+  String _languageName(AppLanguageMode mode) => switch (mode) {
+    AppLanguageMode.system => context.l10n.languageSystem,
+    AppLanguageMode.zh => context.l10n.languageChinese,
+    AppLanguageMode.en => context.l10n.languageEnglish,
+  };
+
+  Future<void> _showLanguageOptions() async {
+    final selected = context.read<LanguageModel>().mode;
+    final value = await showModalBottomSheet<AppLanguageMode>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // 主题预览
-              Container(
-                width: 64,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: theme.backgroundColor,
-                  borderRadius: BorderRadius.circular(6),
+              _sectionTitle(context.l10n.language),
+              for (final mode in AppLanguageMode.values)
+                ListTile(
+                  title: Text(_languageName(mode)),
+                  trailing: selected == mode
+                      ? Icon(
+                          Icons.check,
+                          color: Theme.of(context).colorScheme.primary,
+                        )
+                      : null,
+                  onTap: () => Navigator.of(sheetContext).pop(mode),
                 ),
-                child: Center(
-                  child: Icon(Icons.circle, color: theme.seedColor, size: 18),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // 主题名称
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _themeName(context, type),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      theme.brightness == Brightness.dark
-                          ? context.l10n.darkBackground
-                          : context.l10n.lightBackground,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // 选中标记
-              if (isSelected) Icon(Icons.check_circle, color: theme.seedColor),
+              const SizedBox(height: 8),
             ],
           ),
         ),
       ),
     );
+    if (value != null && mounted) await _setLanguageMode(value);
   }
 
-  String _themeName(BuildContext context, ThemeType type) {
-    return switch (type) {
-      ThemeType.yellowDark => context.l10n.themeYellowDark,
-      ThemeType.blueLight => context.l10n.themeBlueLight,
-    };
+  Future<void> _showThemeOptions() async {
+    final model = context.read<ThemeModel>();
+    final value = await showModalBottomSheet<Object>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _sectionTitle(context.l10n.themeSettings),
+              SwitchListTile(
+                title: Text(
+                  VideoVaultService.supported
+                      ? context.l10n.followSystemAppearance
+                      : context.l10n.useSystemMaterialYouColors,
+                ),
+                value: model.useSystem,
+                onChanged: (enabled) => Navigator.of(sheetContext).pop(enabled),
+              ),
+              const Divider(),
+              for (final type in ThemeType.values)
+                ListTile(
+                  key: ValueKey('theme-option-${type.name}'),
+                  leading: Container(
+                    width: 36,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: ThemeModel.themeSchemes[type]!.backgroundColor,
+                      border: Border.all(color: Theme.of(context).dividerColor),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Icon(
+                      Icons.circle,
+                      size: 14,
+                      color: ThemeModel.themeSchemes[type]!.seedColor,
+                    ),
+                  ),
+                  title: Text(_themeName(context, type)),
+                  subtitle: Text(
+                    ThemeModel.themeSchemes[type]!.brightness == Brightness.dark
+                        ? context.l10n.darkBackground
+                        : context.l10n.lightBackground,
+                  ),
+                  trailing: !model.useSystem && model.currentThemeType == type
+                      ? Icon(
+                          Icons.check,
+                          color: Theme.of(context).colorScheme.primary,
+                        )
+                      : null,
+                  onTap: () => Navigator.of(sheetContext).pop(type),
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (value == null || !mounted) return;
+    try {
+      if (value is ThemeType) {
+        await model.setThemeType(value);
+      } else if (value is bool) {
+        await model.setUseSystem(value);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l10n.themeChangeFailed)));
+      }
+    }
   }
+
+  String _themeName(BuildContext context, ThemeType type) => switch (type) {
+    ThemeType.yellowDark => context.l10n.themeYellowDark,
+    ThemeType.blueLight => context.l10n.themeBlueLight,
+  };
 }

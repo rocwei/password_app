@@ -336,7 +336,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vault => 'Vault';
 
   @override
-  String get generatePasswordNavigationLabel => 'Generate Password';
+  String get generatePasswordNavigationLabel => 'Generate';
 
   @override
   String get otpNavigationLabel => 'OTP';
@@ -865,6 +865,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeSettings => 'Theme';
 
   @override
+  String get appearance => 'General';
+
+  @override
+  String get followSystemAppearance => 'Follow system appearance';
+
+  @override
+  String get themeChangeFailed => 'Could not save the theme. Please try again.';
+
+  @override
+  String get showPassword => 'Show password';
+
+  @override
+  String get hidePassword => 'Hide password';
+
+  @override
   String get useSystemMaterialYouColors => 'Use system Material You colors';
 
   @override
@@ -874,7 +889,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeYellowDark => 'Yellow & Black';
 
   @override
-  String get themeBlueLight => 'Blue & White';
+  String get themeBlueLight => 'Simple Light';
 
   @override
   String get darkBackground => 'Dark background';

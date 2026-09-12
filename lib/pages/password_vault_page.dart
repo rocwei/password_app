@@ -278,7 +278,18 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
     final totalCount = _countMap.values.fold(0, (a, b) => a + b);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.vault), elevation: 0),
+      appBar: AppBar(
+        title: Text(l10n.vault),
+        centerTitle: true,
+        elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: _navigateToAddCategory,
+            tooltip: l10n.addCategory,
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
       body: _isLoading
           ? Center(
               child: Semantics(
@@ -305,11 +316,12 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
                       },
                     )
                   : ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       children: [
-                        _buildStatsCard(totalCount),
-                        const SizedBox(height: 8),
+                        _buildSummary(totalCount),
                         _buildCategoryTile(
                           icon: Icons.inbox,
+                          color: const Color(0xFF8A9197),
                           name: l10n.defaultCategory,
                           count: defaultCount,
                           onTap: () => _navigateToCategory(
@@ -322,6 +334,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
                           final count = _countMap[category.id] ?? 0;
                           return _buildCategoryTile(
                             icon: _getCategoryIcon(category.name),
+                            color: _getCategoryColor(category.name),
                             name: category.name,
                             count: count,
                             onTap: () => _navigateToCategory(
@@ -333,15 +346,10 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
                             onDelete: () => _deleteCategory(category),
                           );
                         }),
-                        const SizedBox(height: 80),
+                        const SizedBox(height: 24),
                       ],
                     ),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToAddCategory,
-        tooltip: l10n.addCategory,
-        child: const Icon(Icons.create_new_folder),
-      ),
     );
   }
 
@@ -360,47 +368,22 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
     );
   }
 
-  Widget _buildStatsCard(int totalCount) {
+  Widget _buildSummary(int totalCount) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Card(
-        color: Theme.of(context).colorScheme.primaryContainer,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        elevation: 0.5,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Icon(
-                Icons.lock,
-                size: 32,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.l10n.passwordCount(totalCount),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  Text(
-                    context.l10n.categoryCount(_categories.length + 1),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onPrimaryContainer.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: DefaultTextStyle(
+        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+          fontSize: 12,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            Text(context.l10n.passwordCount(totalCount)),
+            const Text('·'),
+            Text(context.l10n.categoryCount(_categories.length + 1)),
+          ],
         ),
       ),
     );
@@ -420,7 +403,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
           Text(
             context.l10n.noPasswordsYet,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
@@ -428,7 +411,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
           Text(
             context.l10n.emptyVaultDescription,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 12,
               color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
@@ -457,6 +440,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
 
   Widget _buildCategoryTile({
     required IconData icon,
+    required Color color,
     required String name,
     required int count,
     required VoidCallback onTap,
@@ -464,24 +448,58 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
     VoidCallback? onEdit,
     VoidCallback? onDelete,
   }) {
-    final tile = Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: Theme.of(context).scaffoldBackgroundColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: Colors.blue.shade300, width: 1),
-      ),
-      elevation: 0.5,
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Theme.of(context).colorScheme.onPrimary,
-          child: Icon(icon, size: 20),
-        ),
-        title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(context.l10n.passwordCount(count)),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: onTap,
+    final theme = Theme.of(context);
+    final stackCount = MediaQuery.textScalerOf(context).scale(15) > 21;
+    final countText = Text(
+      '$count',
+      style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+    );
+    final tile = Material(
+      color: theme.cardColor,
+      child: Column(
+        children: [
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 2,
+            ),
+            minVerticalPadding: 8,
+            leading: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(icon, size: 20, color: Colors.white),
+            ),
+            title: Text(
+              name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
+            ),
+            subtitle: stackCount ? countText : null,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!stackCount) ...[countText, const SizedBox(width: 8)],
+                Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+            onTap: onTap,
+          ),
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            indent: 60,
+            color: theme.dividerColor,
+          ),
+        ],
       ),
     );
 
@@ -497,20 +515,30 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
             foregroundColor: Theme.of(context).colorScheme.onPrimary,
             icon: Icons.edit,
             label: context.l10n.edit,
-            borderRadius: BorderRadius.circular(10),
           ),
-          const SizedBox(width: 8),
           SlidableAction(
             onPressed: (_) => onDelete?.call(),
             backgroundColor: Theme.of(context).colorScheme.error,
             foregroundColor: Theme.of(context).colorScheme.onError,
             icon: Icons.delete,
             label: context.l10n.delete,
-            borderRadius: BorderRadius.circular(10),
           ),
         ],
       ),
       child: tile,
     );
+  }
+
+  Color _getCategoryColor(String name) {
+    final icon = _getCategoryIcon(name);
+    if (icon == Icons.account_balance) return const Color(0xFFEF8A27);
+    if (icon == Icons.email || icon == Icons.wifi) {
+      return const Color(0xFF2782E8);
+    }
+    if (icon == Icons.people || icon == Icons.work) {
+      return const Color(0xFF16A66A);
+    }
+    if (icon == Icons.shopping_cart) return const Color(0xFFD76773);
+    return const Color(0xFF78838D);
   }
 }

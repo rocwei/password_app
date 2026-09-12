@@ -223,319 +223,194 @@ class _GeneratePasswordPageState extends State<GeneratePasswordPage> {
     }
   }
 
-  Widget _buildActions(BuildContext context) {
-    final l10n = context.l10n;
-    final regenerateButton = ElevatedButton.icon(
-      onPressed: _generatePassword,
-      icon: const Icon(Icons.refresh),
-      label: Text(l10n.regenerate),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-      ),
-    );
-    final saveButton = ElevatedButton.icon(
-      onPressed: _generatedPassword.isEmpty ? null : _savePassword,
-      icon: const Icon(Icons.save),
-      label: Text(l10n.saveToVault),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-        foregroundColor: Theme.of(context).colorScheme.onSecondary,
-      ),
-    );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final useCompactLayout =
-            constraints.maxWidth < 420 ||
-            MediaQuery.textScalerOf(context).scale(14) > 20;
-        if (useCompactLayout) {
-          Widget compactButton({
-            required VoidCallback? onPressed,
-            required IconData icon,
-            required String label,
-            required Color backgroundColor,
-            required Color foregroundColor,
-          }) {
-            return ElevatedButton(
-              onPressed: onPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: backgroundColor,
-                foregroundColor: foregroundColor,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon),
-                  const SizedBox(height: 4),
-                  Text(label, textAlign: TextAlign.center),
-                ],
-              ),
-            );
-          }
-
-          return Row(
-            children: [
-              Expanded(
-                child: compactButton(
-                  onPressed: _generatePassword,
-                  icon: Icons.refresh,
-                  label: l10n.regenerate,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: compactButton(
-                  onPressed: _generatedPassword.isEmpty ? null : _savePassword,
-                  icon: Icons.save,
-                  label: l10n.saveToVault,
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                  foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                ),
-              ),
-            ],
-          );
-        }
-        return Row(
-          children: [
-            Expanded(child: regenerateButton),
-            const SizedBox(width: 8),
-            Expanded(child: saveButton),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final theme = Theme.of(context);
     final strength = _getPasswordStrength();
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.passwordGeneratorTitle)),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 生成的密码显示区域
-            Flexible(
-              child: SingleChildScrollView(
-                child: Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(
-                      color: Theme.of(context).dividerColor.withOpacity(1),
-                      width: 0.5,
-                    ),
-                  ),
-                  elevation: 0.5,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.generatedPassword,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Theme.of(context).dividerColor,
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                            color: Theme.of(context).scaffoldBackgroundColor,
-                          ),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Text(
-                              _generatedPassword.isEmpty
-                                  ? l10n.generatePasswordPrompt
-                                  : _generatedPassword,
-                              style: const TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 16,
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text(
+          l10n.passwordGeneratorTitle,
+          style: const TextStyle(fontSize: 16),
+        ),
+      ),
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                child: Text(
+                  l10n.generatedPassword,
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              ),
+              Material(
+                color: theme.cardColor,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: Text(
+                                _generatedPassword.isEmpty
+                                    ? l10n.generatePasswordPrompt
+                                    : _generatedPassword,
+                                key: const ValueKey('generated-password'),
+                                style: const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 18,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Wrap(
-                                spacing: 4,
-                                children: [
-                                  Text(l10n.passwordStrength),
-                                  Text(
-                                    _getPasswordStrengthLabel(
+                          IconButton(
+                            onPressed: _copyToClipboard,
+                            icon: const Icon(Icons.copy),
+                            tooltip: l10n.copyPassword,
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Wrap(
+                              spacing: 4,
+                              children: [
+                                Text(l10n.passwordStrength),
+                                Text(
+                                  _getPasswordStrengthLabel(context, strength),
+                                  style: TextStyle(
+                                    color: _getPasswordStrengthColor(
                                       context,
                                       strength,
                                     ),
-                                    style: TextStyle(
-                                      color: _getPasswordStrengthColor(
-                                        context,
-                                        strength,
-                                      ),
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              onPressed: _copyToClipboard,
-                              icon: const Icon(Icons.copy),
-                              tooltip: l10n.copyPassword,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 密码设置
-            Expanded(
-              child: Card(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                color: Theme.of(context).scaffoldBackgroundColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(
-                    color: Theme.of(context).dividerColor.withOpacity(1),
-                    width: 0.5,
-                  ),
-                ),
-                elevation: 0.5,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.passwordSettings,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // 密码长度
-                      Text(l10n.passwordLength(_passwordLength.round())),
-                      Slider(
-                        value: _passwordLength,
-                        min: 4,
-                        max: 32,
-                        divisions: 28,
-                        activeColor: Theme.of(context).colorScheme.primary,
-                        inactiveColor: Theme.of(
-                          context,
-                        ).colorScheme.primary.withOpacity(0.3),
-                        onChanged: (value) {
-                          setState(() {
-                            _passwordLength = value;
-                          });
-                          _generatePassword();
-                        },
-                      ),
-
-                      // 字符类型选择
-                      CheckboxListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                        title: Text(l10n.includeUppercaseLetters),
-                        value: _includeUppercase,
-                        onChanged: (value) {
-                          setState(() {
-                            _includeUppercase = value ?? false;
-                          });
-                          _generatePassword();
-                        },
-                      ),
-                      CheckboxListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                        title: Text(l10n.includeLowercaseLetters),
-                        value: _includeLowercase,
-                        onChanged: (value) {
-                          setState(() {
-                            _includeLowercase = value ?? false;
-                          });
-                          _generatePassword();
-                        },
-                      ),
-                      CheckboxListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                        title: Text(l10n.includeNumbers),
-                        value: _includeNumbers,
-                        onChanged: (value) {
-                          setState(() {
-                            _includeNumbers = value ?? false;
-                          });
-                          _generatePassword();
-                        },
-                      ),
-                      CheckboxListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                        title: Text(l10n.includeSpecialCharacters),
-                        value: _includeSpecialChars,
-                        onChanged: (value) {
-                          setState(() {
-                            _includeSpecialChars = value ?? false;
-                          });
-                          _generatePassword();
-                        },
-                      ),
-                      CheckboxListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                        title: Text(l10n.excludeSimilarCharacters),
-                        value: _excludeSimilar,
-                        onChanged: (value) {
-                          setState(() {
-                            _excludeSimilar = value ?? false;
-                          });
-                          _generatePassword();
-                        },
+                          ),
+                          IconButton(
+                            onPressed: _generatePassword,
+                            icon: const Icon(Icons.refresh),
+                            tooltip: l10n.regenerate,
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
-
-            const SizedBox(height: 16),
-
-            _buildActions(context),
-          ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                child: Text(
+                  l10n.passwordSettings,
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              ),
+              Material(
+                color: theme.cardColor,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          l10n.passwordLength(_passwordLength.round()),
+                        ),
+                      ),
+                    ),
+                    Slider(
+                      value: _passwordLength,
+                      min: 4,
+                      max: 32,
+                      divisions: 28,
+                      label: _passwordLength.round().toString(),
+                      activeColor: theme.colorScheme.primary,
+                      inactiveColor: theme.colorScheme.primary.withOpacity(0.3),
+                      onChanged: (value) {
+                        setState(() => _passwordLength = value);
+                        _generatePassword();
+                      },
+                    ),
+                    Divider(height: 1, color: theme.dividerColor),
+                    SwitchListTile.adaptive(
+                      title: Text(l10n.includeUppercaseLetters),
+                      value: _includeUppercase,
+                      onChanged: (value) {
+                        setState(() => _includeUppercase = value);
+                        _generatePassword();
+                      },
+                    ),
+                    Divider(height: 1, indent: 16, color: theme.dividerColor),
+                    SwitchListTile.adaptive(
+                      title: Text(l10n.includeLowercaseLetters),
+                      value: _includeLowercase,
+                      onChanged: (value) {
+                        setState(() => _includeLowercase = value);
+                        _generatePassword();
+                      },
+                    ),
+                    Divider(height: 1, indent: 16, color: theme.dividerColor),
+                    SwitchListTile.adaptive(
+                      title: Text(l10n.includeNumbers),
+                      value: _includeNumbers,
+                      onChanged: (value) {
+                        setState(() => _includeNumbers = value);
+                        _generatePassword();
+                      },
+                    ),
+                    Divider(height: 1, indent: 16, color: theme.dividerColor),
+                    SwitchListTile.adaptive(
+                      title: Text(l10n.includeSpecialCharacters),
+                      value: _includeSpecialChars,
+                      onChanged: (value) {
+                        setState(() => _includeSpecialChars = value);
+                        _generatePassword();
+                      },
+                    ),
+                    Divider(height: 1, indent: 16, color: theme.dividerColor),
+                    SwitchListTile.adaptive(
+                      title: Text(l10n.excludeSimilarCharacters),
+                      value: _excludeSimilar,
+                      onChanged: (value) {
+                        setState(() => _excludeSimilar = value);
+                        _generatePassword();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                child: ElevatedButton(
+                  onPressed: _generatedPassword.isEmpty ? null : _savePassword,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                  ),
+                  child: Text(l10n.saveToVault, textAlign: TextAlign.center),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

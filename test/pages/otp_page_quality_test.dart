@@ -38,7 +38,7 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.tap(find.text('Add OTP'));
+    await tester.tap(find.byTooltip('Add OTP'));
     await tester.pump();
     await tester.enterText(find.byType(TextFormField).at(0), 'Concurrent');
     await tester.enterText(

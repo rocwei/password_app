@@ -12,6 +12,9 @@ import 'package:password_manager/models/password_entry.dart';
 import 'package:password_manager/pages/add_category_page.dart';
 import 'package:password_manager/pages/category_entries_page.dart';
 import 'package:password_manager/pages/home_page.dart';
+import 'package:password_manager/pages/generate_password_page.dart';
+import 'package:password_manager/pages/otp_page.dart';
+import 'package:password_manager/pages/settings_page.dart';
 import 'package:password_manager/pages/password_detail_page.dart';
 import 'package:password_manager/pages/password_vault_page.dart';
 import 'package:provider/provider.dart';
@@ -45,7 +48,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Vault'), findsNWidgets(2));
-    expect(find.text('Generate Password'), findsOneWidget);
+    expect(find.text('Generate'), findsOneWidget);
     expect(find.text('OTP'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('密码库'), findsNothing);
@@ -53,6 +56,56 @@ void main() {
     expect(find.text('OTP验证'), findsNothing);
     expect(find.text('设置'), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('English root tabs switch at 320 width and double text scale', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      buildLocalizedPage(
+        Builder(
+          builder: (context) => Theme(
+            data: ThemeModel().createThemeData(),
+            child: MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(2)),
+              child: const HomePage(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final navigation = find.byType(BottomNavigationBar);
+    const labels = ['Vault', 'Generate', 'OTP', 'Settings'];
+    const pageTypes = [
+      PasswordVaultPage,
+      GeneratePasswordPage,
+      OtpPage,
+      SettingsPage,
+    ];
+    for (final index in [0, 1, 2, 3, 0]) {
+      await tester.tap(
+        find.descendant(of: navigation, matching: find.text(labels[index])),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        tester.widget<BottomNavigationBar>(navigation).currentIndex,
+        index,
+      );
+      expect(
+        tester.widget<IndexedStack>(find.byType(IndexedStack)).index,
+        index,
+      );
+      expect(find.byType(pageTypes[index]), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
   });
 
   testWidgets(
@@ -145,9 +198,19 @@ void main() {
       if (locale.languageCode == 'en') {
         expect(find.text('3 passwords'), findsOneWidget);
         expect(find.text('3 categories'), findsOneWidget);
-        expect(find.text('1 password'), findsOneWidget);
-        expect(find.text('2 passwords'), findsOneWidget);
-        expect(find.text('No passwords'), findsOneWidget);
+        for (final row in const {
+          'Default Category': '1',
+          categoryName: '2',
+          'Empty/空': '0',
+        }.entries) {
+          expect(
+            find.descendant(
+              of: find.widgetWithText(ListTile, row.key),
+              matching: find.text(row.value),
+            ),
+            findsOneWidget,
+          );
+        }
       }
       expect(tester.takeException(), isNull);
     }
@@ -513,11 +576,22 @@ void main() {
       final passwordField = tester.widget<TextField>(
         find.byType(TextField).at(2),
       );
-      expect(passwordField.maxLines, 5);
-      expect(passwordField.minLines, 2);
-      expect(passwordField.obscureText, isFalse);
-      expect(find.byTooltip('Show password'), findsNothing);
+      expect(passwordField.maxLines, 1);
+      expect(passwordField.minLines, 1);
+      expect(passwordField.obscureText, isTrue);
+      expect(passwordField.readOnly, isFalse);
+      expect(find.byTooltip('Show password'), findsOneWidget);
       expect(find.byTooltip('Hide password'), findsNothing);
+
+      await tester.tap(find.byTooltip('Show password'));
+      await tester.pump();
+      final revealedPasswordField = tester.widget<TextField>(
+        find.byType(TextField).at(2),
+      );
+      expect(revealedPasswordField.maxLines, 5);
+      expect(revealedPasswordField.obscureText, isFalse);
+      expect(revealedPasswordField.readOnly, isFalse);
+      expect(find.byTooltip('Hide password'), findsOneWidget);
 
       await tester.enterText(find.byType(TextFormField).first, entryTitle);
       expect(find.text(entryTitle), findsOneWidget);

@@ -108,12 +108,16 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -800));
     await tester.pumpAndSettle();
     expect(find.text('Theme'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('settings-theme-row')));
+    await tester.pumpAndSettle();
     expect(find.text('Use system Material You colors'), findsOneWidget);
-    expect(find.text('Theme presets'), findsOneWidget);
     expect(find.text('Yellow & Black'), findsOneWidget);
     expect(find.text('Dark background'), findsOneWidget);
-    expect(find.text('Blue & White'), findsOneWidget);
+    expect(find.text('Simple Light'), findsWidgets);
     expect(find.text('Light background'), findsOneWidget);
+
+    Navigator.of(tester.element(find.byType(BottomSheet))).pop();
+    await tester.pumpAndSettle();
 
     await tester.drag(find.byType(ListView), const Offset(0, -800));
     await tester.pumpAndSettle();
@@ -156,13 +160,20 @@ void main() {
           widget is Scrollable && widget.axisDirection == AxisDirection.down,
     );
     await tester.scrollUntilVisible(
-      find.text('Blue & White', skipOffstage: false),
+      find.byKey(const ValueKey('settings-theme-row')),
       300,
       scrollable: verticalScrollable,
     );
-    await tester.ensureVisible(find.text('Blue & White', skipOffstage: false));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('settings-theme-row')),
+    );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Blue & White'));
+    await tester.tap(find.byKey(const ValueKey('settings-theme-row')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('theme-option-blueLight')),
+    );
+    await tester.tap(find.byKey(const ValueKey('theme-option-blueLight')));
     await tester.pumpAndSettle();
     expect(themeModel.currentThemeType, ThemeType.blueLight);
 

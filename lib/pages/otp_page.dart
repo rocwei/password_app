@@ -508,13 +508,33 @@ class _OtpPageState extends State<OtpPage> with WidgetsBindingObserver {
     final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.oneTimePassword),
+        centerTitle: true,
+        toolbarHeight: math.max(
+          56,
+          MediaQuery.textScalerOf(context).scale(17) * 2 + 16,
+        ),
+        title: Text(
+          l10n.oneTimePassword,
+          style: const TextStyle(fontSize: 16),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
         elevation: 0,
         actions: [
           IconButton(
             onPressed: _isLoading ? null : _loadOtpTokens,
             icon: const Icon(Icons.refresh),
             tooltip: l10n.retry,
+          ),
+          IconButton(
+            onPressed: _scanQrCode,
+            icon: const Icon(Icons.qr_code_scanner),
+            tooltip: l10n.scanQrCode,
+          ),
+          IconButton(
+            onPressed: _showAddOtpDialog,
+            icon: const Icon(Icons.add),
+            tooltip: l10n.addOtp,
           ),
         ],
       ),
@@ -535,27 +555,6 @@ class _OtpPageState extends State<OtpPage> with WidgetsBindingObserver {
             ),
           ),
           Expanded(child: _buildContent(context)),
-        ],
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton.small(
-            heroTag: 'scan_qr',
-            onPressed: _scanQrCode,
-            tooltip: l10n.scanQrCode,
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            foregroundColor: Theme.of(context).colorScheme.onSecondary,
-            child: const Icon(Icons.qr_code_scanner),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            heroTag: 'add_otp',
-            onPressed: _showAddOtpDialog,
-            icon: const Icon(Icons.add),
-            label: Text(l10n.addOtp),
-          ),
         ],
       ),
     );
@@ -656,7 +655,7 @@ class _OtpPageState extends State<OtpPage> with WidgetsBindingObserver {
               l10n.noOtpAccountsDescription,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
@@ -668,79 +667,186 @@ class _OtpPageState extends State<OtpPage> with WidgetsBindingObserver {
 
   Widget _buildOtpList(BuildContext context) {
     final l10n = context.l10n;
+    final theme = Theme.of(context);
     return SlidableAutoCloseBehavior(
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+      child: ListView.separated(
+        padding: EdgeInsets.zero,
         itemCount: _otpList.length,
+        separatorBuilder: (_, _) =>
+            Divider(height: 1, indent: 64, color: theme.dividerColor),
         itemBuilder: (context, index) {
           final item = _otpList[index];
+          // Only present the scanner's existing delimiter on separate lines.
+          // The stored label and deletion confirmation remain untouched.
+          final separator = item.token.label.indexOf(' - ');
+          final hasIssuer =
+              separator > 0 && separator + 3 < item.token.label.length;
+          final issuer = hasIssuer
+              ? item.token.label.substring(0, separator)
+              : item.token.label;
+          final account = hasIssuer
+              ? item.token.label.substring(separator + 3)
+              : null;
+          final countdownColor = _secondsRemaining <= 5
+              ? theme.colorScheme.error
+              : theme.colorScheme.primary;
+          final countdownSize = math.max(
+            32.0,
+            MediaQuery.textScalerOf(context).scale(12) * 2 + 8,
+          );
+
           return Slidable(
             key: ValueKey(item.token.id),
             endActionPane: ActionPane(
               motion: const DrawerMotion(),
               extentRatio: 0.25,
               children: [
-                CustomSlidableAction(
+                SlidableAction(
                   onPressed: (_) => _deleteOtp(item.token.id),
-                  foregroundColor: Colors.white,
-                  child: Container(
-                    height: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  backgroundColor: theme.colorScheme.error,
+                  foregroundColor: theme.colorScheme.onError,
+                  icon: Icons.delete_outline,
+                  label: l10n.delete,
+                ),
+              ],
+            ),
+            child: Material(
+              color: theme.cardColor,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.delete, color: Colors.white, size: 24),
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.delete,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(
+                            Icons.shield_outlined,
+                            size: 20,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                issuer,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (account != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  account,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ),
-              ],
-            ),
-            child: Card(
-              elevation: 2,
-              margin: const EdgeInsets.only(bottom: 16),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item.token.label,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(start: 44),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final code = Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                item.code,
+                                maxLines: 1,
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          );
+                          final actions = Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.copy),
+                                tooltip: l10n.copyOtpCode,
+                                onPressed: () => _copyOtpCode(item.code),
+                              ),
+                              const SizedBox(width: 8),
+                              Semantics(
+                                label: l10n.secondsRemaining(_secondsRemaining),
+                                child: SizedBox.square(
+                                  dimension: countdownSize,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Positioned.fill(
+                                        child: CircularProgressIndicator(
+                                          value: _secondsRemaining / 30,
+                                          strokeWidth: 3,
+                                          color: countdownColor,
+                                          backgroundColor: countdownColor
+                                              .withOpacity(0.2),
+                                        ),
+                                      ),
+                                      Text(
+                                        '$_secondsRemaining',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: countdownColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                          if (constraints.maxWidth < 240 ||
+                              MediaQuery.textScalerOf(context).scale(14) > 20) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                code,
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: AlignmentDirectional.centerEnd,
+                                  child: actions,
+                                ),
+                              ],
+                            );
+                          }
+                          return Row(
+                            children: [
+                              Expanded(child: code),
+                              const SizedBox(width: 12),
+                              actions,
+                            ],
+                          );
+                        },
                       ),
-                    ),
-                    Text(
-                      item.code,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.copy),
-                      tooltip: l10n.copyOtpCode,
-                      color: Theme.of(context).colorScheme.primary,
-                      onPressed: () => _copyOtpCode(item.code),
                     ),
                   ],
                 ),

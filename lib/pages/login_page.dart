@@ -210,129 +210,138 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final biometricName = _biometricDisplayName(context);
-
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.unlock)),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight:
-                  MediaQuery.of(context).size.height -
-                  MediaQuery.of(context).padding.top -
-                  MediaQuery.of(context).padding.bottom,
-            ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 80,
-                    height: 80,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        'assets/icon/my_app_icon.png',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.appName,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.unlockDescription,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 32),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: !_isPasswordVisible,
-                    style: const TextStyle(),
-                    decoration: InputDecoration(
-                      labelText: l10n.masterPassword,
-                      border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
-                        },
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return l10n.masterPasswordRequired;
-                      }
-                      return null;
-                    },
-                    onFieldSubmitted: (_) => _login(),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _login,
-                      child: _isLoading
-                          ? const CircularProgressIndicator()
-                          : Text(
-                              l10n.unlock,
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_isBiometricAvailable) ...[
-                    Row(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: (constraints.maxHeight - 64).clamp(
+                  0.0,
+                  double.infinity,
+                ),
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(l10n.or),
+                        Center(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              'assets/icon/my_app_icon.png',
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
-                        const Expanded(child: Divider()),
+                        const SizedBox(height: 12),
+                        Text(
+                          l10n.appName,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        Text(
+                          l10n.masterPassword,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _passwordController,
+                          enabled: !_isLoading,
+                          obscureText: !_isPasswordVisible,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          decoration: InputDecoration(
+                            labelText: l10n.masterPassword,
+                            floatingLabelBehavior: FloatingLabelBehavior.never,
+                            suffixIcon: IconButton(
+                              tooltip: _isPasswordVisible
+                                  ? l10n.hidePassword
+                                  : l10n.showPassword,
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                              onPressed: () => setState(
+                                () => _isPasswordVisible = !_isPasswordVisible,
+                              ),
+                            ),
+                          ),
+                          validator: (value) => value == null || value.isEmpty
+                              ? l10n.masterPasswordRequired
+                              : null,
+                          onFieldSubmitted: (_) {
+                            if (!_isLoading) _login();
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              minWidth: 200,
+                              maxWidth: 240,
+                            ),
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _login,
+                              child: _isLoading
+                                  ? SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimary,
+                                      ),
+                                    )
+                                  : Text(
+                                      l10n.unlock,
+                                      textAlign: TextAlign.center,
+                                    ),
+                            ),
+                          ),
+                        ),
+                        if (_isBiometricAvailable) ...[
+                          const SizedBox(height: 20),
+                          TextButton(
+                            onPressed: _isLoading ? null : _loginWithBiometric,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _availableBiometrics.contains(
+                                        BiometricType.fingerprint,
+                                      )
+                                      ? Icons.fingerprint
+                                      : Icons.face_retouching_natural,
+                                  size: 32,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  l10n.unlockWithBiometric(biometricName),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: OutlinedButton.icon(
-                        onPressed: _isLoading ? null : _loginWithBiometric,
-                        icon: Icon(
-                          _availableBiometrics.contains(
-                                BiometricType.fingerprint,
-                              )
-                              ? Icons.fingerprint
-                              : Icons.face,
-                          size: 24,
-                        ),
-                        label: Text(
-                          l10n.unlockWithBiometric(biometricName),
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        style: OutlinedButton.styleFrom(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ],
+                  ),
+                ),
               ),
             ),
           ),
