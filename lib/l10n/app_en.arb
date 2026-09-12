@@ -1476,6 +1476,16 @@
   "@featureFastSearchDescription": {
     "description": "About page search feature description"
   },
+  "videoImport": "Import Video",
+  "@videoImport": {"description": "Video import action"},
+  "videoPlay": "Play video",
+  "@videoPlay": {"description": "Video playback action"},
+  "videoCount": "{count, plural, =1{1 video} other{{count} videos}}",
+  "@videoCount": {"description": "Number of encrypted videos", "placeholders": {"count": {"type": "int"}}},
+  "videoSupportedFormats": "MP4, MOV and M4V videos",
+  "@videoSupportedFormats": {"description": "Supported video formats"},
+  "videoStorageNotice": "Stored only on this device, not included in password backups.\nCannot be recovered after uninstalling or losing your device. Keep your original files.",
+  "@videoStorageNotice": {"description": "Local encrypted video storage warning"},
   "securityNotes": "Security Notes",
   "@securityNotes": {
     "description": "About page security section title"

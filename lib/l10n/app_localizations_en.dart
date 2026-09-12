@@ -1184,6 +1184,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'Find and manage password entries quickly.';
 
   @override
+  String get videoImport => 'Import Video';
+
+  @override
+  String get videoPlay => 'Play video';
+
+  @override
+  String videoCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count videos',
+      one: '1 video',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get videoSupportedFormats => 'MP4, MOV and M4V videos';
+
+  @override
+  String get videoStorageNotice =>
+      'Stored only on this device, not included in password backups.\nCannot be recovered after uninstalling or losing your device. Keep your original files.';
+
+  @override
   String get securityNotes => 'Security Notes';
 
   @override

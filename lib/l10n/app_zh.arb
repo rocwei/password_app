@@ -1476,6 +1476,16 @@
   "@featureFastSearchDescription": {
     "description": "About page search feature description"
   },
+  "videoImport": "导入视频",
+  "@videoImport": {"description": "Video import action"},
+  "videoPlay": "播放视频",
+  "@videoPlay": {"description": "Video playback action"},
+  "videoCount": "{count} 个视频",
+  "@videoCount": {"description": "Number of encrypted videos", "placeholders": {"count": {"type": "int"}}},
+  "videoSupportedFormats": "支持 MP4、MOV、M4V 视频",
+  "@videoSupportedFormats": {"description": "Supported video formats"},
+  "videoStorageNotice": "仅保存在本机，不包含在密码备份中。\n卸载应用或丢失设备后无法恢复，请保留原文件。",
+  "@videoStorageNotice": {"description": "Local encrypted video storage warning"},
   "securityNotes": "安全说明",
   "@securityNotes": {
     "description": "About page security section title"

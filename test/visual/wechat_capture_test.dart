@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -10,10 +11,12 @@ import 'package:local_auth/local_auth.dart';
 import 'package:password_manager/helpers/language_model.dart';
 import 'package:password_manager/helpers/otp_helper.dart';
 import 'package:password_manager/helpers/theme_settings.dart';
+import 'package:password_manager/helpers/video_vault_service.dart';
 import 'package:password_manager/l10n/app_localizations.dart';
 import 'package:password_manager/models/category.dart';
 import 'package:password_manager/models/password_entry.dart';
 import 'package:password_manager/pages/category_entries_page.dart';
+import 'package:password_manager/pages/file_encryption_page.dart';
 import 'package:password_manager/pages/generate_password_page.dart';
 import 'package:password_manager/pages/login_page.dart';
 import 'package:password_manager/pages/otp_page.dart';
@@ -76,7 +79,7 @@ void main() {
     ),
   ]) {
     testWidgets(
-      'capture seven pages ${configuration.name}',
+      'capture app pages and encrypted file states ${configuration.name}',
       (tester) async {
         FlutterSecureStorage.setMockInitialValues({});
         tester.view.physicalSize = configuration.size;
@@ -129,7 +132,19 @@ void main() {
               note: chinese ? '示例备注' : 'Example note',
             ),
         ];
+        final videoService = _CaptureVideoService(chinese);
+        addTearDown(videoService.controller.close);
         final pages = <(String, Widget, int?)>[
+          (
+            '08-files',
+            FileEncryptionPage(
+              service: videoService,
+              hasSession: () => true,
+              biometricEnabled: () async => true,
+              authenticateBiometric: (_) async => true,
+            ),
+            null,
+          ),
           (
             '01-unlock',
             LoginPage(
@@ -312,19 +327,52 @@ void main() {
             await tester.pumpAndSettle();
           }
           expect(tester.takeException(), isNull, reason: name);
-          await tester.runAsync(() async {
-            final boundary = tester.renderObject<RenderRepaintBoundary>(
-              find.byKey(boundaryKey),
-            );
-            final image = await boundary.toImage(pixelRatio: 2);
-            final data = await image.toByteData(format: ui.ImageByteFormat.png);
-            final output = File(
-              'docs/ui-redesign/2026-09-12/wechat/rendered/${configuration.name}/$name.png',
-            );
-            await output.parent.create(recursive: true);
-            await output.writeAsBytes(data!.buffer.asUint8List());
-            image.dispose();
-          });
+          Future<void> saveCapture(String captureName) async {
+            await tester.runAsync(() async {
+              final boundary = tester.renderObject<RenderRepaintBoundary>(
+                find.byKey(boundaryKey),
+              );
+              final image = await boundary.toImage(pixelRatio: 2);
+              final data = await image.toByteData(
+                format: ui.ImageByteFormat.png,
+              );
+              final output = File(
+                'docs/ui-redesign/2026-09-12/wechat/rendered/${configuration.name}/$captureName.png',
+              );
+              await output.parent.create(recursive: true);
+              await output.writeAsBytes(data!.buffer.asUint8List());
+              image.dispose();
+            });
+          }
+
+          await saveCapture(name);
+          if (name == '08-files') {
+            await tester.tap(find.byKey(const ValueKey('video-import')));
+            await tester.pumpAndSettle();
+            expect(tester.takeException(), isNull, reason: 'import sheet');
+            await saveCapture('09-file-import');
+            await tester.tap(find.text(chinese ? '从文件导入' : 'From Files'));
+            await tester.pump();
+            await tester.pump(const Duration(milliseconds: 400));
+            videoService.controller.add({
+              'type': 'progress',
+              'phase': 'encrypting',
+              'progress': .35,
+            });
+            await tester.pump();
+            await tester.pump(const Duration(milliseconds: 300));
+            expect(tester.takeException(), isNull, reason: 'progress');
+            await saveCapture('10-file-progress');
+            await tester.tap(find.text(chinese ? '取消' : 'Cancel'));
+            await tester.pumpAndSettle();
+            videoService.empty = true;
+            videoService.controller.add({'type': 'locked'});
+            await tester.pumpAndSettle();
+            await tester.tap(find.byIcon(Icons.fingerprint));
+            await tester.pumpAndSettle();
+            expect(tester.takeException(), isNull, reason: 'empty');
+            await saveCapture('11-file-empty');
+          }
           await tester.pumpWidget(const SizedBox());
           await tester.pumpAndSettle();
         }
@@ -338,4 +386,51 @@ void main() {
 class _StillTicker implements OtpTicker {
   @override
   void cancel() {}
+}
+
+class _CaptureVideoService extends VideoVaultService {
+  _CaptureVideoService(this.chinese);
+  final bool chinese;
+  final controller = StreamController<Map<String, dynamic>>.broadcast();
+  Completer<void>? pending;
+  bool empty = false;
+  @override
+  Stream<Map<String, dynamic>> get events => controller.stream;
+  @override
+  Future<void> open() async {}
+  @override
+  void invalidate() {}
+  @override
+  Future<List<Map<String, dynamic>>> list() async => empty
+      ? []
+      : [
+          for (var i = 0; i < 4; i++)
+            {
+              'id': 'demo-$i',
+              'name': (chinese
+                  ? ['旅行记录.mov', '家庭聚会.mp4', '工作资料.m4v', '周末片段.mp4']
+                  : [
+                      'Travel memories.mov',
+                      'Family gathering.mp4',
+                      'Project recording.m4v',
+                      'Weekend clips.mp4',
+                    ])[i],
+              'size': [134846873, 269274317, 88290099, 65536000][i],
+              'importedAt': DateTime(
+                2026,
+                9,
+                12 - i * 2,
+                11,
+                20,
+              ).millisecondsSinceEpoch,
+            },
+        ];
+  @override
+  Future<void> importVideo(String source) =>
+      (pending = Completer<void>()).future;
+  @override
+  Future<void> cancel() async {
+    pending?.completeError(PlatformException(code: 'cancelled'));
+    pending = null;
+  }
 }

@@ -2048,6 +2048,36 @@ abstract class AppLocalizations {
   /// **'快速查找和管理密码条目。'**
   String get featureFastSearchDescription;
 
+  /// Video import action
+  ///
+  /// In zh, this message translates to:
+  /// **'导入视频'**
+  String get videoImport;
+
+  /// Video playback action
+  ///
+  /// In zh, this message translates to:
+  /// **'播放视频'**
+  String get videoPlay;
+
+  /// Number of encrypted videos
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个视频'**
+  String videoCount(int count);
+
+  /// Supported video formats
+  ///
+  /// In zh, this message translates to:
+  /// **'支持 MP4、MOV、M4V 视频'**
+  String get videoSupportedFormats;
+
+  /// Local encrypted video storage warning
+  ///
+  /// In zh, this message translates to:
+  /// **'仅保存在本机，不包含在密码备份中。\n卸载应用或丢失设备后无法恢复，请保留原文件。'**
+  String get videoStorageNotice;
+
   /// About page security section title
   ///
   /// In zh, this message translates to:

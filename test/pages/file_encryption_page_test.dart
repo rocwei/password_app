@@ -21,12 +21,16 @@ void main() {
   late List<Map<String, dynamic>> videos;
   late Future<dynamic> Function(MethodCall)? operation;
 
-  Future<void> nativeEvent(WidgetTester tester, String type) async {
+  Future<void> nativeEvent(
+    WidgetTester tester,
+    String type, [
+    Map<String, dynamic> data = const {},
+  ]) async {
     // ignore: deprecated_member_use
     await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
       channel.name,
       const StandardMethodCodec().encodeMethodCall(
-        MethodCall('event', {'type': type}),
+        MethodCall('event', {'type': type, ...data}),
       ),
       (_) {},
     );
@@ -58,6 +62,7 @@ void main() {
     Future<bool> Function(String)? biometric,
     Locale locale = const Locale('en'),
   }) => MaterialApp(
+    theme: ThemeModel().createThemeData(),
     locale: locale,
     supportedLocales: AppLocalizations.supportedLocales,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -68,6 +73,176 @@ void main() {
       authenticateBiometric: biometric,
       verifyPassword: (password) => password == 'correct',
     ),
+  );
+
+  Future<void> openImport(WidgetTester tester) async {
+    await tester.tap(find.byKey(const ValueKey('video-import')));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+    'compact list keeps metadata and playback without permanent delete icons',
+    (tester) async {
+      videos = [
+        {
+          'id': 'demo',
+          'name': 'sample.mp4',
+          'size': 134846873,
+          'importedAt': 1000,
+        },
+      ];
+      await tester.pumpWidget(app(biometric: (_) async => true));
+      await tester.pumpAndSettle();
+      expect(find.text('1 video'), findsOneWidget);
+      expect(find.text('From Photos'), findsNothing);
+      expect(find.byIcon(Icons.delete_outline).hitTestable(), findsNothing);
+      expect(find.byType(Card), findsNothing);
+      expect(find.textContaining('MB'), findsOneWidget);
+      expect(tester.widget<Text>(find.text('sample.mp4')).style?.fontSize, 15);
+      await tester.tap(find.byTooltip('Play video'));
+      await tester.pumpAndSettle();
+      expect(calls.where((method) => method == 'play'), hasLength(1));
+      expect(
+        tester
+            .widget<IconButton>(find.byKey(const ValueKey('video-import')))
+            .onPressed,
+        isNull,
+      );
+      await nativeEvent(tester, 'playbackClosed');
+      expect(
+        tester
+            .widget<IconButton>(find.byKey(const ValueKey('video-import')))
+            .onPressed,
+        isNotNull,
+      );
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'lock closes import sheet and a stale source cannot import',
+    (tester) async {
+      await tester.pumpWidget(app(biometric: (_) async => true));
+      await tester.pumpAndSettle();
+      await openImport(tester);
+      final source = tester
+          .widget<ListTile>(find.widgetWithText(ListTile, 'From Photos'))
+          .onTap!;
+      expect(find.byType(BottomSheet), findsOneWidget);
+      await nativeEvent(tester, 'locked');
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(find.byType(TextField), findsOneWidget);
+      // A retained callback from the dismissed route must not act on the new route.
+      source();
+      await tester.pumpAndSettle();
+      expect(calls, isNot(contains('import')));
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'import sheet cancel does not start a native operation',
+    (tester) async {
+      await tester.pumpWidget(app(biometric: (_) async => true));
+      await tester.pumpAndSettle();
+      await openImport(tester);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(calls, ['open', 'list']);
+      expect(find.byType(BottomSheet), findsNothing);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'swipe deletion still confirms before calling native delete',
+    (tester) async {
+      videos = [
+        {'id': 'demo', 'name': 'sample.mp4', 'size': 100, 'importedAt': 1000},
+      ];
+      String? deleted;
+      operation = (call) async {
+        if (call.method == 'delete') {
+          deleted = (call.arguments as Map)['id'] as String;
+          videos = [];
+        }
+      };
+      await tester.pumpWidget(app(biometric: (_) async => true));
+      await tester.pumpAndSettle();
+      await tester.drag(find.text('sample.mp4'), const Offset(-500, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.delete_outline).hitTestable());
+      await tester.pumpAndSettle();
+      expect(calls, isNot(contains('delete')));
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+      expect(calls, isNot(contains('delete')));
+      await tester.longPress(find.text('sample.mp4'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+      await tester.pumpAndSettle();
+      expect(deleted, 'demo');
+      expect(find.text('sample.mp4'), findsNothing);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'import progress preserves rows and disables competing operations',
+    (tester) async {
+      videos = [
+        {'id': 'demo', 'name': 'sample.mp4', 'size': 100, 'importedAt': 1000},
+      ];
+      final pending = Completer<void>();
+      String? source;
+      operation = (call) async {
+        if (call.method == 'import') {
+          source = (call.arguments as Map)['source'] as String;
+          return pending.future;
+        }
+        if (call.method == 'cancel') {
+          pending.completeError(PlatformException(code: 'cancelled'));
+        }
+      };
+      await tester.pumpWidget(app(biometric: (_) async => true));
+      await tester.pumpAndSettle();
+      await openImport(tester);
+      await tester.tap(find.text('From Files'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await nativeEvent(tester, 'progress', {
+        'phase': 'encrypting',
+        'progress': 0.35,
+      });
+      expect(source, 'files');
+      expect(find.text('sample.mp4'), findsOneWidget);
+      expect(find.text('35%'), findsOneWidget);
+      expect(
+        tester
+            .widget<LinearProgressIndicator>(
+              find.byType(LinearProgressIndicator),
+            )
+            .value,
+        0.35,
+      );
+      expect(
+        tester
+            .widget<IconButton>(find.byKey(const ValueKey('video-import')))
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.text('sample.mp4'));
+      await tester.longPress(find.text('sample.mp4'));
+      expect(calls, isNot(contains('play')));
+      expect(find.byType(AlertDialog), findsNothing);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.byType(SnackBar), findsNothing);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
   );
 
   testWidgets(
@@ -85,6 +260,7 @@ void main() {
       await tester.tap(find.text('Unlock'));
       await tester.pumpAndSettle();
       expect(calls, ['open', 'list']);
+      await openImport(tester);
       expect(find.text('From Photos'), findsOneWidget);
       expect(find.text('From Files'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
@@ -229,6 +405,7 @@ void main() {
       };
       await tester.pumpWidget(app(biometric: (_) async => true));
       await tester.pumpAndSettle();
+      await openImport(tester);
       await tester.tap(find.text('From Files'));
       await tester.pumpAndSettle();
       expect(find.textContaining('space'), findsOneWidget);
@@ -252,8 +429,10 @@ void main() {
       };
       await tester.pumpWidget(app(biometric: (_) async => true));
       await tester.pumpAndSettle();
+      await openImport(tester);
       await tester.tap(find.text('From Photos'));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(calls, containsAllInOrder(['import', 'cancel']));
@@ -278,7 +457,7 @@ void main() {
       ];
       await tester.pumpWidget(app(biometric: (_) async => true));
       await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.longPress(find.text('private-demo.mp4'));
       await tester.pumpAndSettle();
       expect(find.byType(AlertDialog), findsOneWidget);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);

@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 
 import '../helpers/auth_helper.dart';
@@ -40,6 +42,7 @@ class _FileEncryptionPageState extends State<FileEncryptionPage> {
   bool _playing = false;
   bool _biometricEnabled = false;
   BuildContext? _deleteDialogContext;
+  BuildContext? _importSheetContext;
   String? _error;
   String _phase = 'loading';
   double? _progress;
@@ -47,6 +50,8 @@ class _FileEncryptionPageState extends State<FileEncryptionPage> {
 
   bool get _hasSession =>
       (widget.hasSession ?? () => AuthHelper().isLoggedIn)();
+
+  bool get _canOperate => _unlocked && !_busy && !_playing && _hasSession;
 
   @override
   void initState() {
@@ -64,6 +69,7 @@ class _FileEncryptionPageState extends State<FileEncryptionPage> {
     if (!mounted) return;
     if (event['type'] == 'locked') {
       _dismissDeleteDialog();
+      _dismissImportSheet();
       _generation++;
       _password.clear();
       setState(() {
@@ -155,7 +161,7 @@ class _FileEncryptionPageState extends State<FileEncryptionPage> {
     bool playing = false,
     bool cancellable = false,
   }) async {
-    if (_busy || _playing || !_unlocked) return;
+    if (!_canOperate) return;
     final generation = _generation;
     setState(() {
       _busy = true;
@@ -204,6 +210,7 @@ class _FileEncryptionPageState extends State<FileEncryptionPage> {
   }
 
   Future<void> _delete(Map<String, dynamic> video) async {
+    if (!_canOperate) return;
     final generation = _generation;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -243,6 +250,290 @@ class _FileEncryptionPageState extends State<FileEncryptionPage> {
     }
   }
 
+  void _dismissImportSheet() {
+    final sheet = _importSheetContext;
+    _importSheetContext = null;
+    if (sheet != null &&
+        sheet.mounted &&
+        ModalRoute.of(sheet)?.isCurrent == true) {
+      Navigator.of(sheet).pop();
+    }
+  }
+
+  Future<void> _showImportOptions() async {
+    if (!_canOperate || _importSheetContext != null) return;
+    final generation = _generation;
+    final l = context.l10n;
+    final source = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        _importSheetContext = sheetContext;
+        void select(String? value) {
+          if (mounted &&
+              generation == _generation &&
+              _canOperate &&
+              sheetContext.mounted &&
+              ModalRoute.of(sheetContext)?.isCurrent == true) {
+            Navigator.pop(sheetContext, value);
+          }
+        }
+
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                  child: Text(
+                    l.videoSupportedFormats,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: Text(l.videoFromPhotos),
+                  onTap: () => select('photos'),
+                ),
+                const Divider(height: 1, indent: 56),
+                ListTile(
+                  leading: const Icon(Icons.folder_open_outlined),
+                  title: Text(l.videoFromFiles),
+                  onTap: () => select('files'),
+                ),
+                const Divider(height: 12, thickness: 8),
+                ListTile(
+                  title: Text(l.cancel, textAlign: TextAlign.center),
+                  onTap: () => select(null),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    _importSheetContext = null;
+    if (!mounted ||
+        generation != _generation ||
+        !_canOperate ||
+        source == null) {
+      return;
+    }
+    await _operate(
+      () => _service.importVideo(source),
+      imported: true,
+      cancellable: true,
+    );
+  }
+
+  Widget _videoRow(Map<String, dynamic> video) {
+    final l = context.l10n;
+    final colors = Theme.of(context).colorScheme;
+    final sizeFormat = NumberFormat.decimalPattern(l.localeName)
+      ..maximumFractionDigits = 1;
+    final date = DateFormat.yMd(l.localeName).add_Hm().format(
+      DateTime.fromMillisecondsSinceEpoch((video['importedAt'] as num).toInt()),
+    );
+    void play() => _operate(
+      () => _service.play(video['id'] as String, l.videoDone),
+      playing: true,
+      cancellable: true,
+    );
+    return Semantics(
+      customSemanticsActions: _canOperate
+          ? {CustomSemanticsAction(label: l.deleteVideo): () => _delete(video)}
+          : null,
+      child: Slidable(
+        key: ValueKey(video['id']),
+        enabled: _canOperate,
+        endActionPane: ActionPane(
+          motion: const ScrollMotion(),
+          extentRatio: .25,
+          children: [
+            SlidableAction(
+              onPressed: (_) => _delete(video),
+              backgroundColor: colors.error,
+              foregroundColor: colors.onError,
+              icon: Icons.delete_outline,
+              label: l.delete,
+            ),
+          ],
+        ),
+        child: Material(
+          color: colors.surface,
+          child: InkWell(
+            onTap: _canOperate ? play : null,
+            onLongPress: _canOperate ? () => _delete(video) : null,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: .09),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Icon(
+                      Icons.lock_outline,
+                      color: colors.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          video['name'] as String,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 2,
+                          children: [
+                            Text(
+                              '${sizeFormat.format((video['size'] as num) / (1024 * 1024))} MB',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                            Text(
+                              date,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: l.videoPlay,
+                    onPressed: _canOperate ? play : null,
+                    icon: const Icon(Icons.play_arrow_rounded),
+                    color: colors.primary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _unlockedBody() {
+    final l = context.l10n;
+    return Column(
+      children: [
+        if (_busy)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(_phaseText, style: const TextStyle(fontSize: 13)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: LinearProgressIndicator(
+                        value: _progress,
+                        minHeight: 2,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    if (_progress != null)
+                      Text(
+                        NumberFormat.percentPattern(
+                          l.localeName,
+                        ).format(_progress),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    if (_cancellable)
+                      TextButton(onPressed: _cancel, child: Text(l.cancel)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        Expanded(
+          child: SlidableAutoCloseBehavior(
+            child: ListView.builder(
+              padding: const EdgeInsets.only(bottom: 24),
+              itemCount: _videos.length + 2,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                    child: Text(
+                      l.videoCount(_videos.length),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  );
+                }
+                if (index <= _videos.length) {
+                  return Column(
+                    children: [
+                      _videoRow(_videos[index - 1]),
+                      ColoredBox(
+                        color: Theme.of(context).colorScheme.surface,
+                        child: Divider(
+                          height: 1,
+                          indent: 68,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: .08),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  child: Column(
+                    children: [
+                      if (_videos.isEmpty && !_busy) ...[
+                        const SizedBox(height: 36),
+                        Icon(
+                          Icons.lock_outline,
+                          size: 36,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(l.videoEmpty, textAlign: TextAlign.center),
+                        const SizedBox(height: 28),
+                      ],
+                      Text(
+                        l.videoStorageNotice,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(height: 1.6),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   String _errorText() {
     final l = context.l10n;
     return switch (_error) {
@@ -277,14 +568,24 @@ class _FileEncryptionPageState extends State<FileEncryptionPage> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(l.fileEncryption)),
+      appBar: AppBar(
+        title: Text(l.fileEncryption),
+        actions: [
+          if (_unlocked)
+            IconButton(
+              key: const ValueKey('video-import'),
+              tooltip: l.videoImport,
+              onPressed: _canOperate ? _showImportOptions : null,
+              icon: const Icon(Icons.add),
+            ),
+        ],
+      ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
             if (_error != null)
               Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
                 child: Semantics(
                   liveRegion: true,
                   child: Text(
@@ -295,116 +596,48 @@ class _FileEncryptionPageState extends State<FileEncryptionPage> {
                   ),
                 ),
               ),
-            if (!_unlocked) ...[
-              const Icon(Icons.lock_outline, size: 48),
-              const SizedBox(height: 16),
-              Text(l.fileEncryptionAuthReason),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _password,
-                obscureText: true,
-                enabled: !_busy && _hasSession,
-                autocorrect: false,
-                enableSuggestions: false,
-                decoration: InputDecoration(
-                  labelText: l.masterPassword,
-                  border: const OutlineInputBorder(),
-                ),
-                onSubmitted: (_) => _authenticate(),
-              ),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: _busy || !_hasSession ? null : () => _authenticate(),
-                child: Text(l.unlock),
-              ),
-              if (_biometricEnabled)
-                TextButton.icon(
-                  onPressed: _busy || !_hasSession
-                      ? null
-                      : () => _authenticate(useBiometric: true),
-                  icon: const Icon(Icons.fingerprint),
-                  label: Text(l.fileEncryptionBiometric),
-                ),
-              if (_busy) const Center(child: CircularProgressIndicator()),
-            ] else ...[
-              Text(l.videoLocalOnly),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _busy || _playing
-                        ? null
-                        : () => _operate(
-                            () => _service.importVideo('photos'),
-                            imported: true,
-                            cancellable: true,
+            Expanded(
+              child: _unlocked
+                  ? _unlockedBody()
+                  : ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        const Icon(Icons.lock_outline, size: 48),
+                        const SizedBox(height: 16),
+                        Text(l.fileEncryptionAuthReason),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _password,
+                          obscureText: true,
+                          enabled: !_busy && _hasSession,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          decoration: InputDecoration(
+                            labelText: l.masterPassword,
+                            border: const OutlineInputBorder(),
                           ),
-                    icon: const Icon(Icons.photo_library_outlined),
-                    label: Text(l.videoFromPhotos),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _busy || _playing
-                        ? null
-                        : () => _operate(
-                            () => _service.importVideo('files'),
-                            imported: true,
-                            cancellable: true,
-                          ),
-                    icon: const Icon(Icons.folder_open),
-                    label: Text(l.videoFromFiles),
-                  ),
-                ],
-              ),
-              if (_busy)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(_phaseText),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(value: _progress),
-                      if (_cancellable)
-                        TextButton(onPressed: _cancel, child: Text(l.cancel)),
-                    ],
-                  ),
-                ),
-              if (!_busy && _videos.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 48),
-                  child: Center(child: Text(l.videoEmpty)),
-                ),
-              for (final video in _videos)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.video_file_outlined),
-                  title: Text(
-                    video['name'] as String,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: Text(
-                    '${NumberFormat.decimalPattern(l.localeName).format((video['size'] as num) / (1024 * 1024))} MB\n'
-                    '${DateFormat.yMd(l.localeName).add_Hm().format(DateTime.fromMillisecondsSinceEpoch((video['importedAt'] as num).toInt()))}',
-                  ),
-                  isThreeLine: true,
-                  onTap: _busy || _playing
-                      ? null
-                      : () => _operate(
-                          () =>
-                              _service.play(video['id'] as String, l.videoDone),
-                          playing: true,
-                          cancellable: true,
+                          onSubmitted: (_) => _authenticate(),
                         ),
-                  trailing: IconButton(
-                    tooltip: l.deleteVideo,
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: _busy || _playing ? null : () => _delete(video),
-                  ),
-                ),
-            ],
+                        const SizedBox(height: 16),
+                        FilledButton(
+                          onPressed: _busy || !_hasSession
+                              ? null
+                              : () => _authenticate(),
+                          child: Text(l.unlock),
+                        ),
+                        if (_biometricEnabled)
+                          TextButton.icon(
+                            onPressed: _busy || !_hasSession
+                                ? null
+                                : () => _authenticate(useBiometric: true),
+                            icon: const Icon(Icons.fingerprint),
+                            label: Text(l.fileEncryptionBiometric),
+                          ),
+                        if (_busy)
+                          const Center(child: CircularProgressIndicator()),
+                      ],
+                    ),
+            ),
           ],
         ),
       ),

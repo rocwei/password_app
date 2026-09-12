@@ -1103,6 +1103,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featureFastSearchDescription => '快速查找和管理密码条目。';
 
   @override
+  String get videoImport => '导入视频';
+
+  @override
+  String get videoPlay => '播放视频';
+
+  @override
+  String videoCount(int count) {
+    return '$count 个视频';
+  }
+
+  @override
+  String get videoSupportedFormats => '支持 MP4、MOV、M4V 视频';
+
+  @override
+  String get videoStorageNotice => '仅保存在本机，不包含在密码备份中。\n卸载应用或丢失设备后无法恢复，请保留原文件。';
+
+  @override
   String get securityNotes => '安全说明';
 
   @override
