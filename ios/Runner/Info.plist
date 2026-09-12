@@ -33,9 +33,9 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Scan OTP QR codes to add authenticator accounts.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Use Face ID to unlock your local password vault.</string>
+	<string>Use Face ID to unlock your local password vault and verify access to encrypted files.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Allow access to your photo library only when you choose a file from the system picker. Secure Vault does not read or upload photos in the background.</string>
+	<string>Select videos to encrypt and store on this device. Original videos stay in your library. Secure Vault does not read or upload your library in the background.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

@@ -1,7 +1,7 @@
 "CFBundleDisplayName" = "密盾安存";
 "CFBundleName" = "密盾安存";
 "NSCameraUsageDescription" = "用於掃描 OTP 二維碼並新增驗證器帳戶。";
-"NSFaceIDUsageDescription" = "用於透過 Face ID 解鎖本機密碼庫。";
-"NSPhotoLibraryUsageDescription" = "僅在您主動透過系統選擇器選取檔案時存取照片圖庫；密盾安存不會在背景讀取或上傳您的照片。";
+"NSFaceIDUsageDescription" = "用於透過 Face ID 解鎖本機密碼庫，並驗證加密檔案存取權限。";
+"NSPhotoLibraryUsageDescription" = "用於選取影片並加密儲存在本機，原影片仍保留在照片圖庫中。密盾安存不會在背景讀取或上傳您的照片圖庫。";
 "CFBundleTypeName" = "密盾安存備份";
 "UTTypeDescription" = "密盾安存備份檔案";

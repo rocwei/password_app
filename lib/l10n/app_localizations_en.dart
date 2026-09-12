@@ -9,6 +9,88 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get fileEncryption => 'File Encryption';
+
+  @override
+  String get fileEncryptionDescription =>
+      'Encrypt and view videos on this device';
+
+  @override
+  String get fileEncryptionAuthReason =>
+      'Verify your identity again to access encrypted files.';
+
+  @override
+  String get fileEncryptionBiometric => 'Use biometric verification';
+
+  @override
+  String get fileEncryptionLocked =>
+      'File storage is locked. Unlock your password vault and open this page again.';
+
+  @override
+  String get videoLocalOnly =>
+      'Supports MP4, MOV and M4V videos. Videos stay on this device and are not included in password backups. Uninstalling the app or losing your device makes them unrecoverable. Keep a reliable copy of your originals.';
+
+  @override
+  String get videoFromPhotos => 'From Photos';
+
+  @override
+  String get videoFromFiles => 'From Files';
+
+  @override
+  String get videoEmpty => 'No encrypted videos';
+
+  @override
+  String get videoImported =>
+      'Encrypted copy saved. The original remains at its source. To remove the original, delete it yourself in Photos or Files.';
+
+  @override
+  String get deleteVideo => 'Delete Video';
+
+  @override
+  String deleteVideoConfirmation(String name) {
+    return 'Delete the encrypted copy of \"$name\"? This cannot be undone. The original video will not be deleted.';
+  }
+
+  @override
+  String get videoLoading => 'Loading video…';
+
+  @override
+  String get videoChecking => 'Checking video…';
+
+  @override
+  String get videoEncrypting => 'Encrypting video…';
+
+  @override
+  String get videoDecrypting => 'Decrypting before playback…';
+
+  @override
+  String get videoInvalid =>
+      'This file cannot be played. Choose an unprotected, playable MP4, MOV or M4V video.';
+
+  @override
+  String get videoInsufficientSpace =>
+      'Not enough storage. Importing or playing requires additional free space. Free up storage and try again.';
+
+  @override
+  String get videoCorrupt =>
+      'The encrypted file is damaged or its version is unsupported.';
+
+  @override
+  String get videoKeyUnavailable =>
+      'The device video key is unavailable. Unlock the device and try again. Videos cannot be recovered if the key has been lost.';
+
+  @override
+  String get videoCleanupFailed =>
+      'Temporary video cleanup did not finish. Leave this page and reopen it to retry cleanup.';
+
+  @override
+  String get videoOperationFailed =>
+      'The file operation failed. Please try again.';
+
+  @override
+  String get videoDone => 'Done';
+
+  @override
   String get appName => 'Secure Vault';
 
   @override
@@ -161,7 +243,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteLocalVaultDescription =>
-      'Permanently delete passwords, categories, OTP, and master password settings stored on this device';
+      'Permanently delete this device\'s passwords, categories, OTP, encrypted files, and master password settings';
 
   @override
   String get lockLocalVault => 'Lock Local Vault';
@@ -194,7 +276,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get permanentDeleteWarning =>
-      'This permanently deletes passwords, categories, OTP, master password settings, biometric keys, and theme preferences stored on this device. This cannot be undone.';
+      'This permanently deletes passwords, categories, OTP, encrypted video copies and their key, master password settings, biometric keys, and theme preferences stored on this device. Original videos in Photos or Files are not deleted. This cannot be undone.';
 
   @override
   String get cachedBackupDeleteWarning =>

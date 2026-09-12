@@ -20,9 +20,7 @@ void main() {
     );
     expect(
       infoPlist['NSPhotoLibraryUsageDescription'],
-      'Allow access to your photo library only when you choose a file from '
-      'the system picker. Secure Vault does not read or upload photos in the '
-      'background.',
+      'Select videos to encrypt and store on this device. Original videos stay in your library. Secure Vault does not read or upload your library in the background.',
     );
   });
 
@@ -37,11 +35,9 @@ void main() {
       'NSCameraUsageDescription':
           'Scan OTP QR codes to add authenticator accounts.',
       'NSFaceIDUsageDescription':
-          'Use Face ID to unlock your local password vault.',
+          'Use Face ID to unlock your local password vault and verify access to encrypted files.',
       'NSPhotoLibraryUsageDescription':
-          'Allow access to your photo library only when you choose a file '
-          'from the system picker. Secure Vault does not read or upload '
-          'photos in the background.',
+          'Select videos to encrypt and store on this device. Original videos stay in your library. Secure Vault does not read or upload your library in the background.',
       'CFBundleTypeName': 'Secure Vault Backup',
       'UTTypeDescription': 'Secure Vault backup file',
     });
@@ -49,9 +45,9 @@ void main() {
       'CFBundleDisplayName': '密盾安存',
       'CFBundleName': '密盾安存',
       'NSCameraUsageDescription': '用于扫描 OTP 二维码并添加验证器账户。',
-      'NSFaceIDUsageDescription': '用于通过面容 ID 解锁本地密码库。',
+      'NSFaceIDUsageDescription': '用于通过面容 ID 解锁本地密码库，并验证加密文件访问权限。',
       'NSPhotoLibraryUsageDescription':
-          '仅在您主动通过系统选择器选取文件时访问照片库；密盾安存不会在后台读取或上传您的照片。',
+          '用于选择视频并加密保存在本机，原视频仍保留在照片库中。密盾安存不会在后台读取或上传您的照片库。',
       'CFBundleTypeName': '密盾安存备份',
       'UTTypeDescription': '密盾安存备份文件',
     });
@@ -59,12 +55,29 @@ void main() {
       'CFBundleDisplayName': '密盾安存',
       'CFBundleName': '密盾安存',
       'NSCameraUsageDescription': '用於掃描 OTP 二維碼並新增驗證器帳戶。',
-      'NSFaceIDUsageDescription': '用於透過 Face ID 解鎖本機密碼庫。',
+      'NSFaceIDUsageDescription': '用於透過 Face ID 解鎖本機密碼庫，並驗證加密檔案存取權限。',
       'NSPhotoLibraryUsageDescription':
-          '僅在您主動透過系統選擇器選取檔案時存取照片圖庫；密盾安存不會在背景讀取或上傳您的照片。',
+          '用於選取影片並加密儲存在本機，原影片仍保留在照片圖庫中。密盾安存不會在背景讀取或上傳您的照片圖庫。',
       'CFBundleTypeName': '密盾安存備份',
       'UTTypeDescription': '密盾安存備份檔案',
     });
+  });
+
+  test('native video file access has an embedded required-reason manifest', () {
+    final manifest = _readPlist('ios/Runner/PrivacyInfo.xcprivacy');
+    final reasons = {
+      for (final entry in manifest['NSPrivacyAccessedAPITypes'] as List)
+        entry['NSPrivacyAccessedAPIType']:
+            entry['NSPrivacyAccessedAPITypeReasons'],
+    };
+    expect(manifest['NSPrivacyTracking'], false);
+    expect(reasons['NSPrivacyAccessedAPICategoryDiskSpace'], ['E174.1']);
+    expect(
+      reasons['NSPrivacyAccessedAPICategoryFileTimestamp'],
+      containsAll(['C617.1', '3B52.1']),
+    );
+    final project = File(projectPath).readAsStringSync();
+    expect(_occurrences(project, 'PrivacyInfo.xcprivacy in Resources'), 2);
   });
 
   test('Xcode includes one localized InfoPlist.strings resource group', () {

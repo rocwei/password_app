@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../l10n/l10n.dart';
+import '../helpers/video_vault_service.dart';
 import 'register_page.dart';
 
 class SecureStorageCleanupPage extends StatefulWidget {
@@ -47,8 +48,9 @@ class _SecureStorageCleanupPageState extends State<SecureStorageCleanupPage> {
     }
   }
 
-  static Future<void> _clearSecureStorage() {
-    return const FlutterSecureStorage().deleteAll();
+  static Future<void> _clearSecureStorage() async {
+    await VideoVaultService.instance.deleteAll();
+    await const FlutterSecureStorage().deleteAll();
   }
 
   @override

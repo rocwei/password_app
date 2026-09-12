@@ -307,7 +307,7 @@ void main() {
     expect(find.text('Permanently Delete Local Vault?'), findsOneWidget);
     expect(
       find.text(
-        'This permanently deletes passwords, categories, OTP, master password settings, biometric keys, and theme preferences stored on this device. This cannot be undone.',
+        'This permanently deletes passwords, categories, OTP, encrypted video copies and their key, master password settings, biometric keys, and theme preferences stored on this device. Original videos in Photos or Files are not deleted. This cannot be undone.',
       ),
       findsOneWidget,
     );

@@ -1,5 +1,51 @@
 {
   "@@locale": "en",
+  "fileEncryption": "File Encryption",
+  "@fileEncryption": {"description":"File encryption: fileEncryption"},
+  "fileEncryptionDescription": "Encrypt and view videos on this device",
+  "@fileEncryptionDescription": {"description":"File encryption: fileEncryptionDescription"},
+  "fileEncryptionAuthReason": "Verify your identity again to access encrypted files.",
+  "@fileEncryptionAuthReason": {"description":"File encryption: fileEncryptionAuthReason"},
+  "fileEncryptionBiometric": "Use biometric verification",
+  "@fileEncryptionBiometric": {"description":"File encryption: fileEncryptionBiometric"},
+  "fileEncryptionLocked": "File storage is locked. Unlock your password vault and open this page again.",
+  "@fileEncryptionLocked": {"description":"File encryption: fileEncryptionLocked"},
+  "videoLocalOnly": "Supports MP4, MOV and M4V videos. Videos stay on this device and are not included in password backups. Uninstalling the app or losing your device makes them unrecoverable. Keep a reliable copy of your originals.",
+  "@videoLocalOnly": {"description":"File encryption: videoLocalOnly"},
+  "videoFromPhotos": "From Photos",
+  "@videoFromPhotos": {"description":"File encryption: videoFromPhotos"},
+  "videoFromFiles": "From Files",
+  "@videoFromFiles": {"description":"File encryption: videoFromFiles"},
+  "videoEmpty": "No encrypted videos",
+  "@videoEmpty": {"description":"File encryption: videoEmpty"},
+  "videoImported": "Encrypted copy saved. The original remains at its source. To remove the original, delete it yourself in Photos or Files.",
+  "@videoImported": {"description":"File encryption: videoImported"},
+  "deleteVideo": "Delete Video",
+  "@deleteVideo": {"description":"File encryption: deleteVideo"},
+  "deleteVideoConfirmation": "Delete the encrypted copy of \"{name}\"? This cannot be undone. The original video will not be deleted.",
+  "@deleteVideoConfirmation": {"description":"File encryption: deleteVideoConfirmation","placeholders":{"name":{"type":"String"}}},
+  "videoLoading": "Loading video…",
+  "@videoLoading": {"description":"File encryption: videoLoading"},
+  "videoChecking": "Checking video…",
+  "@videoChecking": {"description":"File encryption: videoChecking"},
+  "videoEncrypting": "Encrypting video…",
+  "@videoEncrypting": {"description":"File encryption: videoEncrypting"},
+  "videoDecrypting": "Decrypting before playback…",
+  "@videoDecrypting": {"description":"File encryption: videoDecrypting"},
+  "videoInvalid": "This file cannot be played. Choose an unprotected, playable MP4, MOV or M4V video.",
+  "@videoInvalid": {"description":"File encryption: videoInvalid"},
+  "videoInsufficientSpace": "Not enough storage. Importing or playing requires additional free space. Free up storage and try again.",
+  "@videoInsufficientSpace": {"description":"File encryption: videoInsufficientSpace"},
+  "videoCorrupt": "The encrypted file is damaged or its version is unsupported.",
+  "@videoCorrupt": {"description":"File encryption: videoCorrupt"},
+  "videoKeyUnavailable": "The device video key is unavailable. Unlock the device and try again. Videos cannot be recovered if the key has been lost.",
+  "@videoKeyUnavailable": {"description":"File encryption: videoKeyUnavailable"},
+  "videoCleanupFailed": "Temporary video cleanup did not finish. Leave this page and reopen it to retry cleanup.",
+  "@videoCleanupFailed": {"description":"File encryption: videoCleanupFailed"},
+  "videoOperationFailed": "The file operation failed. Please try again.",
+  "@videoOperationFailed": {"description":"File encryption: videoOperationFailed"},
+  "videoDone": "Done",
+  "@videoDone": {"description":"File encryption: videoDone"},
   "appName": "Secure Vault",
   "@appName": {
     "description": "Application display title inside Flutter"
@@ -202,7 +248,7 @@
   "@deleteLocalVault": {
     "description": "Settings action that starts permanent local vault deletion"
   },
-  "deleteLocalVaultDescription": "Permanently delete passwords, categories, OTP, and master password settings stored on this device",
+  "deleteLocalVaultDescription": "Permanently delete this device's passwords, categories, OTP, encrypted files, and master password settings",
   "@deleteLocalVaultDescription": {
     "description": "Settings description for permanent local vault deletion"
   },
@@ -242,7 +288,7 @@
   "@permanentlyDeleteLocalVaultQuestion": {
     "description": "Title for the final permanent local vault deletion confirmation"
   },
-  "permanentDeleteWarning": "This permanently deletes passwords, categories, OTP, master password settings, biometric keys, and theme preferences stored on this device. This cannot be undone.",
+  "permanentDeleteWarning": "This permanently deletes passwords, categories, OTP, encrypted video copies and their key, master password settings, biometric keys, and theme preferences stored on this device. Original videos in Photos or Files are not deleted. This cannot be undone.",
   "@permanentDeleteWarning": {
     "description": "Warning describing local data removed by permanent local vault deletion"
   },

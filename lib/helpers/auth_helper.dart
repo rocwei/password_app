@@ -7,6 +7,7 @@ import 'database_helper.dart';
 import 'encryption_helper.dart';
 import 'biometric_helper.dart';
 import 'local_vault_deletion_service.dart';
+import 'video_vault_service.dart';
 
 enum MasterPasswordChangeResult {
   success,
@@ -426,9 +427,17 @@ class AuthHelper {
 
   // 登出
   void logout() {
+    VideoVaultService.instance.invalidate();
     _currentUser = null;
     _encryptionKey = null;
     EncryptionHelper().clearKey();
+  }
+
+  bool verifyCurrentMasterPassword(String password) {
+    final user = _currentUser;
+    if (!isLoggedIn || user == null || password.isEmpty) return false;
+    return EncryptionHelper.hashMasterPassword(password, user.salt) ==
+        user.masterPasswordHash;
   }
 
   Future<LocalVaultDeletionResult> deleteLocalVault(String masterPassword) {

@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../helpers/auth_helper.dart';
 import '../helpers/file_intent_helper.dart';
+import '../helpers/video_vault_service.dart';
 import '../l10n/l10n.dart';
 import 'password_vault_page.dart';
 import 'generate_password_page.dart';
@@ -13,7 +14,9 @@ import 'otp_page.dart';
 import 'backup_restore_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, this.nativeLifecycleEvents});
+
+  final Stream<Map<String, dynamic>>? nativeLifecycleEvents;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -25,11 +28,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Timer? _backgroundTimer;
   static const Duration _backgroundTimeout = Duration(minutes: 3);
   StreamSubscription<String>? _fileIntentSubscription;
+  StreamSubscription<Map<String, dynamic>>? _nativeLifecycleSubscription;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (VideoVaultService.supported) {
+      _nativeLifecycleSubscription =
+          (widget.nativeLifecycleEvents ?? VideoVaultService.instance.events)
+              .listen((event) {
+                if (event['type'] == 'applicationBackgrounded') {
+                  _handleApplicationLifecycle(AppLifecycleState.paused);
+                } else if (event['type'] == 'applicationForegrounded') {
+                  _handleApplicationLifecycle(AppLifecycleState.resumed);
+                }
+              });
+    }
 
     _pages = [
       const PasswordVaultPage(),
@@ -60,12 +75,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _backgroundTimer?.cancel();
     _backgroundTimer = null;
     _fileIntentSubscription?.cancel();
+    _nativeLifecycleSubscription?.cancel();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+    // On iOS, Flutter paused can mean a native player covers the Flutter view.
+    if (VideoVaultService.supported) return;
+    _handleApplicationLifecycle(state);
+  }
+
+  void _handleApplicationLifecycle(AppLifecycleState state) {
     // 当应用进入后台时，启动 3 分钟计时器；如果在 3 分钟内返回则取消
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {

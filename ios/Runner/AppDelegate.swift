@@ -12,6 +12,7 @@ import UIKit
     
     /// MethodChannel 实例
     private var methodChannel: FlutterMethodChannel?
+    private var videoVault: VideoVaultPlugin?
     
     override func application(
         _ application: UIApplication,
@@ -21,6 +22,7 @@ import UIKit
         
         // 注册 MethodChannel
         let controller = window?.rootViewController as! FlutterViewController
+        videoVault = VideoVaultPlugin(messenger: controller.binaryMessenger, host: controller)
         methodChannel = FlutterMethodChannel(
             name: channelName,
             binaryMessenger: controller.binaryMessenger

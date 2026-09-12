@@ -9,6 +9,78 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get fileEncryption => '文件加密';
+
+  @override
+  String get fileEncryptionDescription => '加密保存并查看本机视频';
+
+  @override
+  String get fileEncryptionAuthReason => '请再次验证身份以访问加密文件。';
+
+  @override
+  String get fileEncryptionBiometric => '使用生物识别验证';
+
+  @override
+  String get fileEncryptionLocked => '文件库已锁定。请先解锁密码库，再重新进入。';
+
+  @override
+  String get videoLocalOnly =>
+      '仅支持 MP4、MOV、M4V 视频。视频只保存在本机，不包含在密码备份中；卸载应用或丢失设备后无法恢复。请保留可靠的原文件副本。';
+
+  @override
+  String get videoFromPhotos => '从照片导入';
+
+  @override
+  String get videoFromFiles => '从文件导入';
+
+  @override
+  String get videoEmpty => '暂无加密视频';
+
+  @override
+  String get videoImported => '已保存加密副本，原视频仍在来源位置。需要删除原视频时，请前往照片或文件 App 自行处理。';
+
+  @override
+  String get deleteVideo => '删除视频';
+
+  @override
+  String deleteVideoConfirmation(String name) {
+    return '删除“$name”的加密副本？此操作无法撤销，原视频不会被删除。';
+  }
+
+  @override
+  String get videoLoading => '正在读取视频…';
+
+  @override
+  String get videoChecking => '正在检查视频…';
+
+  @override
+  String get videoEncrypting => '正在加密视频…';
+
+  @override
+  String get videoDecrypting => '正在解密，完成后开始播放…';
+
+  @override
+  String get videoInvalid => '无法播放此文件。请选择未受保护且可播放的 MP4、MOV 或 M4V 视频。';
+
+  @override
+  String get videoInsufficientSpace => '设备空间不足。导入或播放需要额外的可用空间，请清理空间后重试。';
+
+  @override
+  String get videoCorrupt => '加密文件已损坏或版本不受支持，无法播放。';
+
+  @override
+  String get videoKeyUnavailable => '无法读取本机视频密钥。请先解锁设备后重试；如果密钥已丢失，视频无法恢复。';
+
+  @override
+  String get videoCleanupFailed => '临时视频清理未完成。请退出文件库并重新进入以重试清理。';
+
+  @override
+  String get videoOperationFailed => '文件操作失败，请重试。';
+
+  @override
+  String get videoDone => '完成';
+
+  @override
   String get appName => '密盾安存';
 
   @override
@@ -148,7 +220,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteLocalVault => '删除本地密码库';
 
   @override
-  String get deleteLocalVaultDescription => '永久删除本机保存的密码、分类、OTP 和主密码设置';
+  String get deleteLocalVaultDescription => '永久删除本机保存的密码、分类、OTP、加密文件和主密码设置';
 
   @override
   String get lockLocalVault => '锁定密码库';
@@ -179,7 +251,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get permanentDeleteWarning =>
-      '此操作会永久删除本机保存的密码、分类、OTP、主密码设置、生物识别密钥和主题偏好，且无法恢复。';
+      '此操作会永久删除本机保存的密码、分类、OTP、加密视频副本及其密钥、主密码设置、生物识别密钥和主题偏好，且无法恢复。照片或文件中的原视频不会被删除。';
 
   @override
   String get cachedBackupDeleteWarning =>

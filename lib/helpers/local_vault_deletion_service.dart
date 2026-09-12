@@ -4,6 +4,7 @@ import '../models/user.dart';
 import 'database_helper.dart';
 import 'encryption_helper.dart';
 import 'local_backup_cache_helper.dart';
+import 'video_vault_service.dart';
 
 enum LocalVaultDeletionResult {
   success,
@@ -18,16 +19,20 @@ class LocalVaultDeletionService {
     Future<void> Function()? clearBackupCache,
     Future<void> Function()? deleteDatabase,
     Future<void> Function()? clearSecureStorage,
+    Future<void> Function()? clearVideoVault,
   }) : clearBackupCache = clearBackupCache ?? LocalBackupCacheHelper().clear,
        deleteDatabase =
            deleteDatabase ?? (() => DatabaseHelper().deleteAllLocalData()),
        clearSecureStorage =
            clearSecureStorage ??
-           (() => const FlutterSecureStorage().deleteAll());
+           (() => const FlutterSecureStorage().deleteAll()),
+       clearVideoVault =
+           clearVideoVault ?? (() => VideoVaultService.instance.deleteAll());
 
   final Future<void> Function() clearBackupCache;
   final Future<void> Function() deleteDatabase;
   final Future<void> Function() clearSecureStorage;
+  final Future<void> Function() clearVideoVault;
 
   Future<LocalVaultDeletionResult> delete({
     required User? user,
@@ -48,6 +53,7 @@ class LocalVaultDeletionService {
       }
 
       await clearBackupCache();
+      await clearVideoVault();
       await deleteDatabase();
     } catch (_) {
       return LocalVaultDeletionResult.failed;

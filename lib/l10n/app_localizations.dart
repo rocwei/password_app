@@ -98,6 +98,144 @@ abstract class AppLocalizations {
     Locale('en'),
   ];
 
+  /// File encryption: fileEncryption
+  ///
+  /// In zh, this message translates to:
+  /// **'文件加密'**
+  String get fileEncryption;
+
+  /// File encryption: fileEncryptionDescription
+  ///
+  /// In zh, this message translates to:
+  /// **'加密保存并查看本机视频'**
+  String get fileEncryptionDescription;
+
+  /// File encryption: fileEncryptionAuthReason
+  ///
+  /// In zh, this message translates to:
+  /// **'请再次验证身份以访问加密文件。'**
+  String get fileEncryptionAuthReason;
+
+  /// File encryption: fileEncryptionBiometric
+  ///
+  /// In zh, this message translates to:
+  /// **'使用生物识别验证'**
+  String get fileEncryptionBiometric;
+
+  /// File encryption: fileEncryptionLocked
+  ///
+  /// In zh, this message translates to:
+  /// **'文件库已锁定。请先解锁密码库，再重新进入。'**
+  String get fileEncryptionLocked;
+
+  /// File encryption: videoLocalOnly
+  ///
+  /// In zh, this message translates to:
+  /// **'仅支持 MP4、MOV、M4V 视频。视频只保存在本机，不包含在密码备份中；卸载应用或丢失设备后无法恢复。请保留可靠的原文件副本。'**
+  String get videoLocalOnly;
+
+  /// File encryption: videoFromPhotos
+  ///
+  /// In zh, this message translates to:
+  /// **'从照片导入'**
+  String get videoFromPhotos;
+
+  /// File encryption: videoFromFiles
+  ///
+  /// In zh, this message translates to:
+  /// **'从文件导入'**
+  String get videoFromFiles;
+
+  /// File encryption: videoEmpty
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无加密视频'**
+  String get videoEmpty;
+
+  /// File encryption: videoImported
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存加密副本，原视频仍在来源位置。需要删除原视频时，请前往照片或文件 App 自行处理。'**
+  String get videoImported;
+
+  /// File encryption: deleteVideo
+  ///
+  /// In zh, this message translates to:
+  /// **'删除视频'**
+  String get deleteVideo;
+
+  /// File encryption: deleteVideoConfirmation
+  ///
+  /// In zh, this message translates to:
+  /// **'删除“{name}”的加密副本？此操作无法撤销，原视频不会被删除。'**
+  String deleteVideoConfirmation(String name);
+
+  /// File encryption: videoLoading
+  ///
+  /// In zh, this message translates to:
+  /// **'正在读取视频…'**
+  String get videoLoading;
+
+  /// File encryption: videoChecking
+  ///
+  /// In zh, this message translates to:
+  /// **'正在检查视频…'**
+  String get videoChecking;
+
+  /// File encryption: videoEncrypting
+  ///
+  /// In zh, this message translates to:
+  /// **'正在加密视频…'**
+  String get videoEncrypting;
+
+  /// File encryption: videoDecrypting
+  ///
+  /// In zh, this message translates to:
+  /// **'正在解密，完成后开始播放…'**
+  String get videoDecrypting;
+
+  /// File encryption: videoInvalid
+  ///
+  /// In zh, this message translates to:
+  /// **'无法播放此文件。请选择未受保护且可播放的 MP4、MOV 或 M4V 视频。'**
+  String get videoInvalid;
+
+  /// File encryption: videoInsufficientSpace
+  ///
+  /// In zh, this message translates to:
+  /// **'设备空间不足。导入或播放需要额外的可用空间，请清理空间后重试。'**
+  String get videoInsufficientSpace;
+
+  /// File encryption: videoCorrupt
+  ///
+  /// In zh, this message translates to:
+  /// **'加密文件已损坏或版本不受支持，无法播放。'**
+  String get videoCorrupt;
+
+  /// File encryption: videoKeyUnavailable
+  ///
+  /// In zh, this message translates to:
+  /// **'无法读取本机视频密钥。请先解锁设备后重试；如果密钥已丢失，视频无法恢复。'**
+  String get videoKeyUnavailable;
+
+  /// File encryption: videoCleanupFailed
+  ///
+  /// In zh, this message translates to:
+  /// **'临时视频清理未完成。请退出文件库并重新进入以重试清理。'**
+  String get videoCleanupFailed;
+
+  /// File encryption: videoOperationFailed
+  ///
+  /// In zh, this message translates to:
+  /// **'文件操作失败，请重试。'**
+  String get videoOperationFailed;
+
+  /// File encryption: videoDone
+  ///
+  /// In zh, this message translates to:
+  /// **'完成'**
+  String get videoDone;
+
   /// Application display title inside Flutter
   ///
   /// In zh, this message translates to:
@@ -359,7 +497,7 @@ abstract class AppLocalizations {
   /// Settings description for permanent local vault deletion
   ///
   /// In zh, this message translates to:
-  /// **'永久删除本机保存的密码、分类、OTP 和主密码设置'**
+  /// **'永久删除本机保存的密码、分类、OTP、加密文件和主密码设置'**
   String get deleteLocalVaultDescription;
 
   /// Settings action that locks the local vault
@@ -419,7 +557,7 @@ abstract class AppLocalizations {
   /// Warning describing local data removed by permanent local vault deletion
   ///
   /// In zh, this message translates to:
-  /// **'此操作会永久删除本机保存的密码、分类、OTP、主密码设置、生物识别密钥和主题偏好，且无法恢复。'**
+  /// **'此操作会永久删除本机保存的密码、分类、OTP、加密视频副本及其密钥、主密码设置、生物识别密钥和主题偏好，且无法恢复。照片或文件中的原视频不会被删除。'**
   String get permanentDeleteWarning;
 
   /// Warning that cached backup copies inside the app are deleted

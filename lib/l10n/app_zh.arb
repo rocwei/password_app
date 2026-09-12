@@ -1,5 +1,51 @@
 {
   "@@locale": "zh",
+  "fileEncryption": "文件加密",
+  "@fileEncryption": {"description":"File encryption: fileEncryption"},
+  "fileEncryptionDescription": "加密保存并查看本机视频",
+  "@fileEncryptionDescription": {"description":"File encryption: fileEncryptionDescription"},
+  "fileEncryptionAuthReason": "请再次验证身份以访问加密文件。",
+  "@fileEncryptionAuthReason": {"description":"File encryption: fileEncryptionAuthReason"},
+  "fileEncryptionBiometric": "使用生物识别验证",
+  "@fileEncryptionBiometric": {"description":"File encryption: fileEncryptionBiometric"},
+  "fileEncryptionLocked": "文件库已锁定。请先解锁密码库，再重新进入。",
+  "@fileEncryptionLocked": {"description":"File encryption: fileEncryptionLocked"},
+  "videoLocalOnly": "仅支持 MP4、MOV、M4V 视频。视频只保存在本机，不包含在密码备份中；卸载应用或丢失设备后无法恢复。请保留可靠的原文件副本。",
+  "@videoLocalOnly": {"description":"File encryption: videoLocalOnly"},
+  "videoFromPhotos": "从照片导入",
+  "@videoFromPhotos": {"description":"File encryption: videoFromPhotos"},
+  "videoFromFiles": "从文件导入",
+  "@videoFromFiles": {"description":"File encryption: videoFromFiles"},
+  "videoEmpty": "暂无加密视频",
+  "@videoEmpty": {"description":"File encryption: videoEmpty"},
+  "videoImported": "已保存加密副本，原视频仍在来源位置。需要删除原视频时，请前往照片或文件 App 自行处理。",
+  "@videoImported": {"description":"File encryption: videoImported"},
+  "deleteVideo": "删除视频",
+  "@deleteVideo": {"description":"File encryption: deleteVideo"},
+  "deleteVideoConfirmation": "删除“{name}”的加密副本？此操作无法撤销，原视频不会被删除。",
+  "@deleteVideoConfirmation": {"description":"File encryption: deleteVideoConfirmation","placeholders":{"name":{"type":"String"}}},
+  "videoLoading": "正在读取视频…",
+  "@videoLoading": {"description":"File encryption: videoLoading"},
+  "videoChecking": "正在检查视频…",
+  "@videoChecking": {"description":"File encryption: videoChecking"},
+  "videoEncrypting": "正在加密视频…",
+  "@videoEncrypting": {"description":"File encryption: videoEncrypting"},
+  "videoDecrypting": "正在解密，完成后开始播放…",
+  "@videoDecrypting": {"description":"File encryption: videoDecrypting"},
+  "videoInvalid": "无法播放此文件。请选择未受保护且可播放的 MP4、MOV 或 M4V 视频。",
+  "@videoInvalid": {"description":"File encryption: videoInvalid"},
+  "videoInsufficientSpace": "设备空间不足。导入或播放需要额外的可用空间，请清理空间后重试。",
+  "@videoInsufficientSpace": {"description":"File encryption: videoInsufficientSpace"},
+  "videoCorrupt": "加密文件已损坏或版本不受支持，无法播放。",
+  "@videoCorrupt": {"description":"File encryption: videoCorrupt"},
+  "videoKeyUnavailable": "无法读取本机视频密钥。请先解锁设备后重试；如果密钥已丢失，视频无法恢复。",
+  "@videoKeyUnavailable": {"description":"File encryption: videoKeyUnavailable"},
+  "videoCleanupFailed": "临时视频清理未完成。请退出文件库并重新进入以重试清理。",
+  "@videoCleanupFailed": {"description":"File encryption: videoCleanupFailed"},
+  "videoOperationFailed": "文件操作失败，请重试。",
+  "@videoOperationFailed": {"description":"File encryption: videoOperationFailed"},
+  "videoDone": "完成",
+  "@videoDone": {"description":"File encryption: videoDone"},
   "appName": "密盾安存",
   "@appName": {
     "description": "Application display title inside Flutter"
@@ -202,7 +248,7 @@
   "@deleteLocalVault": {
     "description": "Settings action that starts permanent local vault deletion"
   },
-  "deleteLocalVaultDescription": "永久删除本机保存的密码、分类、OTP 和主密码设置",
+  "deleteLocalVaultDescription": "永久删除本机保存的密码、分类、OTP、加密文件和主密码设置",
   "@deleteLocalVaultDescription": {
     "description": "Settings description for permanent local vault deletion"
   },
@@ -242,7 +288,7 @@
   "@permanentlyDeleteLocalVaultQuestion": {
     "description": "Title for the final permanent local vault deletion confirmation"
   },
-  "permanentDeleteWarning": "此操作会永久删除本机保存的密码、分类、OTP、主密码设置、生物识别密钥和主题偏好，且无法恢复。",
+  "permanentDeleteWarning": "此操作会永久删除本机保存的密码、分类、OTP、加密视频副本及其密钥、主密码设置、生物识别密钥和主题偏好，且无法恢复。照片或文件中的原视频不会被删除。",
   "@permanentDeleteWarning": {
     "description": "Warning describing local data removed by permanent local vault deletion"
   },

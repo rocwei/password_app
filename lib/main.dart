@@ -6,6 +6,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'helpers/auth_helper.dart';
+import 'helpers/video_vault_service.dart';
 import 'helpers/file_intent_helper.dart';
 import 'helpers/language_model.dart';
 import 'helpers/theme_settings.dart';
@@ -299,8 +300,9 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  static Future<void> _clearSecureStorage() {
-    return const FlutterSecureStorage().deleteAll();
+  static Future<void> _clearSecureStorage() async {
+    await VideoVaultService.instance.deleteAll();
+    await const FlutterSecureStorage().deleteAll();
   }
 
   void _retry() {

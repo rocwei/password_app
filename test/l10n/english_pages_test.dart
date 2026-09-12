@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show TargetPlatform;
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:password_manager/helpers/auth_helper.dart';
@@ -52,6 +55,54 @@ void main() {
     expect(find.text('设置'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'iOS native playback does not start the three-minute logout timer',
+    (tester) async {
+      await tester.pumpWidget(buildLocalizedPage(const HomePage()));
+      await tester.pump();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump(const Duration(minutes: 4));
+      await tester.pump();
+      expect(find.byType(HomePage), findsOneWidget);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'iOS real background still logs out and foreground cancels the timer',
+    (tester) async {
+      final events = StreamController<Map<String, dynamic>>.broadcast();
+      await tester.pumpWidget(
+        buildLocalizedPage(HomePage(nativeLifecycleEvents: events.stream)),
+      );
+      await tester.pump();
+      events.add({'type': 'applicationBackgrounded'});
+      await tester.pump();
+      await tester.pump(const Duration(minutes: 2));
+      events.add({'type': 'applicationForegrounded'});
+      await tester.pump();
+      await tester.pump(const Duration(minutes: 2));
+      expect(find.byType(HomePage), findsOneWidget);
+      events.add({'type': 'applicationBackgrounded'});
+      await tester.pump();
+      await tester.pump(const Duration(minutes: 4));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      expect(find.byType(HomePage), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await events.close();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
 
   testWidgets('English vault localizes its empty state and category actions', (
     tester,

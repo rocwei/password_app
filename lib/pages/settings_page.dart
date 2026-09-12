@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../helpers/auth_helper.dart';
+import '../helpers/video_vault_service.dart';
 import '../helpers/language_model.dart';
 import '../helpers/local_vault_deletion_service.dart';
 import '../helpers/theme_settings.dart';
@@ -9,6 +10,7 @@ import '../widgets/delete_local_vault_dialog.dart';
 import 'change_master_password_page.dart';
 import 'backup_restore_page.dart';
 import 'about_page.dart';
+import 'file_encryption_page.dart';
 import 'login_page.dart';
 import 'register_page.dart';
 import 'secure_storage_cleanup_page.dart';
@@ -267,6 +269,18 @@ class _SettingsPageState extends State<SettingsPage> {
             },
           ),
           const Divider(height: 1),
+          if (VideoVaultService.supported) ...[
+            ListTile(
+              leading: const Icon(Icons.enhanced_encryption_outlined),
+              title: Text(context.l10n.fileEncryption),
+              subtitle: Text(context.l10n.fileEncryptionDescription),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const FileEncryptionPage()),
+              ),
+            ),
+            const Divider(height: 1),
+          ],
           ListTile(
             leading: Icon(Icons.delete_forever, color: errorColor),
             title: Text(

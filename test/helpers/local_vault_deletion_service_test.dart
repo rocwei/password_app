@@ -61,13 +61,18 @@ void main() {
   );
 
   test(
-    'deletes backup cache, database, storage, and session in order',
+    'deletes backup cache, video vault, database, storage, and session in order',
     () async {
       final calls = <String>[];
       final backupCompleter = Completer<void>();
+      final videoCompleter = Completer<void>();
       final databaseCompleter = Completer<void>();
       final storageCompleter = Completer<void>();
       final service = LocalVaultDeletionService(
+        clearVideoVault: () {
+          calls.add('video');
+          return videoCompleter.future;
+        },
         clearBackupCache: () {
           calls.add('backup');
           return backupCompleter.future;
@@ -93,15 +98,19 @@ void main() {
 
       backupCompleter.complete();
       await Future<void>.value();
-      expect(calls, ['backup', 'database']);
+      expect(calls, ['backup', 'video']);
+
+      videoCompleter.complete();
+      await Future<void>.value();
+      expect(calls, ['backup', 'video', 'database']);
 
       databaseCompleter.complete();
       await Future<void>.value();
-      expect(calls, ['backup', 'database', 'storage']);
+      expect(calls, ['backup', 'video', 'database', 'storage']);
 
       storageCompleter.complete();
       await Future<void>.value();
-      expect(calls, ['backup', 'database', 'storage', 'session']);
+      expect(calls, ['backup', 'video', 'database', 'storage', 'session']);
       expect(await deletion, LocalVaultDeletionResult.success);
     },
   );
@@ -127,6 +136,31 @@ void main() {
 
       expect(result, LocalVaultDeletionResult.failed);
       expect(calls, ['backup']);
+    },
+  );
+
+  test(
+    'video cleanup failure keeps the password vault available for retry',
+    () async {
+      final calls = <String>[];
+      final service = LocalVaultDeletionService(
+        clearBackupCache: () async => calls.add('backup'),
+        clearVideoVault: () async {
+          calls.add('video');
+          throw StateError('cleanup failure');
+        },
+        deleteDatabase: () async => calls.add('database'),
+        clearSecureStorage: () async => calls.add('storage'),
+      );
+      expect(
+        await service.delete(
+          user: user,
+          masterPassword: 'StrongPass123',
+          clearSession: () => calls.add('session'),
+        ),
+        LocalVaultDeletionResult.failed,
+      );
+      expect(calls, ['backup', 'video']);
     },
   );
 
