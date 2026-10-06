@@ -1,3 +1,4 @@
+import AVFoundation
 import Flutter
 import CryptoKit
 import UIKit
@@ -77,6 +78,28 @@ class RunnerTests: XCTestCase {
     center.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
     XCTAssertTrue(messenger.events.contains("locked"))
     XCTAssertTrue(messenger.events.contains("applicationBackgrounded"))
+  }
+
+  func testVideoPlaybackUsesMediaAudioInsteadOfSilentSwitchCategory() throws {
+    let audio = AVAudioSession.sharedInstance()
+    let category = audio.category
+    let mode = audio.mode
+    let options = audio.categoryOptions
+    let player = VideoPlaybackContainer(url: directory.appendingPathComponent("audio-test.mp4"), done: "Done")
+    defer {
+      player.stop()
+      try? audio.setCategory(category, mode: mode, options: options)
+    }
+    try audio.setCategory(.soloAmbient)
+    var failed = false
+    player.onFailure = { failed = true }
+    player.start()
+    XCTAssertFalse(failed, "Media audio must activate successfully")
+    XCTAssertEqual(audio.category, .playback, "Video must be audible with the silent switch on")
+    XCTAssertEqual(audio.mode, .moviePlayback)
+    XCTAssertEqual(audio.categoryOptions, [], "Keep the system-selected speaker or Bluetooth route")
+    player.stop()
+    player.stop()
   }
 }
 

@@ -436,11 +436,12 @@ extension VideoVaultPlugin: PHPickerViewControllerDelegate {
 }
 
 // Compose the system player; AVPlayerViewController itself must not be subclassed.
-private final class VideoPlaybackContainer: UIViewController {
+final class VideoPlaybackContainer: UIViewController {
     private let playback: AVPlayer
     private let controller = AVPlayerViewController()
     private let done: String
     private var observation: NSKeyValueObservation?
+    private var audioActive = false
     var onClose: (() -> Void)?
     var onFailure: (() -> Void)?
 
@@ -483,9 +484,34 @@ private final class VideoPlaybackContainer: UIViewController {
             DispatchQueue.main.async { self?.onFailure?(); self?.close() }
         }
     }
-    func start() { playback.play() }
+    func start() {
+        do {
+            let audio = AVAudioSession.sharedInstance()
+            // Video sound must play through the speaker even when the phone is silent.
+            try audio.setCategory(.playback, mode: .moviePlayback, options: [])
+            try audio.setActive(true)
+            audioActive = true
+            playback.play()
+        } catch {
+            onFailure?()
+            close()
+        }
+    }
     func pause() { playback.pause() }
-    func stop() { playback.pause(); observation = nil; playback.replaceCurrentItem(with: nil); controller.player = nil }
+    func stop() {
+        playback.pause()
+        observation = nil
+        playback.replaceCurrentItem(with: nil)
+        controller.player = nil
+        if audioActive {
+            do {
+                try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+                audioActive = false
+            } catch {
+                NSLog("Video vault audio session deactivation failed")
+            }
+        }
+    }
     @objc private func close() { stop(); dismiss(animated: true) }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
